@@ -1,0 +1,3479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>London Climbing Gym Prices</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- Optional account sync (Firebase). Harmless if not configured. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js" onerror="window.FIREBASE_CONFIG=window.FIREBASE_CONFIG||{}"></script>
+<style>
+  :root{
+    --bg:#0f1115; --card:#181b22; --card2:#1f232c; --ink:#e8ebf0; --mut:#9aa3b2;
+    --line:#2a2f3a; --accent:#5db07a; --accent2:#e2a13c; --warn:#c96a5a; --chip:#262b35;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink)}
+  header{padding:22px 20px 12px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:22px}
+  .sub{color:var(--mut);font-size:13px;margin-top:4px}
+  .wrap{max-width:960px;margin:0 auto;padding:18px 20px 60px}
+  .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;
+            background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:18px 0}
+  .ctl{display:flex;flex-direction:column;gap:4px}
+  .ctl label{font-size:12px;color:var(--mut)}
+  input,select,button{font:inherit;color:var(--ink);background:var(--card2);
+       border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  button{cursor:pointer;background:var(--accent);color:#06210f;border:none;font-weight:600}
+  button.ghost{background:var(--chip);color:var(--ink);font-weight:500}
+  .toggle{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--mut);padding-bottom:8px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px}
+  .tab{padding:7px 13px;border-radius:20px;background:var(--chip);color:var(--mut);cursor:pointer;font-size:13px;border:1px solid transparent}
+  .tab.on{background:var(--card2);color:var(--ink);border-color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 0;margin-bottom:16px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px}
+  th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  .price{font-weight:700;font-variant-numeric:tabular-nums}
+  .rank{color:var(--mut);width:26px}
+  .best .price{color:var(--accent)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--chip);color:var(--mut)}
+  .pill.off{background:#16321f;color:#7fd29a}
+  .pill.magic{background:#3a2c12;color:#e8bd6e}
+  .pill.peak{background:#2a2230;color:#c79ad4}
+  .flag{color:var(--warn);font-size:11px}
+  .note{color:var(--mut);font-size:12px;padding:4px 14px 10px}
+  .zonegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:12px}
+  .znum{font-size:12px;color:var(--accent2);font-weight:700;letter-spacing:.05em}
+  .gymline{padding:8px 0;border-bottom:1px solid var(--line)}
+  .gymline:last-child{border:none}
+  .gymline a{color:var(--ink);text-decoration:none}
+  .gymline a:hover{text-decoration:underline}
+  .meta{color:var(--mut);font-size:12px}
+  .hidden{display:none}
+  footer{color:var(--mut);font-size:12px;margin-top:20px;line-height:1.6}
+  a{color:var(--accent)}
+  #map{height:400px;border-radius:10px;margin:0 12px 8px;z-index:0}
+  .leaflet-popup-content{font:13px -apple-system,Arial,sans-serif}
+  .startbar{display:flex;gap:8px;align-items:flex-end;padding:12px 14px 4px;flex-wrap:wrap}
+  .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tscroll table{min-width:1180px}
+  /* ---- phone / narrow screens ---- */
+  @media (max-width:760px){
+    .wrap{padding:12px 12px 48px}
+    header{padding:16px 14px 10px}
+    h1{font-size:19px}
+    th,td{padding:7px 9px;font-size:13px}
+    .card{overflow-x:auto;-webkit-overflow-scrolling:touch}  /* let wide tables scroll instead of clipping */
+    .controls{gap:8px;padding:10px}
+    .ctl input,.ctl select{min-width:0}
+    .tab{padding:6px 11px;font-size:12px}
+    #map{height:300px;margin:0 8px 8px}
+    .zonegrid{grid-template-columns:1fr}
+    .pill{font-size:10px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>London Climbing Gym Prices</h1>
+  <div class="sub" id="meta"></div>
+  <div class="sub" id="account"></div>
+</header>
+<div class="wrap">
+
+  <div class="controls">
+    <div class="ctl" style="flex:1;min-width:170px"><label>Your location (postcode or place) — public-transport travel times</label>
+      <input type="text" id="startloc" placeholder="e.g. SW1A 1AA or &quot;Vauxhall station&quot;"></div>
+    <button id="geoloc" class="ghost" title="Use your current location">Use my location</button>
+    <div class="ctl"><label>Date</label><input type="date" id="date"></div>
+    <div class="ctl"><label>Time</label><input type="time" id="time"></div>
+    <div class="ctl"><label>Climber</label>
+      <select id="who"><option value="adult">Adult</option><option value="conc">Student / concession</option></select>
+    </div>
+    <div class="ctl"><label>Type</label>
+      <select id="type"><option value="">Any</option><option value="bouldering">Bouldering</option><option value="ropes">Ropes</option></select>
+    </div>
+    <div class="ctl"><label>Zone</label>
+      <select id="zone"><option value="">Any</option></select>
+    </div>
+    <div class="ctl"><label>Cheapest mode</label>
+      <select id="mode"><option value="day">Best price all day</option><option value="time">At selected time</option></select>
+    </div>
+    <button id="now" class="ghost">Now</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-view="cheapest">Cheapest on this day</div>
+    <div class="tab" data-view="map">Map &amp; directions</div>
+    <div class="tab" data-view="all">All gyms</div>
+    <div class="tab" data-view="offpeak">Off-peak &amp; cheap slots</div>
+    <div class="tab" data-view="students">Student discounts</div>
+    <div class="tab" data-view="memberships">Memberships &amp; passes</div>
+    <div class="tab" data-view="promos">Limited offers</div>
+    <div class="tab" data-view="events">Events</div>
+    <div class="tab" data-view="classes">Classes</div>
+    <div class="tab" data-view="routeset">Route setting</div>
+  </div>
+
+  <div id="view"></div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+/* ----- data (mirror of gyms.json) ----- */
+const DATA = {
+  "_meta": {
+    "currency": "GBP",
+    "last_research_date": "2026-07-01",
+    "sources": [
+      "web research 2026-07-01",
+      "user Google Sheet (incorporated 2026-07-01)"
+    ],
+    "notes": [
+      "Prices are 'pay-as-you-go' single day-pass entries unless stated.",
+      "'Standard' in the source sheet = adult peak. 'Concession' = student/senior/UC etc. peak.",
+      "Off-peak / peak split: where a gym states exact times they are used; otherwise off-peak is assumed to be weekday daytime until 16:00 and is flagged 'offpeak_assumed'. Peak = weekday evenings + all weekend.",
+      "'magic_slots' are special cheap windows (e.g. LCC 'Magic Time' £8, Rise super off-peak £7.50, student-saver days). Slots labelled 'student'/'concession' only apply to concession holders.",
+      "Multi-site brands share one price list but off-peak windows differ per centre. City Bouldering is split into separate entries (Aldgate, White City, Stratford, Climbing Co Fulham) because each has its own off-peak schedule. 'offpeak_window' may be a single object or a list of objects (e.g. Stratford has different weekday windows).",
+      "Where a value is null it was not publicly listed; run the scraper or check the website."
+    ]
+  },
+  "student_promotions": [
+    {
+      "scope": "Climbing District (Bermondsey, Tottenham Hale, London Fields)",
+      "offer": "Student Saver £5 day pass on Mondays and Fridays",
+      "source": "https://climbingdistrict.uk/pricing/"
+    },
+    {
+      "scope": "City Bouldering (Aldgate, White City, Stratford, Climbing Co Fulham)",
+      "offer": "Bargain £7.50 and Student Saver £9.50 run on different days per centre (see each gym's note). Student Saver anytime: Aldgate Fri, White City Thu, Stratford Mon & Fri, Fulham Tue. Aldgate also runs BOGOF (£17 for two) Saturday eves 5-8pm.",
+      "source": "https://www.citybouldering.co.uk/pricing"
+    },
+    {
+      "scope": "The Font (Wandsworth, Borough, Hounslow - Hounslow is cheaper)",
+      "offer": "Student Saver £10.50 Mon-Fri off-peak and all day Saturday",
+      "source": "https://www.the-font.co.uk/wandsworth/prices"
+    },
+    {
+      "scope": "Yonder (Walthamstow)",
+      "offer": "Student Saver £8 on Tuesdays and Fridays",
+      "source": "https://www.thisisyonder.com/yonder-climbing"
+    },
+    {
+      "scope": "London Climbing Centres",
+      "offer": "3-month student membership £205; Student Fridays £9.50 at CroyWall",
+      "source": "https://londonclimbingcentres.co.uk/prices/"
+    }
+  ],
+  "gyms": [
+    {
+      "id": "castle",
+      "name": "The Castle Climbing Centre",
+      "brand": "Independent",
+      "type": "ropes+bouldering",
+      "area": "Manor House / Finsbury Park",
+      "borough": "Hackney",
+      "zone": 2,
+      "postcode": "N4 2HA",
+      "lat": 51.5712,
+      "lng": -0.0894,
+      "website": "https://www.castle-climbing.co.uk/",
+      "prices_url": "https://www.castle-climbing.co.uk/prices",
+      "payg": {
+        "adult_peak": 18.0,
+        "adult_offpeak": null,
+        "concession_peak": 12.5,
+        "concession_offpeak": 10.5
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "08:00",
+        "end": "17:00",
+        "concession_only": true,
+        "except_bank_holidays": true
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [],
+      "student_note": "Concession £12.50 peak / £10.50 off-peak (Mon-Fri 8am-5pm) for students, under-16s, over-65s and unwaged. Show ID.",
+      "registration_fee": 3.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.castle-climbing.co.uk/prices",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Ropes (230+ routes), auto-belay (40+), bouldering, outdoor garden",
+      "membership": {
+        "full_monthly": 87,
+        "concession_monthly": 72
+      },
+      "address": "Green Lanes, London N4 2HA",
+      "passes": "8 sessions £128 (£92 conc)",
+      "hours": {
+        "Mon": [
+          "08:00",
+          "22:00"
+        ],
+        "Tue": [
+          "08:00",
+          "22:00"
+        ],
+        "Wed": [
+          "08:00",
+          "22:00"
+        ],
+        "Thu": [
+          "08:00",
+          "22:00"
+        ],
+        "Fri": [
+          "08:00",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "20:00"
+        ],
+        "Sun": [
+          "09:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "thecastleclimbingcentre",
+      "classes_url": "https://www.castle-climbing.co.uk/climbing-courses",
+      "class_info": "[Taster session](https://www.castle-climbing.co.uk/climbing-courses) £45 (90min); [Bouldering Fundamentals](https://www.castle-climbing.co.uk/climbing-courses) (4-week) and [Learn to Top Rope](https://www.castle-climbing.co.uk/climbing-courses) (1-day) courses; [Bouldering & Roped Climbing Fundamentals 6-week](https://www.castle-climbing.co.uk/climbing-courses) £235 (incl. FREE membership worth £114); [private tuition](https://www.castle-climbing.co.uk/climbing-courses) from 1hr.",
+      "socials": [
+        "[Top Rope Social](https://www.castle-climbing.co.uk/events/top-rop-social) — Mon & Thu 19:00-21:00, plus Sat 13:45-16:00",
+        "[Mixed Bouldering Social](https://www.castle-climbing.co.uk/events/bouldering-social-with-coach) — Mondays (1st Mon coach-led)",
+        "[Women's Bouldering Social](https://www.castle-climbing.co.uk/events/womens-bouldering-social-with-coach) — 1st Tue of month (coach-led)",
+        "[Original Girlz Social](https://www.castle-climbing.co.uk/events/original-girlz-social) (women) — 2nd Wed of month 19:00-21:00 (free)"
+      ]
+    },
+    {
+      "id": "arch_bermondsey",
+      "name": "Climbing District - Bermondsey",
+      "brand": "Climbing District",
+      "type": "bouldering",
+      "area": "Bermondsey",
+      "borough": "Southwark",
+      "zone": 2,
+      "postcode": "SE16 4DG",
+      "lat": 51.4925,
+      "lng": -0.0689,
+      "website": "https://climbingdistrict.uk/",
+      "prices_url": "https://climbingdistrict.uk/pricing/",
+      "payg": {
+        "adult_peak": 15.0,
+        "adult_offpeak": null,
+        "concession_peak": 12.5,
+        "concession_offpeak": null
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": true,
+      "magic_slots": [
+        {
+          "days": [
+            "Mon",
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 5.0,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £12.50. Student Saver £5 day pass on Mondays & Fridays (student ID).",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://climbingdistrict.uk/pricing/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, training area, MoonBoard, spray wall, large traverse walls",
+      "membership": {
+        "full_monthly": 72,
+        "concession_monthly": 62
+      },
+      "address": "Building One, Tower Bridge Business Complex, Drummond Road, London SE16 4DG",
+      "passes": "10 punches £125 (£110 conc); Summer Pass 10 £99 (£89 conc, 3-mo)",
+      "hours": {
+        "Mon": [
+          "06:30",
+          "22:30"
+        ],
+        "Tue": [
+          "06:30",
+          "22:30"
+        ],
+        "Wed": [
+          "06:30",
+          "22:30"
+        ],
+        "Thu": [
+          "06:30",
+          "22:30"
+        ],
+        "Fri": [
+          "06:30",
+          "22:30"
+        ],
+        "Sat": [
+          "09:00",
+          "21:00"
+        ],
+        "Sun": [
+          "09:00",
+          "21:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://climbingdistrict.uk/activities/workshops-socials/",
+      "instagram": "climbingdistrictlondon",
+      "classes_url": "https://climbingdistrict.uk/activities/introduction-lessons/",
+      "class_info": "[Introduction Lessons](https://climbingdistrict.uk/activities/introduction-lessons/) £20 (1hr small group)."
+    },
+    {
+      "id": "stronghold",
+      "name": "Climbing District - Tottenham Hale",
+      "brand": "Climbing District",
+      "type": "ropes+bouldering",
+      "area": "Tottenham Hale",
+      "borough": "Haringey",
+      "zone": 3,
+      "postcode": "N15 4BE",
+      "lat": 51.5896,
+      "lng": -0.0599,
+      "website": "https://thestrongholduk.com/",
+      "prices_url": "https://climbingdistrict.uk/pricing/",
+      "payg": {
+        "adult_peak": 15.0,
+        "adult_offpeak": null,
+        "concession_peak": 12.5,
+        "concession_offpeak": null
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": true,
+      "magic_slots": [
+        {
+          "days": [
+            "Mon",
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 5.0,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £12.50. Student Saver £5 day pass on Mondays & Fridays (student ID).",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://climbingdistrict.uk/pricing/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Ropes, bouldering, gym",
+      "membership": {
+        "full_monthly": 72,
+        "concession_monthly": 62
+      },
+      "address": "The Archives, Unit 10 High Cross Centre, Fountayne Road, London N15 4BE",
+      "passes": "10 punches £125 (£110 conc); Summer Pass 10 £99 (£89 conc, 3-mo)",
+      "hours": {
+        "Mon": [
+          "07:00",
+          "22:30"
+        ],
+        "Tue": [
+          "07:00",
+          "22:30"
+        ],
+        "Wed": [
+          "08:00",
+          "22:30"
+        ],
+        "Thu": [
+          "08:00",
+          "22:30"
+        ],
+        "Fri": [
+          "07:00",
+          "22:30"
+        ],
+        "Sat": [
+          "09:00",
+          "19:00"
+        ],
+        "Sun": [
+          "09:00",
+          "21:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://climbingdistrict.uk/activities/workshops-socials/",
+      "instagram": "stronghold_uk",
+      "classes_url": "https://climbingdistrict.uk/activities/introduction-lessons/",
+      "class_info": "[Introduction Lessons](https://climbingdistrict.uk/activities/introduction-lessons/) £20 (1hr small group).",
+      "socials": [
+        "[Climb With Us](https://climbingdistrict.uk/activities/workshops-socials/) — 1.5hr coached social, £5 (excl. entry), V1-3 & V3-5",
+        "[Sister Sessions](https://climbingdistrict.uk/activities/sister-sessions/) (Women+)"
+      ]
+    },
+    {
+      "id": "climbingdistrict_londonfields",
+      "name": "Climbing District - London Fields",
+      "brand": "Climbing District",
+      "type": "bouldering",
+      "area": "London Fields",
+      "borough": "Hackney",
+      "zone": 2,
+      "postcode": "E8 4FX",
+      "lat": 51.541,
+      "lng": -0.057,
+      "website": "https://climbingdistrict.uk/",
+      "prices_url": "https://climbingdistrict.uk/pricing/",
+      "payg": {
+        "adult_peak": 15.0,
+        "adult_offpeak": null,
+        "concession_peak": 12.5,
+        "concession_offpeak": null
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": true,
+      "magic_slots": [
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 5.0,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £12.50. Student Saver £5 day pass on Fridays (student ID).",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://climbingdistrict.uk/pricing/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, Kilter board, AC available",
+      "membership": {
+        "full_monthly": 72,
+        "concession_monthly": 62
+      },
+      "address": "Unit 30, Canal Place, Andrews Road, London E8 4FX",
+      "passes": "10 punches £125 (£110 conc); Summer Pass 10 £99 (£89 conc, 3-mo)",
+      "hours": {
+        "Mon": [
+          "06:30",
+          "22:30"
+        ],
+        "Tue": [
+          "06:30",
+          "22:30"
+        ],
+        "Wed": [
+          "06:30",
+          "22:30"
+        ],
+        "Thu": [
+          "06:30",
+          "22:30"
+        ],
+        "Fri": [
+          "06:30",
+          "22:30"
+        ],
+        "Sat": [
+          "09:00",
+          "21:00"
+        ],
+        "Sun": [
+          "09:00",
+          "21:00"
+        ]
+      },
+      "hours_assumed": true,
+      "events_url": "https://climbingdistrict.uk/activities/workshops-socials/",
+      "instagram": "stronghold_ldnf",
+      "classes_url": "https://climbingdistrict.uk/activities/introduction-lessons/",
+      "class_info": "[Introduction Lessons](https://climbingdistrict.uk/activities/introduction-lessons/) £20 (1hr small group).",
+      "socials": [
+        "[Climb With Us](https://climbingdistrict.uk/activities/workshops-socials/) — 1.5hr coached social, £5 (excl. entry), V1-3 & V3-5",
+        "[Sister Sessions](https://climbingdistrict.uk/activities/sister-sessions/) (Women+)"
+      ]
+    },
+    {
+      "id": "cb_aldgate",
+      "name": "City Bouldering Aldgate",
+      "brand": "City Bouldering",
+      "type": "bouldering",
+      "area": "Aldgate",
+      "borough": "City of London",
+      "zone": 1,
+      "postcode": "EC3N 1AH",
+      "lat": 51.5138,
+      "lng": -0.0755,
+      "website": "https://www.citybouldering.co.uk/locations/city-bouidering-aldgate",
+      "prices_url": "https://www.citybouldering.co.uk/pricing",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 14.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 14.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "09:00",
+        "end": "15:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "16:30",
+          "end": "20:00",
+          "price": 7.5,
+          "label": "Bargain",
+          "prebook": true
+        },
+        {
+          "days": [
+            "Mon"
+          ],
+          "start": "08:00",
+          "end": "10:00",
+          "price": 7.5,
+          "label": "Bargain",
+          "except_bank_holidays": true,
+          "prebook": true
+        },
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 9.5,
+          "label": "Student Saver (concession)"
+        },
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "17:00",
+          "end": "20:00",
+          "price": 8.5,
+          "label": "BOGOF (£17 for 2, students £15 for 2)",
+          "prebook": true
+        }
+      ],
+      "student_note": "Concession £15. Bargain £7.50 (pre-book); Student Saver £9.50 Fridays; BOGOF £17 for two on Saturday eves 5-8pm.",
+      "registration_fee": 3.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.citybouldering.co.uk/pricing",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, Kilter board, training area, showers",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "33 Aldgate High Street, London EC3N 1AH",
+      "passes": "10 climbs £148 (£130 conc); 20 climbs £280 (£246 conc)",
+      "hours": {
+        "Mon": [
+          "06:30",
+          "23:00"
+        ],
+        "Tue": [
+          "06:30",
+          "23:00"
+        ],
+        "Wed": [
+          "06:30",
+          "23:00"
+        ],
+        "Thu": [
+          "06:30",
+          "23:00"
+        ],
+        "Fri": [
+          "06:30",
+          "23:00"
+        ],
+        "Sat": [
+          "09:00",
+          "22:00"
+        ],
+        "Sun": [
+          "09:00",
+          "22:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://www.citybouldering.co.uk/climbing-events-for-adults",
+      "instagram": "aldgatecitybouldering",
+      "classes_url": "https://www.citybouldering.co.uk/coaching",
+      "class_info": "[Intro to Bouldering](https://www.citybouldering.co.uk/events/intro-to-bouldering) £36 (1hr, incl. 2 weeks free, all 4 sites); [Fundamentals V0-V1](https://www.citybouldering.co.uk/events/fundamentals) £85 (£50 members, all 4 sites); [Intermediate V2-V4](https://www.citybouldering.co.uk/events/technical-foundations) £85 (£50 members, not Fulham); [Advanced Tactics V4-V6](https://www.citybouldering.co.uk/events/elite-tactics) £90 (£60 members); 1hr [private coaching](https://www.citybouldering.co.uk/events/private-coaching) £50 member / £60",
+      "socials": [
+        "[Beginner's Social](https://www.citybouldering.co.uk/events/beginner) — new boulderers (see website for time)",
+        "[Monday Madness](https://www.citybouldering.co.uk/events/monday-madness-social) — Mon 19:00-20:30, coached on the new set, £17 (members free)"
+      ]
+    },
+    {
+      "id": "cb_whitecity",
+      "name": "City Bouldering White City",
+      "brand": "City Bouldering",
+      "type": "ropes+bouldering",
+      "area": "White City / Shepherd's Bush",
+      "borough": "Hammersmith & Fulham",
+      "zone": 2,
+      "postcode": "W12 7HB",
+      "lat": 51.5074,
+      "lng": -0.2242,
+      "website": "https://www.citybouldering.co.uk/locations/city-bouldering-white-city",
+      "prices_url": "https://www.citybouldering.co.uk/pricing",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 14.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 14.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "10:00",
+        "end": "15:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Tue"
+          ],
+          "start": "09:00",
+          "end": "15:00",
+          "price": 7.5,
+          "label": "Bargain",
+          "prebook": true
+        },
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "17:00",
+          "end": "21:00",
+          "price": 7.5,
+          "label": "Bargain",
+          "prebook": true
+        },
+        {
+          "days": [
+            "Thu"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 9.5,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £15. Bargain £7.50 (pre-book); Student Saver £9.50 Thursdays.",
+      "registration_fee": 3.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.citybouldering.co.uk/pricing",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, auto-belay (9 routes)",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "Ariel Way, White City, London W12 7HB",
+      "passes": "10 climbs £148 (£130 conc); 20 climbs £280 (£246 conc)",
+      "hours": {
+        "Mon": [
+          "10:00",
+          "22:30"
+        ],
+        "Tue": [
+          "10:00",
+          "22:30"
+        ],
+        "Wed": [
+          "10:00",
+          "22:30"
+        ],
+        "Thu": [
+          "10:00",
+          "22:30"
+        ],
+        "Fri": [
+          "10:00",
+          "22:30"
+        ],
+        "Sat": [
+          "09:00",
+          "21:00"
+        ],
+        "Sun": [
+          "09:00",
+          "21:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://www.citybouldering.co.uk/climbing-events-for-adults",
+      "instagram": "cityboulderingwestfield",
+      "classes_url": "https://www.citybouldering.co.uk/coaching",
+      "class_info": "[Intro to Bouldering](https://www.citybouldering.co.uk/events/intro-to-bouldering) £36 (1hr, incl. 2 weeks free, all 4 sites); [Fundamentals V0-V1](https://www.citybouldering.co.uk/events/fundamentals) £85 (£50 members, all 4 sites); [Intermediate V2-V4](https://www.citybouldering.co.uk/events/technical-foundations) £85 (£50 members, not Fulham); [Advanced Tactics V4-V6](https://www.citybouldering.co.uk/events/elite-tactics) £90 (£60 members); 1hr [private coaching](https://www.citybouldering.co.uk/events/private-coaching) £50 member / £60",
+      "socials": [
+        "[Beginner's Social](https://www.citybouldering.co.uk/events/beginner) — new boulderers (see website for time)",
+        "[Student Social](https://www.citybouldering.co.uk/events/student-social) — Thu 18:00-21:00, £9.50 entry",
+        "[Members Social](https://www.citybouldering.co.uk/events/members-social) — Fri, members only (free)",
+        "[Drill It!](https://www.citybouldering.co.uk/events/drill-it) — Tue 19:00-20:00, coached drills, £14.95 (members free)"
+      ]
+    },
+    {
+      "id": "cb_stratford",
+      "name": "City Bouldering Stratford",
+      "brand": "City Bouldering",
+      "type": "bouldering",
+      "area": "Stratford",
+      "borough": "Newham",
+      "zone": 2,
+      "postcode": "E15 2JA",
+      "lat": 51.5416,
+      "lng": -0.0042,
+      "website": "https://www.citybouldering.co.uk/locations/city-bouldering-stratford",
+      "prices_url": "https://www.citybouldering.co.uk/pricing",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 14.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 14.0
+      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Tue",
+            "Wed",
+            "Thu"
+          ],
+          "start": "09:00",
+          "end": "15:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Mon",
+            "Fri"
+          ],
+          "start": "10:00",
+          "end": "15:00",
+          "concession_only": false
+        }
+      ],
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Wed"
+          ],
+          "start": "09:00",
+          "end": "15:00",
+          "price": 7.5,
+          "label": "Bargain",
+          "prebook": true
+        },
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "16:00",
+          "end": "21:00",
+          "price": 7.5,
+          "label": "Bargain",
+          "prebook": true
+        },
+        {
+          "days": [
+            "Mon",
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 9.5,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £15. Bargain £7.50 (pre-book); Student Saver £9.50 Mondays & Fridays.",
+      "registration_fee": 3.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.citybouldering.co.uk/pricing",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, Kilter board, fitness area",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "234 High Street, Stratford, London E15 2JA",
+      "passes": "10 climbs £148 (£130 conc); 20 climbs £280 (£246 conc)",
+      "hours": {
+        "Mon": [
+          "10:00",
+          "22:30"
+        ],
+        "Tue": [
+          "07:00",
+          "22:30"
+        ],
+        "Wed": [
+          "07:00",
+          "22:30"
+        ],
+        "Thu": [
+          "07:00",
+          "22:30"
+        ],
+        "Fri": [
+          "10:00",
+          "22:30"
+        ],
+        "Sat": [
+          "09:00",
+          "21:00"
+        ],
+        "Sun": [
+          "09:00",
+          "21:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://www.citybouldering.co.uk/climbing-events-for-adults",
+      "instagram": "cityboulderingstratford",
+      "classes_url": "https://www.citybouldering.co.uk/coaching",
+      "class_info": "[Intro to Bouldering](https://www.citybouldering.co.uk/events/intro-to-bouldering) £36 (1hr, incl. 2 weeks free, all 4 sites); [Fundamentals V0-V1](https://www.citybouldering.co.uk/events/fundamentals) £85 (£50 members, all 4 sites); [Intermediate V2-V4](https://www.citybouldering.co.uk/events/technical-foundations) £85 (£50 members, not Fulham); [Advanced Tactics V4-V6](https://www.citybouldering.co.uk/events/elite-tactics) £90 (£60 members); 1hr [private coaching](https://www.citybouldering.co.uk/events/private-coaching) £50 member / £60",
+      "socials": [
+        "[Beginner's Social](https://www.citybouldering.co.uk/events/beginner) — new boulderers (see website for time)",
+        "[Routes & Roots](https://www.citybouldering.co.uk/events/routes-roots) — Sun 18:00-21:00 (Black & POC climbers), £9.50 incl shoes, members free",
+        "[Send it Sisters](https://www.citybouldering.co.uk/events/stratford-send-sisters) (Womxns+) — Thu 19:00",
+        "[Queer Climbers Social](https://www.citybouldering.co.uk/events/queer-climbers-social) — Fri 19:00-20:00, £9.50 incl shoes, members free",
+        "[Geeks Who Climb](https://www.citybouldering.co.uk/events/geeks-who-climb) — 1st Sat monthly, £7.50, members free",
+        "[Bend & Boulder](https://www.citybouldering.co.uk/events/bend-and-boulder-mobility-sessions) — 45min mobility/stretching, £20 incl entry (members free)"
+      ]
+    },
+    {
+      "id": "mileend",
+      "name": "Mile End Climbing Wall",
+      "brand": "Independent",
+      "type": "ropes+bouldering",
+      "area": "Mile End",
+      "borough": "Tower Hamlets",
+      "zone": 2,
+      "postcode": "E3 5BN",
+      "lat": 51.5265,
+      "lng": -0.0333,
+      "website": "https://www.mileendwall.org.uk/",
+      "prices_url": "https://www.mileendwall.org.uk/memberships-and-entries",
+      "payg": {
+        "adult_peak": 14.5,
+        "adult_offpeak": null,
+        "concession_peak": 10.0,
+        "concession_offpeak": null
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "07:00",
+          "end": "09:30",
+          "price": 5.0,
+          "label": "super off-peak",
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Wed",
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 7.0,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Students £7 on Wed & Fri (student ID). Other concessions (over-65s, Universal Credit, PIP) £10. Super off-peak £5, Mon-Fri 7-9:30am.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.mileendwall.org.uk/memberships-and-entries",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Ropes, auto-belay, bouldering, outdoor wall",
+      "membership": {
+        "full_monthly": 60,
+        "concession_monthly": null
+      },
+      "address": "Haverfield Road, London E3 5BN",
+      "passes": "30-day pass £75 (£60 conc); 10-climb punchcard £120; student 20-climb £160",
+      "hours": {
+        "Mon": [
+          "07:00",
+          "22:00"
+        ],
+        "Tue": [
+          "07:00",
+          "22:00"
+        ],
+        "Wed": [
+          "07:00",
+          "22:00"
+        ],
+        "Thu": [
+          "07:00",
+          "22:00"
+        ],
+        "Fri": [
+          "07:00",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "20:00"
+        ],
+        "Sun": [
+          "09:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "mileendclimbing",
+      "classes_url": "https://www.mileendwall.org.uk/",
+      "class_info": "[Bouldering Induction](https://www.mileendwall.org.uk/index.php/courses/categories/bouldering-courses) £23 (1hr); [Roped Climbing Induction](https://www.mileendwall.org.uk/index.php/courses/categories/roped-courses) £75 (5h45m); [Lead Climbing Essentials](https://www.mileendwall.org.uk/index.php/courses/categories/roped-courses) £120 (7h30m); [Beginner Setting Experience](https://www.mileendwall.org.uk/index.php/courses/categories/route-setting) £120. Ages 14+.",
+      "route_setting_url": "https://www.mileendwall.org.uk/about-us",
+      "socials": [
+        "[Women+ social](https://www.mileendwall.org.uk/index.php/socials-and-events) — Thu 19:25–20:40 (free social + shoe hire, pay entry)",
+        "[Queer climb social](https://www.mileendwall.org.uk/index.php/socials-and-events) — first Monday of the month"
+      ]
+    },
+    {
+      "id": "the_font_wandsworth",
+      "name": "The Font Wandsworth",
+      "brand": "The Font",
+      "type": "ropes+bouldering",
+      "area": "Wandsworth",
+      "borough": "Wandsworth",
+      "zone": 2,
+      "postcode": "SW18",
+      "lat": 51.4614,
+      "lng": -0.1996,
+      "website": "https://www.the-font.co.uk/wandsworth",
+      "prices_url": "https://www.the-font.co.uk/wandsworth/prices",
+      "payg": {
+        "adult_peak": 18.0,
+        "adult_offpeak": null,
+        "concession_peak": 15.5,
+        "concession_offpeak": 10.5
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": true
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 10.5,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £15.50. £10.50 off-peak pass before 4pm Mon-Fri & all-day Sat (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.the-font.co.uk/wandsworth/prices",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, ropes/auto-belay, fitness, yoga",
+      "membership": {
+        "full_monthly": 80,
+        "concession_monthly": 62
+      },
+      "address": "30 Lydden Road, London SW18 4LR",
+      "passes": "5 passes £85 (£72.50 conc); 10 passes £155 (£130 conc)",
+      "hours": {
+        "Mon": [
+          "06:15",
+          "22:00"
+        ],
+        "Tue": [
+          "06:15",
+          "22:00"
+        ],
+        "Wed": [
+          "06:15",
+          "22:00"
+        ],
+        "Thu": [
+          "06:15",
+          "22:00"
+        ],
+        "Fri": [
+          "06:15",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "18:00"
+        ],
+        "Sun": [
+          "09:00",
+          "18:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://www.the-font.co.uk/whats-on",
+      "instagram": "thefontwandsworth",
+      "classes_url": "https://www.the-font.co.uk/adult-coaching",
+      "class_info": "[Intro to Bouldering](https://www.the-font.co.uk/adult-coaching) £32 (1hr); [Intro to Roped Climbing](https://www.the-font.co.uk/adult-coaching) £120 (6hr); [V0-V2 technique workshops](https://www.the-font.co.uk/adult-coaching) (footwork, handholds, route reading) £27 (90min). Coaching at Wandsworth.",
+      "socials": [
+        "[Women's Climbing Social](https://www.the-font.co.uk/news-and-articles/social-schedule-wandsworth) — 19:00-21:00 (Wandsworth 2.0)"
+      ]
+    },
+    {
+      "id": "the_font_borough",
+      "name": "The Font Borough",
+      "brand": "The Font",
+      "type": "bouldering",
+      "area": "Borough",
+      "borough": "Southwark",
+      "zone": 1,
+      "postcode": "SE1",
+      "lat": 51.5015,
+      "lng": -0.094,
+      "website": "https://www.the-font.co.uk/borough",
+      "prices_url": "https://www.the-font.co.uk/borough/prices",
+      "payg": {
+        "adult_peak": 18.0,
+        "adult_offpeak": null,
+        "concession_peak": 15.5,
+        "concession_offpeak": 10.5
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": true
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 10.5,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £15.50. £10.50 off-peak pass before 4pm Mon-Fri & all-day Sat (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.the-font.co.uk/borough/prices",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, fitness",
+      "membership": {
+        "full_monthly": 80,
+        "concession_monthly": 62
+      },
+      "address": "Unit 1B, Triptych Place, 185 Park Street, Bankside, London SE1 9BL",
+      "passes": "5 passes £85 (£72.50 conc); 10 passes £155 (£130 conc)",
+      "hours": {
+        "Mon": [
+          "07:00",
+          "22:00"
+        ],
+        "Tue": [
+          "07:00",
+          "22:00"
+        ],
+        "Wed": [
+          "07:00",
+          "22:00"
+        ],
+        "Thu": [
+          "07:00",
+          "22:00"
+        ],
+        "Fri": [
+          "07:00",
+          "22:00"
+        ],
+        "Sat": [
+          "10:00",
+          "18:00"
+        ],
+        "Sun": [
+          "10:00",
+          "18:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://www.the-font.co.uk/whats-on",
+      "instagram": "thefontborough",
+      "classes_url": "https://www.the-font.co.uk/adult-coaching",
+      "class_info": "Bouldering intro sessions & coaching workshops (prices at booking). Roped climbing & workshops run at Wandsworth.",
+      "socials": [
+        "[Women's Climbing Social](https://www.the-font.co.uk/news-and-articles/social-schedule-borough) — 19:00-21:00",
+        "[Women's Tension Board Social](https://www.the-font.co.uk/news-and-articles/social-schedule-borough) — alt Tuesdays 18:00-20:00 (V3+)"
+      ]
+    },
+    {
+      "id": "the_font_hounslow",
+      "name": "The Font Hounslow",
+      "brand": "The Font",
+      "type": "bouldering",
+      "area": "Hounslow",
+      "borough": "Hounslow",
+      "zone": 4,
+      "postcode": "TW3",
+      "lat": 51.467,
+      "lng": -0.361,
+      "website": "https://www.the-font.co.uk/hounslow",
+      "prices_url": "https://www.the-font.co.uk/hounslow/prices",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": null,
+        "concession_peak": 14.5,
+        "concession_offpeak": 10.5
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": true
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 10.5,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £14.50. £10.50 off-peak pass before 4pm Mon-Fri & all-day Sat (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.the-font.co.uk/hounslow/prices",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, fitness",
+      "membership": {
+        "full_monthly": 75,
+        "concession_monthly": 62
+      },
+      "address": "High Street Quarter, 9 Smithy Lane, Hounslow TW3 1EH",
+      "passes": "5 passes £80 (£67.50 conc); 10 passes £150 (£125 conc)",
+      "hours": {
+        "Mon": [
+          "10:00",
+          "21:30"
+        ],
+        "Tue": [
+          "10:00",
+          "21:30"
+        ],
+        "Wed": [
+          "10:00",
+          "21:30"
+        ],
+        "Thu": [
+          "10:00",
+          "21:30"
+        ],
+        "Fri": [
+          "10:00",
+          "21:30"
+        ],
+        "Sat": [
+          "10:00",
+          "18:00"
+        ],
+        "Sun": [
+          "10:00",
+          "18:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://www.the-font.co.uk/whats-on",
+      "instagram": "thefonthounslow",
+      "classes_url": "https://www.the-font.co.uk/adult-coaching",
+      "class_info": "Bouldering intro sessions & coaching workshops (prices at booking). Roped climbing & workshops run at Wandsworth."
+    },
+    {
+      "id": "yonder",
+      "name": "Yonder Climbing",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Walthamstow / Blackhorse Road",
+      "borough": "Waltham Forest",
+      "zone": 3,
+      "postcode": "E17 6DP",
+      "lat": 51.5868,
+      "lng": -0.0413,
+      "website": "https://www.thisisyonder.com/",
+      "prices_url": "https://www.thisisyonder.com/yonder-climbing",
+      "payg": {
+        "adult_peak": 15.0,
+        "adult_offpeak": null,
+        "concession_peak": 12.0,
+        "concession_offpeak": null
+      },
+      "offpeak_window": null,
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Tue",
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 8.0,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £12 / under-18 £10. Student £8 on Tuesdays & Fridays.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.thisisyonder.com/yonder-climbing",
+        "method": "image-board",
+        "needs_js": true
+      },
+      "facilities": "Bouldering, yoga, coworking",
+      "membership": {
+        "full_monthly": 70,
+        "concession_monthly": 60
+      },
+      "address": "4-6 Hookers Road, Walthamstow, London E17 6DP",
+      "passes": "10 pass £135 (£110 conc); 5 pass £72",
+      "hours": {
+        "Mon": [
+          "07:00",
+          "22:00"
+        ],
+        "Tue": [
+          "07:00",
+          "22:00"
+        ],
+        "Wed": [
+          "07:00",
+          "22:00"
+        ],
+        "Thu": [
+          "07:00",
+          "22:00"
+        ],
+        "Fri": [
+          "07:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "18:00"
+        ],
+        "Sun": [
+          "08:00",
+          "18:00"
+        ]
+      },
+      "hours_assumed": false,
+      "price_images": [
+        "baa9bd35-8434-4687-98e5-cce5868b03ba/PASS+PACKS.jpg",
+        "1286907c-514a-46a7-b648-a99ffb9a6eca/MEMBERSHIPS.jpg",
+        "4f12153b-a6fa-4ede-a729-cc89a619f2de/PASS+PACKS_1.jpg"
+      ],
+      "price_image_note": "Prices are image boards on thisisyonder.com/yonder-climbing; auto-check watches whether these image assets are swapped (a change means prices likely changed - re-read the board manually).",
+      "events_url": "https://www.thisisyonder.com/events-calender",
+      "instagram": "yonder.climbing",
+      "classes_url": "https://www.thisisyonder.com/coaching-courses-intro",
+      "class_info": "[The Boulder Experience](https://www.thisisyonder.com/coaching-courses-intro) £25 (1hr intro, incl. kit + day entry). [Ground Up bouldering essentials](https://www.thisisyonder.com/coaching-courses-intro) £85 (3x1.5hr, incl. membership during course + 20% off shoes)."
+    },
+    {
+      "id": "the_reach",
+      "name": "The Reach",
+      "brand": "Independent",
+      "type": "ropes+bouldering",
+      "area": "Woolwich",
+      "borough": "Greenwich",
+      "zone": 4,
+      "postcode": "SE18 5NR",
+      "lat": 51.49,
+      "lng": 0.069,
+      "website": "https://thereach.org.uk/",
+      "prices_url": "https://thereach.org.uk/prices",
+      "payg": {
+        "adult_peak": 15.0,
+        "adult_offpeak": 12.0,
+        "concession_peak": 12.0,
+        "concession_offpeak": 10.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false,
+        "except_bank_holidays": true
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [],
+      "student_note": "Concession £12 peak / £10 off-peak (students, over-65s, paraclimbers, means-tested benefits). Off-peak Mon-Fri before 4pm.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://thereach.org.uk/prices",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Ropes (65 routes), lead, top-rope, auto-belay (12), bouldering",
+      "membership": {
+        "full_monthly": 59,
+        "concession_monthly": null
+      },
+      "address": "Unit 6, Mellish Industrial Estate, Harrington Way, Woolwich, London SE18 5NR",
+      "passes": "10-session pack £125 (no expiry)",
+      "hours": {
+        "Mon": [
+          "10:00",
+          "22:00"
+        ],
+        "Tue": [
+          "10:00",
+          "22:00"
+        ],
+        "Wed": [
+          "10:00",
+          "22:00"
+        ],
+        "Thu": [
+          "10:00",
+          "22:00"
+        ],
+        "Fri": [
+          "10:00",
+          "22:00"
+        ],
+        "Sat": [
+          "10:00",
+          "19:00"
+        ],
+        "Sun": [
+          "10:00",
+          "19:00"
+        ]
+      },
+      "hours_assumed": false,
+      "route_setting_url": "https://thereach.org.uk/walls",
+      "events_url": "https://thereach.org.uk/events",
+      "instagram": "thereachclimbingwall",
+      "classes_url": "https://thereach.org.uk/courses",
+      "class_info": "[Taster session](https://thereach.org.uk/courses/taster-session) £20; [Beginners Course](https://thereach.org.uk/courses/reach-beginners-course) £70; [Skills courses](https://thereach.org.uk/courses/all) £25 each; [Learn to Lead](https://thereach.org.uk/courses/learn-lead-climb) £75; [1-to-1 coaching](https://thereach.org.uk/courses/development-coaching-1-1) £120."
+    },
+    {
+      "id": "rise",
+      "name": "Rise Climbing",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Canning Town",
+      "borough": "Newham",
+      "zone": 3,
+      "postcode": "E16 1ZA",
+      "lat": 51.514,
+      "lng": 0.008,
+      "website": "https://www.rise-climbing.com/",
+      "prices_url": "https://www.rise-climbing.com/entry-memberships",
+      "payg": {
+        "adult_peak": 14.0,
+        "adult_offpeak": 11.0,
+        "concession_peak": 10.5,
+        "concession_offpeak": 9.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false,
+        "except_bank_holidays": true
+      },
+      "offpeak_assumed": true,
+      "magic_slots": [
+        {
+          "days": [
+            "Tue",
+            "Thu"
+          ],
+          "start": "06:00",
+          "end": "10:00",
+          "price": 7.5,
+          "label": "super off-peak"
+        },
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 7.5,
+          "label": "Student Friday (concession, incl. shoes)"
+        },
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 5.0,
+          "label": "Board Friday (board only)"
+        }
+      ],
+      "student_note": "Concession £10.50 peak / £9 off-peak (Mon-Fri before 4pm, excl. bank holidays). Super off-peak £7.50 Tue & Thu 6-10am. Student Fridays £7.50 (incl. shoes); Board Friday £5 (board only). Pay-what-you-can available.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.rise-climbing.com/entry-memberships",
+        "method": "regex",
+        "needs_js": true
+      },
+      "facilities": "Bouldering, Moonboard, training area, showers",
+      "membership": {
+        "full_monthly": 58,
+        "concession_monthly": 46.5
+      },
+      "address": "Unit 6, Caxton Works, Hoy Street, Canning Town, London E16 1ZA",
+      "passes": "10 punches £115 (£95 conc)",
+      "hours": {
+        "Mon": [
+          "10:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "10:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "10:00",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "18:00"
+        ],
+        "Sun": [
+          "09:00",
+          "18:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://www.rise-climbing.com/events-socials",
+      "instagram": "theriseclimbingproject",
+      "classes_url": "https://www.rise-climbing.com/courses-coaching",
+      "class_info": "FREE [Improvers classes](https://www.rise-climbing.com/improvers) (monthly, group coaching — just pay entry); [1-to-1 coaching](https://www.rise-climbing.com/private-coaching) £40 members / £65 non (1hr, incl. entry + shoes; +£20 per extra person).",
+      "socials": [
+        "Free monthly community socials (chess, mahjong, life drawing, karaoke…) — free with entry — [details](https://www.rise-climbing.com/events-socials)"
+      ]
+    },
+    {
+      "id": "sen",
+      "name": "Sen Climbing",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Lambeth North",
+      "borough": "Lambeth",
+      "zone": 1,
+      "postcode": "SE1 7DR",
+      "lat": 51.499,
+      "lng": -0.112,
+      "website": "https://www.climbinggymsen.co.uk/",
+      "prices_url": "https://www.climbinggymsen.co.uk/",
+      "payg": {
+        "adult_peak": 16.0,
+        "adult_offpeak": null,
+        "concession_peak": 14.0,
+        "concession_offpeak": null
+      },
+      "offpeak_window": null,
+      "offpeak_assumed": false,
+      "magic_slots": [],
+      "student_note": "Concession £14 for full-time students (physical ID) or Team GB. No off-peak rate.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.climbinggymsen.co.uk/",
+        "method": "regex",
+        "needs_js": true
+      },
+      "facilities": "Bouldering",
+      "membership": {
+        "full_monthly": 72.5,
+        "concession_monthly": 62.5
+      },
+      "address": "Railway Arch 210, Newnham Terrace, London SE1 7DR",
+      "passes": "10 day passes £135 (£115 conc)",
+      "hours": {
+        "Mon": [
+          "11:00",
+          "22:00"
+        ],
+        "Tue": [
+          "11:00",
+          "22:00"
+        ],
+        "Wed": [
+          "11:00",
+          "22:00"
+        ],
+        "Thu": [
+          "11:00",
+          "22:00"
+        ],
+        "Fri": [
+          "11:00",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "20:00"
+        ],
+        "Sun": [
+          "09:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "climbing_gym_sen",
+      "classes_url": "https://www.climbinggymsen.co.uk/firstvisit",
+      "class_info": "[Coaching](https://www.climbinggymsen.co.uk/firstvisit) 60-90min: Beginner £40, Intermediate £55, Advanced £65 (+£10-£20 per extra climber)."
+    },
+    {
+      "id": "westway",
+      "name": "Westway Climbing Centre",
+      "brand": "Independent",
+      "type": "ropes+bouldering",
+      "area": "White City / Ladbroke Grove",
+      "borough": "Hammersmith & Fulham",
+      "zone": 2,
+      "postcode": "W10 6RP",
+      "lat": 51.521,
+      "lng": -0.224,
+      "website": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/climbing-centre/",
+      "prices_url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/pricelist/",
+      "payg": {
+        "adult_peak": 16.0,
+        "adult_offpeak": 13.0,
+        "concession_peak": 12.5,
+        "concession_offpeak": 9.5
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "08:00",
+        "end": "17:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [],
+      "student_note": "Concession £12.50 peak / £9.50 off-peak.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/pricelist/",
+        "method": "regex",
+        "needs_js": true
+      },
+      "facilities": "Ropes (350+ routes), lead, top-rope, auto-belay (8), bouldering, outdoor",
+      "membership": {
+        "full_monthly": 82,
+        "concession_monthly": 68
+      },
+      "address": "Westway Sports Centre, 1 Crowthorne Road, London W10 6RP",
+      "passes": "5 for £50; 10 for £90; 20 for £170",
+      "hours": {
+        "Mon": [
+          "07:00",
+          "22:00"
+        ],
+        "Tue": [
+          "07:00",
+          "22:00"
+        ],
+        "Wed": [
+          "07:00",
+          "22:00"
+        ],
+        "Thu": [
+          "07:00",
+          "22:00"
+        ],
+        "Fri": [
+          "07:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "22:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "westway_climbing",
+      "classes_url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/climbing-centre/",
+      "class_info": "[Coaching & courses](https://www.everyoneactive.com/centre/westway-sports-fitness-centre/climbing-centre/) (prices at booking)."
+    },
+    {
+      "id": "climbing_co_fulham",
+      "name": "Climbing Co Fulham (City Bouldering)",
+      "brand": "City Bouldering",
+      "type": "bouldering",
+      "area": "Parsons Green",
+      "borough": "Hammersmith & Fulham",
+      "zone": 2,
+      "postcode": "SW6 4HH",
+      "lat": 51.4753,
+      "lng": -0.2008,
+      "website": "https://www.citybouldering.co.uk/locations/climbing-co-fulham",
+      "prices_url": "https://www.citybouldering.co.uk/pricing",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": null,
+        "concession_peak": 14.0,
+        "concession_offpeak": null
+      },
+      "offpeak_window": null,
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Mon"
+          ],
+          "start": "10:00",
+          "end": "16:00",
+          "price": 7.5,
+          "label": "Bargain",
+          "prebook": true
+        },
+        {
+          "days": [
+            "Tue"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 9.5,
+          "label": "Student Saver (concession)"
+        }
+      ],
+      "student_note": "Concession £14 (peak price at all times). Bargain £7.50 Mondays; Student Saver £9.50 Tuesdays.",
+      "registration_fee": 3.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://www.citybouldering.co.uk/pricing",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering",
+      "membership": {
+        "full_monthly": 59.99,
+        "concession_monthly": null
+      },
+      "address": "5 Parsons Green Depot, 33-35 Parsons Green Lane, London SW6 4HH",
+      "passes": "10 climbs £99",
+      "hours": {
+        "Mon": [
+          "10:00",
+          "22:00"
+        ],
+        "Tue": [
+          "10:00",
+          "22:00"
+        ],
+        "Wed": [
+          "07:00",
+          "22:00"
+        ],
+        "Thu": [
+          "10:00",
+          "22:00"
+        ],
+        "Fri": [
+          "07:00",
+          "21:00"
+        ],
+        "Sat": [
+          "09:00",
+          "19:00"
+        ],
+        "Sun": [
+          "09:00",
+          "19:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://www.citybouldering.co.uk/climbing-events-for-adults",
+      "classes_url": "https://www.citybouldering.co.uk/coaching",
+      "class_info": "[Intro to Bouldering](https://www.citybouldering.co.uk/events/intro-to-bouldering) £36 (1hr, incl. 2 weeks free, all 4 sites); [Fundamentals V0-V1](https://www.citybouldering.co.uk/events/fundamentals) £85 (£50 members, all 4 sites); [Intermediate V2-V4](https://www.citybouldering.co.uk/events/technical-foundations) £85 (£50 members, not Fulham); [Advanced Tactics V4-V6](https://www.citybouldering.co.uk/events/elite-tactics) £90 (£60 members); 1hr [private coaching](https://www.citybouldering.co.uk/events/private-coaching) £50 member / £60",
+      "socials": [
+        "No regular socials listed — see [events page](https://www.citybouldering.co.uk/climbing-events-for-adults)"
+      ]
+    },
+    {
+      "id": "substation_brixton",
+      "name": "Substation Brixton",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Brixton Hill",
+      "borough": "Lambeth",
+      "zone": 2,
+      "postcode": "SW2 5DZ",
+      "lat": 51.4487,
+      "lng": -0.1219,
+      "website": "https://brixton.substation.co.uk/",
+      "prices_url": "https://brixton.substation.co.uk/climbing/book-a-climb",
+      "payg": {
+        "adult_peak": 17.5,
+        "adult_offpeak": 15.5,
+        "concession_peak": 14.5,
+        "concession_offpeak": 12.5
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "07:00",
+        "end": "15:00",
+        "concession_only": false,
+        "except_bank_holidays": true
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [],
+      "student_note": "Concession £14.50 peak / £12.50 off-peak (over-60s, NHS/emergency services, JSA, disabled, students; ID needed). Off-peak Mon-Fri 7am-3pm.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://brixton.substation.co.uk/climbing/book-a-climb",
+        "method": "regex",
+        "needs_js": true
+      },
+      "facilities": "Bouldering, fitness gym",
+      "membership": {
+        "full_monthly": 82,
+        "concession_monthly": 66
+      },
+      "address": "Unit 13, Ellerslie Square Industrial Estate, Brixton Hill, London SW2 5DZ",
+      "passes": "10x day pass £155 (£125 conc)",
+      "hours": {
+        "Mon": [
+          "07:00",
+          "22:00"
+        ],
+        "Tue": [
+          "07:00",
+          "22:00"
+        ],
+        "Wed": [
+          "07:00",
+          "22:00"
+        ],
+        "Thu": [
+          "07:00",
+          "22:00"
+        ],
+        "Fri": [
+          "07:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": false,
+      "events_url": "https://brixton.substation.co.uk/events",
+      "instagram": "substation.brixton",
+      "classes_url": "https://brixton.substation.co.uk/climbing/adult-coaching",
+      "class_info": "[Bouldering Basics Course](https://brixton.substation.co.uk/climbing/adult-coaching) £120 (4-week beginner group); [private coaching](https://brixton.substation.co.uk/climbing/adult-coaching) £60/session. Members get 20% off group coaching.",
+      "socials": [
+        "[Monday Board Social](https://brixton.substation.co.uk/events/monday-board-social) — Mon 6pm+",
+        "[Thursday Climbing Social](https://brixton.substation.co.uk/events/everybody-social) — Thu 18:00-20:00 (coached)",
+        "[Women's Social](https://brixton.substation.co.uk/events/weekly-womens-social) — Fri 18:30+ (free, no booking)"
+      ]
+    },
+    {
+      "id": "lcc_vauxwall_west",
+      "name": "VauxWall West (LCC)",
+      "brand": "London Climbing Centres",
+      "type": "bouldering",
+      "area": "Vauxhall",
+      "borough": "Lambeth",
+      "zone": 1,
+      "postcode": "SW8 1SR",
+      "lat": 51.4851,
+      "lng": -0.1229,
+      "website": "https://londonclimbingcentres.co.uk/centre/vauxwest/",
+      "prices_url": "https://londonclimbingcentres.co.uk/prices/",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 13.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 11.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "08:00",
+          "end": "10:00",
+          "price": 8.0,
+          "label": "Magic Time",
+          "except_bank_holidays": true
+        }
+      ],
+      "student_note": "Concession £15 peak / £11 off-peak. 3-month student membership £205.",
+      "registration_fee": 2.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://londonclimbingcentres.co.uk/prices/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "Arches 45b-47c, South Lambeth Road, Vauxhall, London SW8 1SR",
+      "passes": "10 punches £139 (£119 conc)",
+      "hours": {
+        "Mon": [
+          "06:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "06:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "06:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": true,
+      "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
+      "instagram": "londonclimbingcentres",
+      "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
+      "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
+      "socials": [
+        "Women+ Social"
+      ]
+    },
+    {
+      "id": "lcc_vauxwall_east",
+      "name": "VauxWall East (LCC)",
+      "brand": "London Climbing Centres",
+      "type": "bouldering",
+      "area": "Vauxhall",
+      "borough": "Lambeth",
+      "zone": 1,
+      "postcode": "SE11 6BD",
+      "lat": 51.4924,
+      "lng": -0.1145,
+      "website": "https://londonclimbingcentres.co.uk/centre/vauxeast/",
+      "prices_url": "https://londonclimbingcentres.co.uk/prices/",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 13.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 11.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Mon"
+          ],
+          "start": "09:00",
+          "end": "16:00",
+          "price": 8.0,
+          "label": "Magic Time",
+          "except_bank_holidays": true
+        }
+      ],
+      "student_note": "Concession £15 peak / £11 off-peak. 3-month student membership £205.",
+      "registration_fee": 2.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://londonclimbingcentres.co.uk/prices/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "1 Cabanel Place, Lollard Street, London SE11 6BD",
+      "passes": "10 punches £139 (£119 conc)",
+      "hours": {
+        "Mon": [
+          "06:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "06:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "06:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": true,
+      "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
+      "instagram": "londonclimbingcentres",
+      "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
+      "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
+      "socials": [
+        "Boulderama — coached bouldering (free)"
+      ]
+    },
+    {
+      "id": "lcc_harrowall",
+      "name": "HarroWall (LCC)",
+      "brand": "London Climbing Centres",
+      "type": "bouldering",
+      "area": "Harrow",
+      "borough": "Harrow",
+      "zone": 5,
+      "postcode": "HA1 4HX",
+      "lat": 51.5807,
+      "lng": -0.3444,
+      "website": "https://londonclimbingcentres.co.uk/centre/harrowall/",
+      "prices_url": "https://londonclimbingcentres.co.uk/prices/",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 13.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 11.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "20:00",
+          "end": "23:00",
+          "price": 8.0,
+          "label": "Magic Time",
+          "except_bank_holidays": true
+        }
+      ],
+      "student_note": "Concession £15 peak / £11 off-peak. 3-month student membership £205.",
+      "registration_fee": 2.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://londonclimbingcentres.co.uk/prices/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "Unit 2a & 3a, Neptune Trading Estate, Neptune Road, Harrow HA1 4HX",
+      "passes": "10 punches £139 (£119 conc)",
+      "hours": {
+        "Mon": [
+          "06:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "06:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "06:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": true,
+      "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
+      "instagram": "londonclimbingcentres",
+      "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
+      "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
+      "socials": [
+        "Women+ Social"
+      ]
+    },
+    {
+      "id": "lcc_croywall",
+      "name": "CroyWall (LCC)",
+      "brand": "London Climbing Centres",
+      "type": "bouldering",
+      "area": "Croydon",
+      "borough": "Croydon",
+      "zone": 5,
+      "postcode": "CR0 4WN",
+      "lat": 51.374,
+      "lng": -0.1157,
+      "website": "https://londonclimbingcentres.co.uk/centre/croywall/",
+      "prices_url": "https://londonclimbingcentres.co.uk/prices/",
+      "payg": {
+        "adult_peak": 15.5,
+        "adult_offpeak": 11.5,
+        "concession_peak": 13.5,
+        "concession_offpeak": 10.5
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Tue"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "price": 8.0,
+          "label": "Magic Time",
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 9.5,
+          "label": "Student Friday (concession)"
+        }
+      ],
+      "student_note": "Concession £13.50 peak / £10.50 off-peak. Student Fridays £9.50. 3-month student membership £205.",
+      "registration_fee": 2.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://londonclimbingcentres.co.uk/prices/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, auto-belay",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "Unit 7 New South Quarter, Whitestone Way, Croydon CR0 4WN",
+      "passes": "10 punches £139 (£119 conc)",
+      "hours": {
+        "Mon": [
+          "06:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "06:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "06:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": true,
+      "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
+      "instagram": "croywall",
+      "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
+      "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
+      "socials": [
+        "Women+ Social"
+      ]
+    },
+    {
+      "id": "lcc_ravenswall",
+      "name": "RavensWall (LCC)",
+      "brand": "London Climbing Centres",
+      "type": "bouldering",
+      "area": "Ravenscourt Park",
+      "borough": "Hammersmith & Fulham",
+      "zone": 2,
+      "postcode": "W6 0UQ",
+      "lat": 51.4942,
+      "lng": -0.2363,
+      "website": "https://londonclimbingcentres.co.uk/centre/ravenswall/",
+      "prices_url": "https://londonclimbingcentres.co.uk/prices/",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 13.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 11.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "price": 8.0,
+          "label": "Magic Time",
+          "except_bank_holidays": true
+        }
+      ],
+      "student_note": "Concession £15 peak / £11 off-peak. 3-month student membership £205.",
+      "registration_fee": 2.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://londonclimbingcentres.co.uk/prices/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "Arch 105, Ravenscourt Road, London W6 0UQ",
+      "passes": "10 punches £139 (£119 conc)",
+      "hours": {
+        "Mon": [
+          "06:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "06:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "06:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": true,
+      "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
+      "instagram": "londonclimbingcentres",
+      "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
+      "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
+      "socials": [
+        "Boulderama — coached bouldering (free, pay entry)",
+        "Improvers Social — Tue 19:00-20:30 (free)",
+        "Women+ Social",
+        "Board Social (coached)"
+      ]
+    },
+    {
+      "id": "lcc_canarywall",
+      "name": "CanaryWall (LCC)",
+      "brand": "London Climbing Centres",
+      "type": "bouldering",
+      "area": "Canary Wharf",
+      "borough": "Tower Hamlets",
+      "zone": 2,
+      "postcode": "E14 8AA",
+      "lat": 51.5098,
+      "lng": -0.0275,
+      "website": "https://londonclimbingcentres.co.uk/centre/canarywall/",
+      "prices_url": "https://londonclimbingcentres.co.uk/prices/",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 13.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 11.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "09:00",
+          "end": "11:00",
+          "price": 8.0,
+          "label": "Magic Time",
+          "except_bank_holidays": true
+        }
+      ],
+      "student_note": "Concession £15 peak / £11 off-peak. 3-month student membership £205.",
+      "registration_fee": 2.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://londonclimbingcentres.co.uk/prices/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "21-23 Trinidad Street, Poplar, London E14 8AA",
+      "passes": "10 punches £139 (£119 conc)",
+      "hours": {
+        "Mon": [
+          "06:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "06:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "06:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": true,
+      "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
+      "instagram": "canarywall",
+      "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
+      "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
+      "socials": [
+        "Boulderama — coached bouldering (free)",
+        "Women+ Social",
+        "Board Social (coached)"
+      ]
+    },
+    {
+      "id": "lcc_bethwall",
+      "name": "BethWall Green (LCC)",
+      "brand": "London Climbing Centres",
+      "type": "bouldering",
+      "area": "Bethnal Green",
+      "borough": "Tower Hamlets",
+      "zone": 2,
+      "postcode": "E2 9QX",
+      "lat": 51.5276,
+      "lng": -0.0565,
+      "website": "https://londonclimbingcentres.co.uk/centre/bethwall/",
+      "prices_url": "https://londonclimbingcentres.co.uk/prices/",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 13.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 11.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "08:00",
+          "end": "10:00",
+          "price": 8.0,
+          "label": "Magic Time",
+          "except_bank_holidays": true
+        }
+      ],
+      "student_note": "Concession £15 peak / £11 off-peak. 3-month student membership £205.",
+      "registration_fee": 2.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://londonclimbingcentres.co.uk/prices/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, AC available",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "Arches 243-247, Hollybush Place, London E2 9QX",
+      "passes": "10 punches £139 (£119 conc)",
+      "hours": {
+        "Mon": [
+          "06:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "06:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "06:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": true,
+      "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
+      "instagram": "londonclimbingcentres",
+      "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
+      "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
+      "socials": [
+        "Boulderama — coached bouldering (free)",
+        "Women+ Social",
+        "Board Social (Women+)"
+      ]
+    },
+    {
+      "id": "lcc_eustonwall",
+      "name": "EustonWall (LCC)",
+      "brand": "London Climbing Centres",
+      "type": "bouldering",
+      "area": "Euston",
+      "borough": "Camden",
+      "zone": 1,
+      "postcode": "NW1 3AX",
+      "lat": 51.5255,
+      "lng": -0.14,
+      "website": "https://londonclimbingcentres.co.uk/centre/eustonwall/",
+      "prices_url": "https://londonclimbingcentres.co.uk/prices/",
+      "payg": {
+        "adult_peak": 17.0,
+        "adult_offpeak": 13.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 11.0
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "06:00",
+        "end": "16:00",
+        "concession_only": false
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "17:00",
+          "end": "21:00",
+          "price": 8.0,
+          "label": "Magic Time",
+          "except_bank_holidays": true
+        }
+      ],
+      "student_note": "Concession £15 peak / £11 off-peak. 3-month student membership £205.",
+      "registration_fee": 2.0,
+      "verified": true,
+      "last_checked": "2026-07-01",
+      "scrape": {
+        "url": "https://londonclimbingcentres.co.uk/prices/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, Kilter board",
+      "membership": {
+        "full_monthly": 85,
+        "concession_monthly": 75
+      },
+      "address": "350 Euston Road, London NW1 3AX",
+      "passes": "10 punches £139 (£119 conc)",
+      "hours": {
+        "Mon": [
+          "06:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "06:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "06:00",
+          "22:00"
+        ],
+        "Sat": [
+          "08:00",
+          "20:00"
+        ],
+        "Sun": [
+          "08:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": true,
+      "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
+      "instagram": "eustonwall",
+      "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
+      "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
+      "socials": [
+        "Boulderama — coached bouldering (free)",
+        "Women+ Social",
+        "Board Social (Women+)"
+      ]
+    }
+  ],
+  "limited_promotions": [
+    {
+      "id": "cd-summer-10",
+      "brand": "Climbing District",
+      "title": "Summer Pass (10 entries)",
+      "details": "10-entry pass, use anytime, valid 3 months from purchase",
+      "price": "£99 (£89 concession)",
+      "valid": "Summer 2026 seasonal offer",
+      "source": "https://climbingdistrict.uk/pricing/",
+      "first_seen": "2026-07-01",
+      "status": "active"
+    },
+    {
+      "id": "cd-summer-5",
+      "brand": "Climbing District",
+      "title": "Summer Pass (5 entries)",
+      "details": "5-entry pass, valid 2 months from purchase",
+      "price": "£49 (£40 concession)",
+      "valid": "Summer 2026 seasonal offer",
+      "source": "https://climbingdistrict.uk/pricing/",
+      "first_seen": "2026-07-01",
+      "status": "active"
+    },
+    {
+      "id": "lcc-first-month",
+      "brand": "London Climbing Centres",
+      "title": "First-timer: a month for £50",
+      "details": "One month's unlimited climbing for £50 (incl. shoe hire); claim within 3 months of your first visit",
+      "price": "£50",
+      "valid": "Ongoing intro offer",
+      "source": "https://londonclimbingcentres.co.uk/prices/",
+      "first_seen": "2026-07-01",
+      "status": "active"
+    },
+    {
+      "id": "westway-annual-25",
+      "brand": "Independent",
+      "title": "Westway: 25% off annual membership",
+      "details": "Everyone Active promo on annual climbing memberships (verify current status)",
+      "price": "25% off annual",
+      "valid": "Check current status",
+      "source": "https://www.everyoneactive.com/promotion/25-off-annual-climbing-memberships/",
+      "first_seen": "2026-07-01",
+      "status": "unverified"
+    },
+    {
+      "id": "sub-intro",
+      "brand": "Independent",
+      "title": "Substation: 2-week intro",
+      "details": "2 weeks unlimited climbing for new customers",
+      "price": "£30",
+      "valid": "Ongoing intro offer",
+      "source": "https://brixton.substation.co.uk/climbing/climbing-intro-offer",
+      "first_seen": "2026-07-01",
+      "status": "active"
+    }
+  ]
+};
+const WD = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+/* ----- price logic (mirrors london_climbing_prices.py) ----- */
+const toMin = s => { const [h,m]=s.split(":").map(Number); return h*60+m; };
+function inWindow(day,mins,w){ if(!w) return false; if(!w.days.includes(day)) return false;
+  return toMin(w.start)<=mins && mins<toMin(w.end); }
+function offpeakWindows(gym){ const w=gym.offpeak_window; if(!w) return []; return Array.isArray(w)?w:[w]; }
+let BANK_HOLIDAYS=null; // Set of "YYYY-MM-DD" (England & Wales), loaded from gov.uk
+const ymd = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+function isBH(when){ return BANK_HOLIDAYS ? BANK_HOLIDAYS.has(ymd(when)) : false; }
+
+function applicable(gym, when, conc){
+  const day = WD[(when.getDay()+6)%7];           // JS Sun=0 -> our Mon=0
+  const mins = when.getHours()*60 + when.getMinutes();
+  const p = gym.payg;
+  const bh = isBH(when);
+  // magic slots
+  let bestMagic=null;
+  for(const s of (gym.magic_slots||[])){
+    if(s.days.includes(day) && inWindow(day,mins,{days:s.days,start:s.start,end:s.end})){
+      if(s.months && !s.months.includes(when.getMonth()+1)) continue;
+      if(s.except_bank_holidays && bh) continue;
+      const lbl=(s.label||"magic");
+      if(lbl.toLowerCase().includes("concession") && !conc) continue;
+      const full = /off[- ]?peak/i.test(lbl)
+        ? (lbl+(s.prebook?" (pre-book)":""))
+        : ("super off-peak ("+lbl+(s.prebook?", pre-book":"")+")");
+      if(!bestMagic || s.price<bestMagic[0]) bestMagic=[s.price,full];
+    }
+  }
+  if(bestMagic) return {price:bestMagic[0],label:bestMagic[1],kind:"magic"};
+  const wins = offpeakWindows(gym);
+  const isOff = wins.some(w=>inWindow(day,mins,w) && !(w.except_bank_holidays && bh));
+  const concOnly = wins.some(w=>w.concession_only);
+  let off,peak;
+  if(conc){ off=p.concession_offpeak; peak=p.concession_peak; }
+  else{ off=p.adult_offpeak; peak=p.adult_peak; if(concOnly) off=null; }
+  if(isOff && off!=null) return {price:off,label:"off-peak",kind:"off"};
+  if(peak!=null) return {price:peak,label:"peak",kind:"peak"};
+  if(off!=null && wins.length===0) return {price:off,label:"off-peak",kind:"off"};
+  return {price:null,label:"no data",kind:"none"};
+}
+
+function bestOnDay(gym, date, conc, step){
+  step=step||15;
+  const samples=[];
+  for(let m=0;m<24*60;m+=step){
+    const w=new Date(date.getFullYear(),date.getMonth(),date.getDate(),Math.floor(m/60),m%60);
+    const r=applicable(gym,w,conc);
+    if(r.price!=null) samples.push([m,r.price,r.label,r.kind]);
+  }
+  if(!samples.length) return null;
+  const minp=Math.min(...samples.map(s=>s[1]));
+  const first=samples.find(s=>s[1]===minp);
+  let ranges=[],cur=null;
+  for(const s of samples){ if(s[1]===minp){cur=cur?[cur[0],s[0]]:[s[0],s[0]];} else if(cur){ranges.push(cur);cur=null;} }
+  if(cur) ranges.push(cur);
+  const hhmm=x=>String(Math.floor(x/60)).padStart(2,"0")+":"+String(x%60).padStart(2,"0");
+  let when;
+  if(ranges.length===1 && ranges[0][0]===0 && ranges[0][1]>=24*60-step) when="any time";
+  else when=ranges.map(r=>hhmm(r[0])+"-"+hhmm(Math.min(r[1]+step,24*60-1))).join("; ");
+  return {price:minp,label:first[2],kind:first[3],when};
+}
+let START = (window.localStorage && localStorage.getItem('startLoc')) || '';
+let START_COORD = null;  // [lat,lng] once geocoded
+function dirLinks(g){
+  const dest=encodeURIComponent(g.address||g.postcode||(g.lat+","+g.lng));
+  const origin = START ? "&origin="+encodeURIComponent(START) : "";
+  return {gmap:"https://www.google.com/maps/dir/?api=1"+origin+"&destination="+dest+"&travelmode=transit"};
+}
+function haversineKm(a,b){
+  const R=6371,dLat=(b[0]-a[0])*Math.PI/180,dLng=(b[1]-a[1])*Math.PI/180;
+  const s=Math.sin(dLat/2)**2+Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
+}
+function geocodeStart(cb){
+  if(!START){START_COORD=null;cb&&cb();return;}
+  fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=gb&q="+encodeURIComponent(START))
+    .then(r=>r.json()).then(j=>{ START_COORD = j&&j[0] ? [parseFloat(j[0].lat),parseFloat(j[0].lon)] : null; cb&&cb(); })
+    .catch(()=>{ START_COORD=null; cb&&cb(); });
+}
+
+/* ----- transit travel time from START via TfL Journey Planner (no key) ----- */
+let TRAVEL={}, TRAVEL_START=null, TRAVEL_LOADING=false;
+// Real-time ("now") departure when it's currently 8am-11pm; otherwise a stable
+// weekday 10:00 departure so overnight numbers stay sensible.
+function tflDepart(){
+  const h=new Date().getHours();
+  if(h>=8 && h<23) return "";   // no params => TfL plans from now (real-time)
+  const d=new Date(); d.setHours(10,0,0,0);
+  while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1);
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
+  return "date="+y+m+da+"&time=1000&timeIs=Departing";
+}
+function runLimited(items, worker, limit, done){
+  let idx=0, active=0, finished=0;
+  (function next(){
+    while(active<limit && idx<items.length){
+      const it=items[idx++]; active++;
+      worker(it, ()=>{ active--; finished++; if(finished===items.length) done&&done(); else next(); });
+    }
+  })();
+}
+function ensureTravel(){
+  if(!START || TRAVEL_START===START || TRAVEL_LOADING) return;
+  TRAVEL_LOADING=true; TRAVEL={}; const forStart=START;
+  runLimited(DATA.gyms,(g,doneOne)=>{
+    const to=g.postcode?encodeURIComponent(g.postcode):(g.lat+","+g.lng);
+    fetch("https://api.tfl.gov.uk/Journey/JourneyResults/"+encodeURIComponent(forStart)+"/to/"+to+"?"+tflDepart())
+      .then(r=>r.ok?r.json():Promise.reject())
+      .then(j=>{ const d=j.journeys&&j.journeys[0]?j.journeys[0].duration:null; if(d!=null) TRAVEL[g.id]=d; })
+      .catch(()=>{}).finally(doneOne);
+  },4,()=>{ TRAVEL_START=forStart; TRAVEL_LOADING=false; render(); });
+}
+function travelStr(g){
+  if(!START) return '';
+  if(TRAVEL_START!==START) return TRAVEL_LOADING?'…':'';
+  const m=TRAVEL[g.id]; return m!=null? m+" min":'—';
+}
+function startTxt(){ if(!START) return 'your location (set it at the top)'; return /^[-0-9.]+,[-0-9.]+$/.test(START)?'your location':('"'+esc(START)+'"'); }
+function setStart(v){
+  START=(v||'').trim();
+  try{localStorage.setItem('startLoc',START);}catch(e){}
+  START_COORD=null; TRAVEL_START=null; TRAVEL_LOADING=false;
+  if(START) geocodeStart(()=>render());
+  render(); ensureTravel();
+}
+function useMyLocation(){
+  if(!navigator.geolocation){ alert("This browser can't share your location."); return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude, lng=pos.coords.longitude;
+    START=lat.toFixed(5)+","+lng.toFixed(5);
+    START_COORD=[lat,lng];
+    try{localStorage.setItem('startLoc',START);}catch(e){}
+    const inp=el.getElementById("startloc"); if(inp) inp.value="My location";
+    TRAVEL_START=null; TRAVEL_LOADING=false;
+    render(); ensureTravel();
+  }, err=>{ alert("Couldn't get your location: "+err.message+"\\nType a postcode instead."); }, {timeout:10000});
+}
+
+/* ----- personal notes & ratings per gym (saved in this browser) ----- */
+let NOTES={}, RATINGS={};
+try{ NOTES=JSON.parse(localStorage.getItem('gymNotes')||'{}'); }catch(e){ NOTES={}; }
+try{ RATINGS=JSON.parse(localStorage.getItem('gymRatings')||'{}'); }catch(e){ RATINGS={}; }
+function editNote(id){
+  const v=window.prompt("Your note for this gym:", NOTES[id]||"");
+  if(v===null) return;
+  if(v.trim()) NOTES[id]=v.trim(); else delete NOTES[id];
+  try{ localStorage.setItem('gymNotes', JSON.stringify(NOTES)); }catch(e){}
+  cloudSave(); fbSave(); render();
+}
+function editRating(id){
+  const v=window.prompt("Your rating 1-5 (blank to clear):", RATINGS[id]||"");
+  if(v===null) return;
+  const n=parseInt(v,10);
+  if(v.trim()==="") delete RATINGS[id];
+  else if(n>=1&&n<=5) RATINGS[id]=n;
+  else { alert("Enter a number 1-5."); return; }
+  try{ localStorage.setItem('gymRatings', JSON.stringify(RATINGS)); }catch(e){}
+  cloudSave(); fbSave(); render();
+}
+window.editNote=editNote; window.editRating=editRating;
+function exportNotes(){
+  const data=JSON.stringify({notes:NOTES,ratings:RATINGS});
+  try{ navigator.clipboard.writeText(data); }catch(e){}
+  window.prompt("Your notes + ratings backup (copied to clipboard). Paste this into ‘import’ on another device:", data);
+}
+function importNotes(){
+  const s=window.prompt("Paste your notes + ratings backup here:");
+  if(!s) return;
+  try{ const j=JSON.parse(s);
+    if(j.notes) NOTES=Object.assign({},NOTES,j.notes);
+    if(j.ratings) RATINGS=Object.assign({},RATINGS,j.ratings);
+    try{ localStorage.setItem('gymNotes',JSON.stringify(NOTES)); localStorage.setItem('gymRatings',JSON.stringify(RATINGS)); }catch(e){}
+    cloudSave(); fbSave(); render();
+  }catch(e){ alert("That didn't look like a valid backup."); }
+}
+window.exportNotes=exportNotes; window.importNotes=importNotes;
+
+/* ----- optional free cloud sync (Firebase Realtime DB REST, no SDK) ----- */
+let SYNC_URL=(window.localStorage&&localStorage.getItem('syncUrl'))||'';
+let SYNC_CODE=(window.localStorage&&localStorage.getItem('syncCode'))||'';
+function syncEndpoint(){ return SYNC_URL.replace(/\/+$/,'')+"/rooms/"+encodeURIComponent(SYNC_CODE)+".json"; }
+function cloudSave(){
+  if(!SYNC_URL||!SYNC_CODE) return;
+  const blob={notes:NOTES,ratings:RATINGS,ts:Date.now()};
+  try{ localStorage.setItem('nrTs',blob.ts); }catch(e){}
+  fetch(syncEndpoint(),{method:'PUT',body:JSON.stringify(blob)}).catch(()=>{});
+}
+function cloudLoad(cb){
+  if(!SYNC_URL||!SYNC_CODE){ cb&&cb(); return; }
+  fetch(syncEndpoint()).then(r=>r.ok?r.json():null).then(j=>{
+    const localTs=+((window.localStorage&&localStorage.getItem('nrTs'))||0);
+    if(j&&j.ts&&j.ts>localTs){
+      if(j.notes){ NOTES=j.notes; try{localStorage.setItem('gymNotes',JSON.stringify(NOTES));}catch(e){} }
+      if(j.ratings){ RATINGS=j.ratings; try{localStorage.setItem('gymRatings',JSON.stringify(RATINGS));}catch(e){} }
+      try{localStorage.setItem('nrTs',j.ts);}catch(e){}
+      render();
+    }
+    cb&&cb();
+  }).catch(()=>{ cb&&cb(); });
+}
+function setupSync(){
+  const url=window.prompt("Cloud sync — paste your Firebase Realtime Database URL\n(e.g. https://yourproject-default-rtdb.europe-west1.firebasedatabase.app)\nLeave blank to turn sync off.", SYNC_URL);
+  if(url===null) return;
+  let code=SYNC_CODE;
+  if(url.trim()){
+    code=window.prompt("Pick a private sync code — use the SAME word on all your devices:", SYNC_CODE||"");
+    if(code===null) return;
+  }
+  SYNC_URL=url.trim(); SYNC_CODE=(code||"").trim();
+  try{ localStorage.setItem('syncUrl',SYNC_URL); localStorage.setItem('syncCode',SYNC_CODE); }catch(e){}
+  if(SYNC_URL&&SYNC_CODE){ cloudLoad(()=>{ cloudSave(); alert("Cloud sync ON. Enter the same URL + code on your other devices."); }); }
+  else alert("Cloud sync off (using this device only).");
+}
+window.setupSync=setupSync;
+
+/* ----- account sync (Firebase Auth + Firestore): private per-user sync ----- */
+let FB=null, FB_USER=null;
+function fbConfigured(){ return window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey && typeof firebase!=='undefined'; }
+function fbInit(){
+  if(!fbConfigured()){ updateAccountUI(); return; }
+  try{ if(!firebase.apps.length) firebase.initializeApp(window.FIREBASE_CONFIG); }catch(e){ updateAccountUI(); return; }
+  FB={auth:firebase.auth(), db:firebase.firestore()};
+  FB.auth.onAuthStateChanged(function(u){ FB_USER=u; updateAccountUI(); if(u) fbLoad(); });
+}
+function fbSignIn(){ if(!FB){alert("Account sync isn't set up on this site yet.");return;} FB.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(function(e){alert(e.message);}); }
+function fbSignOut(){ if(FB) FB.auth.signOut(); }
+function fbLoad(){ if(!FB||!FB_USER) return; FB.db.collection('users').doc(FB_USER.uid).get().then(function(s){ const j=s.data(); if(j){ if(j.notes){NOTES=j.notes; try{localStorage.setItem('gymNotes',JSON.stringify(NOTES));}catch(e){}} if(j.ratings){RATINGS=j.ratings; try{localStorage.setItem('gymRatings',JSON.stringify(RATINGS));}catch(e){}} render(); } }).catch(function(){}); }
+function fbSave(){ if(FB&&FB_USER){ FB.db.collection('users').doc(FB_USER.uid).set({notes:NOTES,ratings:RATINGS,updated:Date.now()},{merge:true}).catch(function(){}); } }
+function updateAccountUI(){
+  const a=el.getElementById('account'); if(!a) return;
+  if(!fbConfigured()){ a.innerHTML=''; return; }
+  if(FB_USER){ a.innerHTML='Synced as '+esc(FB_USER.email||'your account')+' · <a href="#" onclick="fbSignOut();return false;">sign out</a>'; }
+  else { a.innerHTML='<a href="#" onclick="fbSignIn();return false;">Sign in with Google</a> to sync your notes &amp; ratings across devices'; }
+}
+window.fbSignIn=fbSignIn; window.fbSignOut=fbSignOut;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function stars(r){ return "★".repeat(r)+"☆".repeat(5-r); }
+function noteCell(id){
+  const n=NOTES[id], r=RATINGS[id];
+  return (r?`<div class="meta" style="color:var(--accent2)">${stars(r)} (${r}/5)</div>`:"")
+    +(n?`<div class="meta" style="color:var(--accent)">Note: ${esc(n)}</div>`:"")
+    +`<a href="#" onclick="editRating('${id}');return false;" class="meta">${r?'edit rating':'+ rate'}</a> · `
+    +`<a href="#" onclick="editNote('${id}');return false;" class="meta">${n?'edit note':'+ note'}</a>`;
+}
+
+/* ----- helpers ----- */
+const f=p=> p==null?"n/a":"£"+p.toFixed(2);
+const el=document;
+function whenFromInputs(){
+  const d=el.getElementById("date").value, t=el.getElementById("time").value||"12:00";
+  const [Y,M,D]=d.split("-").map(Number), [h,m]=t.split(":").map(Number);
+  return new Date(Y,M-1,D,h,m);
+}
+function activeFilters(){
+  return {conc: el.getElementById("who").value==="conc",
+          type: el.getElementById("type").value,
+          zone: el.getElementById("zone").value};
+}
+
+/* ----- views ----- */
+function viewCheapest(){
+  const when=whenFromInputs(), {conc,type,zone}=activeFilters();
+  const mode=el.getElementById("mode").value;   // "day" or "time"
+  let rows=[];
+  for(const g of DATA.gyms){
+    if(type && !g.type.includes(type)) continue;
+    if(zone && String(g.zone)!==zone) continue;
+    if(mode==="day"){
+      const b=bestOnDay(g,when,conc); if(!b) continue; rows.push({...b,g});
+    }else{
+      const r=applicable(g,when,conc); if(r.price==null) continue;
+      rows.push({...r,when:el.getElementById("time").value||"12:00",g});
+    }
+  }
+  rows.sort((a,b)=>a.price-b.price);
+  const who=conc?"student / concession":"adult";
+  const bhBanner = isBH(when) ? `<div class="note" style="color:var(--accent2)">Heads up: ${when.toDateString()} is a UK bank holiday, so some off-peak, Magic Time and Bargain deals do not apply.</div>` : "";
+  let html=bhBanner+`<div class="card"><table><thead><tr><th class="rank">#</th><th>Gym</th><th>Price</th><th>When to go</th><th>Travel</th><th>Facilities</th><th>Zone</th><th>Go</th></tr></thead><tbody>`;
+  if(!rows.length) html+=`<tr><td colspan="8" class="note">No priced gyms match these filters.</td></tr>`;
+  rows.forEach((r,i)=>{
+    const d=dirLinks(r.g);
+    html+=`<tr class="${i===0?'best':''}">
+      <td class="rank">${i+1}</td>
+      <td><a href="${r.g.prices_url}" target="_blank" style="color:inherit;text-decoration:none">${r.g.name}</a> ${r.g.verified?'':'<span class="flag">verify</span>'}${openBadge(r.g,when)}${noteCell(r.g.id)}</td>
+      <td><span class="price">${f(r.price)}</span> <span class="pill ${r.kind==='off'?'off':r.kind==='magic'?'magic':'peak'}">${r.label}</span></td>
+      <td class="meta">${r.when||''}</td>
+      <td class="meta">${travelStr(r.g)}</td>
+      <td class="meta">${r.g.facilities||'—'}</td>
+      <td>${r.g.zone}</td>
+      <td class="meta"><a href="${d.gmap}" target="_blank">directions</a></td></tr>`;
+  });
+  const modeNote = mode==="day"
+    ? `Cheapest ${who} price achievable on ${when.toDateString()} — "When to go" is the time window for that price.`
+    : `${who} price at ${el.getElementById("time").value||"12:00"} on ${when.toDateString()}.`;
+  html+=`</tbody></table><div class="note">${modeNote} Travel = public-transport (bus/tube/rail) journey time from ${startTxt()}. "pre-book" = must book ahead. "verify" = price not confirmed at research. "directions" opens Google Maps public-transport routing.</div></div>`;
+  return html;
+}
+
+function viewOffpeak(){
+  let deals=[];
+  for(const g of DATA.gyms){
+    const off = g.payg.concession_offpeak ?? g.payg.adult_offpeak;
+    if(off!=null){
+      for(const w of offpeakWindows(g))
+        deals.push({price:off,gym:g.name,kind:"off-peak",when:w.days.join(",")+" "+w.start+"-"+w.end,approx:g.offpeak_assumed,url:g.prices_url});
+    }
+    for(const s of (g.magic_slots||[]))
+      deals.push({price:s.price,gym:g.name,kind:s.label||"magic",when:s.days.join(",")+" "+s.start+"-"+s.end,approx:false,url:g.prices_url});
+  }
+  deals.sort((a,b)=>a.price-b.price);
+  let html=`<div class="card"><table><thead><tr><th>Price</th><th>Gym</th><th>Deal</th><th>When</th></tr></thead><tbody>`;
+  deals.forEach(d=>{
+    html+=`<tr><td class="price">${f(d.price)}</td>
+      <td><a href="${d.url}" target="_blank" style="color:inherit;text-decoration:none">${d.gym}</a></td>
+      <td><span class="pill ${/magic|student/i.test(d.kind)?'magic':'off'}">${d.kind}</span></td>
+      <td class="meta">${d.when} ${d.approx?'<span class="flag">~approx</span>':''}</td></tr>`;
+  });
+  html+=`</tbody></table><div class="note">~approx = the off-peak window is an assumption (weekday daytime), not confirmed for that gym.</div></div>`;
+  return html;
+}
+
+function viewStudents(){
+  let html=`<div class="card"><table><thead><tr><th>Gym</th><th>Conc. peak</th><th>Conc. off-peak</th><th>Notes</th></tr></thead><tbody>`;
+  for(const g of DATA.gyms){
+    html+=`<tr><td><a href="${g.prices_url}" target="_blank" style="color:inherit;text-decoration:none">${g.name}</a></td>
+      <td class="price">${f(g.payg.concession_peak)}</td>
+      <td class="price">${f(g.payg.concession_offpeak)}</td>
+      <td class="meta">${g.student_note||''}</td></tr>`;
+  }
+  html+=`</tbody></table></div>`;
+  if(DATA.student_promotions?.length){
+    html+=`<div class="card"><div class="note" style="padding:12px 14px"><b>Group-wide student promotions</b></div>`;
+    DATA.student_promotions.forEach(p=>{
+      html+=`<div class="note" style="padding:2px 14px 10px">• <b>${p.offer}</b> — ${p.scope} <a href="${p.source}" target="_blank">source</a></div>`;
+    });
+    html+=`</div>`;
+  }
+  return html;
+}
+
+function viewZones(){
+  const zones={};
+  DATA.gyms.forEach(g=>{ (zones[g.zone]=zones[g.zone]||[]).push(g); });
+  let html=`<div class="card"><div class="zonegrid">`;
+  Object.keys(zones).sort().forEach(z=>{
+    html+=`<div class="card2"><div class="znum">ZONE ${z}</div>`;
+    zones[z].forEach(g=>{
+      const d=dirLinks(g);
+      html+=`<div class="gymline"><a href="${g.website}" target="_blank">${g.name}</a>
+        <div class="meta">${g.area} · ${g.postcode} · ${g.type}</div>
+        <div class="meta"><a href="${d.gmap}" target="_blank">transit directions</a></div>
+        ${noteCell(g.id)}</div>`;
+    });
+    html+=`</div>`;
+  });
+  html+=`</div></div>`;
+  return html;
+}
+
+function fmtDeals(g){
+  const sl=(g.magic_slots||[]);
+  if(!sl.length) return '—';
+  return sl.map(s=>{
+    const allday = s.start==='00:00' && s.end==='23:59';
+    const when = s.days.join(',')+(allday?' all day':(' '+s.start+'-'+s.end));
+    const nm = s.label.replace(' (concession)','');
+    return `<span class="price">${f(s.price)}</span> ${esc(nm)} ${when}`
+      + (s.prebook?' (pre-book)':'')
+      + (/concession/i.test(s.label)?' <span style="color:var(--accent2)">conc</span>':'')
+      + (s.except_bank_holidays?' (not bank hols)':'');
+  }).join('<br>');
+}
+function hoursSummary(g){
+  const h=g.hours; if(!h) return '—';
+  const days=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  let parts=[], i=0;
+  while(i<7){
+    const cur=h[days[i]]; let j=i;
+    while(j+1<7 && JSON.stringify(h[days[j+1]])===JSON.stringify(cur)) j++;
+    const lbl = i===j?days[i]:days[i]+"-"+days[j];
+    parts.push(lbl+" "+(cur?cur[0]+"-"+cur[1]:"closed"));
+    i=j+1;
+  }
+  return parts.join("; ")+(g.hours_assumed?" (approx)":"");
+}
+function openState(g, when){
+  const h=g.hours; if(!h) return {open:null,txt:''};
+  const day=WD[(when.getDay()+6)%7], t=h[day];
+  const mins=when.getHours()*60+when.getMinutes();
+  if(!t) return {open:false,txt:'closed today'};
+  const o=toMin(t[0]), c=toMin(t[1]);
+  if(mins<o) return {open:false,txt:'opens '+t[0]};
+  if(mins>=c) return {open:false,txt:'closed'};
+  return {open:true,txt:'open till '+t[1]};
+}
+function openBadge(g, when){
+  const s=openState(g,when);
+  if(s.open===null) return '';
+  return ` <span class="pill ${s.open?'off':'peak'}">${s.txt}</span>`;
+}
+function viewAll(){
+  const rank=b=> b==='London Climbing Centres'?0 : (b==='Independent'?2:1);
+  const gyms=[...DATA.gyms].sort((a,b)=>
+    rank(a.brand)-rank(b.brand) || a.brand.localeCompare(b.brand) || a.zone-b.zone || a.name.localeCompare(b.name));
+  let html=`<div class="card"><div class="tscroll"><table><thead><tr><th>Gym</th><th>Type</th><th>Adult peak</th><th>Adult off-pk</th><th>Conc peak/off</th><th>All deals</th><th>Membership / passes</th><th>Facilities</th><th>Opening hours</th><th>Address</th><th>Travel</th><th>Zone</th><th>Go</th><th>IG</th></tr></thead><tbody>`;
+  let lastBrand=null;
+  gyms.forEach(g=>{
+    if(g.brand!==lastBrand){ lastBrand=g.brand;
+      html+=`<tr><td colspan="14" style="background:var(--card2)"><span class="znum">${esc(g.brand)}</span></td></tr>`; }
+    const cp=g.payg.concession_peak, co=g.payg.concession_offpeak, d=dirLinks(g), m=g.membership||{};
+    const memStr = m.full_monthly!=null ? ('£'+m.full_monthly+'/mo'+(m.concession_monthly!=null?(' (£'+m.concession_monthly+' conc)'):'')) : '';
+    const memPass = [memStr, g.passes].filter(Boolean).map(esc).join('<br>') || '—';
+    html+=`<tr>
+      <td><a href="${g.prices_url}" target="_blank" style="color:inherit;text-decoration:none">${g.name}</a> ${g.verified?'':'<span class="flag">verify</span>'}${noteCell(g.id)}</td>
+      <td class="meta">${g.type.replace('+',' + ')}</td>
+      <td class="price">${f(g.payg.adult_peak)}</td>
+      <td class="price">${f(g.payg.adult_offpeak)}</td>
+      <td class="meta">${f(cp)} / ${f(co)}</td>
+      <td class="meta">${fmtDeals(g)}</td>
+      <td class="meta">${memPass}</td>
+      <td class="meta">${g.facilities||'—'}</td>
+      <td class="meta">${hoursSummary(g)}</td>
+      <td class="meta">${esc(g.address||((g.area||'')+' '+(g.postcode||'')))}</td>
+      <td class="meta">${travelStr(g)}</td>
+      <td>${g.zone}</td>
+      <td class="meta"><a href="${d.gmap}" target="_blank">directions</a></td>
+      <td class="meta">${igUrl(g)?`<a href="${igUrl(g)}" target="_blank">IG</a>`:'—'}</td></tr>`;
+  });
+  html+=`</tbody></table></div><div class="note">Scroll sideways to see all columns. Prices, all special deals, facilities, opening hours, address, and public-transport travel time from ${startTxt()}. Grouped by chain — London Climbing Centres first, independents last. "conc" = concession only; hours "(approx)" = not individually confirmed.</div></div>`;
+  return html;
+}
+function viewMemberships(){
+  const rows=DATA.gyms.map(g=>({g,m:g.membership||{}}))
+    .sort((a,b)=>((a.m.full_monthly==null?1e9:a.m.full_monthly)-(b.m.full_monthly==null?1e9:b.m.full_monthly)));
+  let html=`<div class="card"><div class="tscroll"><table style="min-width:820px"><thead><tr><th>Gym</th><th>Zone</th><th>Membership full / mo</th><th>Membership conc / mo</th><th>Multi-visit / punch cards</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const full=r.m.full_monthly, conc=r.m.concession_monthly;
+    html+=`<tr>
+      <td><a href="${r.g.website}" target="_blank" style="color:inherit;text-decoration:none">${r.g.name}</a><div class="meta">${r.g.brand}</div></td>
+      <td>${r.g.zone}</td>
+      <td class="price">${full!=null?'£'+full.toFixed(2):'—'}</td>
+      <td class="price">${conc!=null?'£'+conc.toFixed(2):'—'}</td>
+      <td class="meta">${r.g.passes?esc(r.g.passes):'—'}</td></tr>`;
+  });
+  html+=`</tbody></table></div><div class="note">Standard monthly rolling membership (unlimited climbing) plus multi-visit punch cards / bulk passes. "conc" = concession. "—" = not publicly listed. Annual memberships are usually cheaper than monthly; multi-site brands may include their other sites.</div></div>`;
+  return html;
+}
+
+function viewPromos(){
+  const ps=DATA.limited_promotions||[];
+  let html=`<div class="card"><table><thead><tr><th>Offer</th><th>Chain</th><th>Price</th><th>Details</th><th>Valid</th></tr></thead><tbody>`;
+  if(!ps.length) html+=`<tr><td colspan="5" class="note">No limited-time offers tracked right now.</td></tr>`;
+  ps.forEach(p=>{
+    const flag = p.status==='unverified'?' <span class="flag">verify</span>':'';
+    html+=`<tr>
+      <td><a href="${p.source}" target="_blank" style="color:inherit">${esc(p.title)}</a>${flag}</td>
+      <td class="meta">${esc(p.brand)}</td>
+      <td class="price">${esc(p.price||'')}</td>
+      <td class="meta">${esc(p.details||'')}</td>
+      <td class="meta" style="color:var(--accent2)">${esc(p.valid||'')}</td></tr>`;
+  });
+  html+=`</tbody></table><div class="note">Limited-time / seasonal offers (separate from the standing deals in "Off-peak & cheap slots"). The weekly price-check task re-reads these pages and flags new or expired offers. City Bouldering's June-only Stratford bargain has ended; their current standing deals (Bargain £7.50, Student Saver £9.50, BOGOF) are in the deals view. "verify" = not reconfirmed this session.</div></div>`;
+  return html;
+}
+
+function igUrl(g){ return g.instagram ? ("https://www.instagram.com/"+g.instagram+"/") : null; }
+function viewEvents(){
+  const rank=b=> b==='London Climbing Centres'?0 : (b==='Independent'?2:1);
+  const gyms=[...DATA.gyms].sort((a,b)=>
+    rank(a.brand)-rank(b.brand) || a.brand.localeCompare(b.brand) || a.name.localeCompare(b.name));
+  let html=`<div class="card"><div class="tscroll"><table><thead><tr><th>Gym</th><th>Events / what's on</th><th>Instagram</th></tr></thead><tbody>`;
+  gyms.forEach(g=>{
+    const ig=igUrl(g);
+    html+=`<tr>
+      <td>${esc(g.name)}</td>
+      <td>${g.events_url?`<a href="${g.events_url}" target="_blank">See what's on ↗</a>`:'—'}</td>
+      <td>${ig?`<a href="${ig}" target="_blank">@${esc(g.instagram)} ↗</a>`:'—'}</td></tr>`;
+  });
+  html+=`</tbody></table></div><div class="note">Socials, comps, workshops and courses — each gym's live events/what's-on page (where one exists) plus its Instagram. Gyms without an events page post updates on Instagram.</div></div>`;
+  return html;
+}
+function viewClasses(){
+  const rank=b=> b==='London Climbing Centres'?0 : (b==='Independent'?2:1);
+  const gyms=[...DATA.gyms].sort((a,b)=>
+    rank(a.brand)-rank(b.brand) || a.brand.localeCompare(b.brand) || a.name.localeCompare(b.name));
+  // one row per chain (same classes across sites); independents listed individually
+  const rows=[], seen={};
+  gyms.forEach(g=>{
+    if(g.brand==='Independent'){ rows.push({label:g.name, ci:g.class_info, url:g.classes_url}); return; }
+    if(seen[g.brand]) return; seen[g.brand]=1;
+    let rep=g, label=g.brand;
+    if(g.brand==='The Font'){ rep=DATA.gyms.find(x=>x.id==='the_font_wandsworth')||g; label='The Font (Wandsworth)'; }
+    rows.push({label, ci:rep.class_info, url:rep.classes_url});
+  });
+  const lines=s=> s ? esc(s).replace(/;\s*/g,'<br>') : 'Intro sessions &amp; courses';
+  let html=`<div class="card"><table><thead><tr><th>Gym / chain</th><th>Climbing classes — prices, bundles &amp; offers</th><th>Book</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html+=`<tr>
+      <td>${esc(r.label)}</td>
+      <td class="meta">${lines(r.ci)}</td>
+      <td>${r.url?`<a href="${r.url}" target="_blank">details ↗</a>`:'—'}</td></tr>`;
+  });
+  html+=`</tbody></table><div class="note">Beginner intro sessions, multi-week technique courses and 1-to-1 coaching. Chains (LCC, City Bouldering, Climbing District, The Font) run the same classes across sites, so they're shown once. Intro sessions usually include shoe hire; some add free climbing time (City Bouldering's 2 weeks, LCC's NEW50 code). Prices shown where published; otherwise tap "details".</div></div>`;
+  return html;
+}
+function viewRouteSetting(){
+  const gs=DATA.gyms.filter(g=>g.route_setting_url);
+  let html=`<div class="card"><table><thead><tr><th>Gym</th><th>Chain</th><th>Zone</th><th>Route-setting schedule</th></tr></thead><tbody>`;
+  if(!gs.length) html+=`<tr><td colspan="4" class="note">No route-setting calendars linked yet.</td></tr>`;
+  gs.forEach(g=>{
+    html+=`<tr>
+      <td>${g.name}</td>
+      <td class="meta">${esc(g.brand)}</td>
+      <td>${g.zone}</td>
+      <td><a href="${g.route_setting_url}" target="_blank">View reset schedule ↗</a></td></tr>`;
+  });
+  html+=`</tbody></table><div class="note">Which walls have been freshly set / are coming down. Only gyms that publish a schedule are listed. Many others (e.g. The Font, Stronghold, LCC) reset weekly but announce it on Instagram rather than a fixed page.</div></div>`;
+  return html;
+}
+
+let MAP=null;
+function viewMap(){
+  const conc=activeFilters().conc, when=whenFromInputs();
+  return `<div class="card">
+    <div class="note">Set <b>Your location</b> at the top of the page to sort by distance and get travel times. Markers = every gym (green = cheapest all-day for your filters). Click a marker for price and directions. "directions" opens Google Maps public-transport routing (with live time).${START?'':' <span style="color:var(--accent2)">No location set yet.</span>'}</div>
+    <div id="map"></div>
+    <div id="maplist"></div>
+  </div>`;
+}
+function renderMapList(){
+  const conc=activeFilters().conc, when=whenFromInputs();
+  const rows=DATA.gyms.map(g=>{
+    const b=bestOnDay(g,when,conc)||{price:null,when:""};
+    const km=START_COORD?haversineKm(START_COORD,[g.lat,g.lng]):null;
+    return {g,price:b.price,best:b,km};
+  });
+  rows.sort((a,b)=>(a.km==null?1e9:a.km)-(b.km==null?1e9:b.km));
+  let html=`<table><thead><tr><th>Gym</th><th>Dist</th><th>Travel</th><th>Cheapest today</th><th>Best time</th><th>Go</th></tr></thead><tbody>`;
+  rows.forEach(r=>{ const d=dirLinks(r.g);
+    html+=`<tr><td><a href="${r.g.website}" target="_blank" style="color:inherit;text-decoration:none">${r.g.name}</a><div class="meta">${r.g.area} · zone ${r.g.zone}</div>${noteCell(r.g.id)}</td>
+      <td class="meta">${r.km==null?'-':r.km.toFixed(1)+' km'}</td>
+      <td class="meta">${travelStr(r.g)}</td>
+      <td><span class="price">${f(r.price)}</span> ${r.best.label?`<span class="pill ${r.best.kind==='off'?'off':r.best.kind==='magic'?'magic':'peak'}">${r.best.label}</span>`:''}</td>
+      <td class="meta">${r.best.when||''}</td>
+      <td class="meta"><a href="${d.gmap}" target="_blank">directions</a></td></tr>`;
+  });
+  html+=`<tr><td colspan="6" class="note">Travel = public-transport (bus/tube/rail) journey time from ${startTxt()} (real-time now between 8am-11pm, otherwise a weekday 10:00 departure; loads live; — = no route found).</td></tr></tbody></table>`;
+  const ml=el.getElementById("maplist"); if(ml) ml.innerHTML=html;
+}
+function initMap(){
+  const box=el.getElementById("map"); if(!box) return;
+  if(typeof L==="undefined"){ box.innerHTML='<div class="note">Map needs internet to load. Directions links still work.</div>'; renderMapList(); return; }
+  if(MAP){ MAP.remove(); MAP=null; }
+  MAP=L.map("map").setView([51.505,-0.09],11);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(MAP);
+  const conc=activeFilters().conc, when=whenFromInputs();
+  const priced=DATA.gyms.map(g=>({g,b:bestOnDay(g,when,conc)})).filter(x=>x.b);
+  const minp=Math.min(...priced.map(x=>x.b.price));
+  const pts=[];
+  DATA.gyms.forEach(g=>{
+    const b=bestOnDay(g,when,conc);
+    const cheap = b && b.price===minp;
+    const d=dirLinks(g);
+    const m=L.circleMarker([g.lat,g.lng],{radius:7,color:cheap?"#5db07a":"#e2a13c",fillColor:cheap?"#5db07a":"#e2a13c",fillOpacity:.85,weight:1}).addTo(MAP);
+    m.bindPopup(`<b>${g.name}</b><br>${g.area} · zone ${g.zone}<br>Cheapest today: <b>${f(b?b.price:null)}</b>${b&&b.when?" ("+b.when+")":""}<br><a href="${d.gmap}" target="_blank">Directions</a> · <a href="${g.prices_url}" target="_blank">Prices</a>`);
+    pts.push([g.lat,g.lng]);
+  });
+  const drawStart=()=>{
+    if(START_COORD){
+      L.marker(START_COORD).addTo(MAP).bindPopup("Start: "+START);
+      MAP.fitBounds(pts.concat([START_COORD]),{padding:[30,30]});
+    } else { MAP.fitBounds(pts,{padding:[30,30]}); }
+    renderMapList();
+  };
+  if(START && !START_COORD) geocodeStart(drawStart); else drawStart();
+}
+
+/* ----- wiring ----- */
+let current="cheapest";
+function render(){
+  const v={cheapest:viewCheapest,offpeak:viewOffpeak,students:viewStudents,zones:viewZones,all:viewAll,memberships:viewMemberships,promos:viewPromos,events:viewEvents,classes:viewClasses,routeset:viewRouteSetting,map:viewMap}[current];
+  el.getElementById("view").innerHTML=v();
+  if(current==="map") initMap();
+  ensureTravel();
+}
+function initZones(){
+  const zs=[...new Set(DATA.gyms.map(g=>g.zone))].sort();
+  const sel=el.getElementById("zone");
+  zs.forEach(z=>{const o=document.createElement("option");o.value=z;o.textContent="Zone "+z;sel.appendChild(o);});
+}
+function setNow(){
+  const n=new Date();
+  el.getElementById("date").value=n.toISOString().slice(0,10);
+  el.getElementById("time").value=n.toTimeString().slice(0,5);
+}
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on"); current=t.dataset.view; render();
+}));
+["date","time","who","type","zone","mode"].forEach(id=>el.getElementById(id).addEventListener("change",render));
+el.getElementById("now").addEventListener("click",()=>{setNow();render();});
+el.getElementById("startloc").value = START==="" ? "" : (/^[-0-9.]+,[-0-9.]+$/.test(START)?"My location":START);
+el.getElementById("startloc").addEventListener("change",e=>setStart(e.target.value));
+el.getElementById("geoloc").addEventListener("click",useMyLocation);
+
+el.getElementById("meta").textContent =
+  DATA.gyms.length+" gyms · researched "+DATA._meta.last_research_date+" · prices in GBP, indicative day-pass entry";
+el.getElementById("foot").innerHTML =
+  "\"Cheapest on this day\" ranks by the best price achievable any time that date (with the window to go); switch \"Cheapest mode\" to price a specific time. "+
+  "Bank holidays are fetched live from gov.uk and some off-peak/Magic/Bargain deals are removed on those days. "+
+  "Enter your postcode (or tap \"Use my location\") at the top to get live public-transport travel times to every gym and to sort by distance on the Map tab. "+
+  "\"Super off-peak\" covers Bargain, Magic Time, Student Saver and BOGOF slots. "+
+  "Notes and star ratings save on this device — <a href='#' onclick='exportNotes();return false;'>export</a> / <a href='#' onclick='importNotes();return false;'>import</a> to move them, or set up free <a href='#' onclick='setupSync();return false;'>cloud sync</a> to auto-sync across devices. "+
+  "Prices marked <span class='flag'>verify</span> were not publicly confirmed at research time — click a gym to open its live price page.";
+
+function loadBankHolidays(){
+  // Fetched live so no hard-coded list is kept. If offline/blocked, bank-holiday
+  // exclusions simply aren't applied.
+  fetch("https://www.gov.uk/bank-holidays.json")
+    .then(r=>r.ok?r.json():Promise.reject())
+    .then(j=>{ const ev=(j["england-and-wales"]||{}).events||[];
+      BANK_HOLIDAYS=new Set(ev.map(e=>e.date)); render(); })
+    .catch(()=>{ /* leave BANK_HOLIDAYS null; deals show without BH exclusions */ });
+}
+initZones(); setNow(); render(); loadBankHolidays(); cloudLoad(); fbInit();
+</script>
+</body>
+</html>
