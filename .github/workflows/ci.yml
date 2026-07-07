@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      # gyms.json is the single source of truth. Fail if the embedded copies
+      # in the HTML files or the .ics calendars have drifted.
+      - name: Check derived files are in sync with gyms.json
+        run: python3 tools/sync_data.py --check
+
+      # Golden pricing tests + JS/Python parity (node is preinstalled on the
+      # runner, so the parity test always runs in CI).
+      - name: Run pricing tests
+        run: python3 -m unittest discover -s tests -v

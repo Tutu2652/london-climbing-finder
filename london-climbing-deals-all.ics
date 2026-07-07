@@ -1,0 +1,484 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//London Climbing Finder//Deals//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:London Climbing Deals
+REFRESH-INTERVAL;VALUE=DURATION:P1W
+X-PUBLISHED-TTL:P1W
+X-WR-CALDESC:Recurring special cheap climbing slots across London gyms.
+X-WR-TIMEZONE:Europe/London
+BEGIN:VEVENT
+UID:cld-all-arch_bermondsey-1@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240101
+DTEND;VALUE=DATE:20240102
+RRULE:FREQ=WEEKLY;BYDAY=MO
+SUMMARY:£5.00 Student Saver — CD Bermondsey
+DESCRIPTION:£5.00 Students/concession only (ID). https://climbingdistrict
+ .uk/pricing/
+LOCATION:Building One\, Tower Bridge Business Complex\, Drummond Road\, Lo
+ ndon SE16 4DG
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-arch_bermondsey-2@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£5.00 Student Saver — CD Bermondsey
+DESCRIPTION:£5.00 Students/concession only (ID). https://climbingdistrict
+ .uk/pricing/
+LOCATION:Building One\, Tower Bridge Business Complex\, Drummond Road\, Lo
+ ndon SE16 4DG
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-stronghold-3@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240101
+DTEND;VALUE=DATE:20240102
+RRULE:FREQ=WEEKLY;BYDAY=MO
+SUMMARY:£5.00 Student Saver — CD Tottenham Hale
+DESCRIPTION:£5.00 Students/concession only (ID). https://climbingdistrict
+ .uk/pricing/
+LOCATION:The Archives\, Unit 10 High Cross Centre\, Fountayne Road\, Londo
+ n N15 4BE
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-stronghold-4@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£5.00 Student Saver — CD Tottenham Hale
+DESCRIPTION:£5.00 Students/concession only (ID). https://climbingdistrict
+ .uk/pricing/
+LOCATION:The Archives\, Unit 10 High Cross Centre\, Fountayne Road\, Londo
+ n N15 4BE
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-climbingdistrict_londonfields-5@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£5.00 Student Saver — CD London Fields
+DESCRIPTION:£5.00 Students/concession only (ID). https://climbingdistrict
+ .uk/pricing/
+LOCATION:Unit 30\, Canal Place\, Andrews Road\, London E8 4FX
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_aldgate-6@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240107T163000
+DTEND:20240107T200000
+RRULE:FREQ=WEEKLY;BYDAY=SU
+SUMMARY:£7.50 Bargain — Aldgate
+DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+LOCATION:33 Aldgate High Street\, London EC3N 1AH
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_aldgate-7@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240101T080000
+DTEND:20240101T100000
+RRULE:FREQ=WEEKLY;BYDAY=MO
+SUMMARY:£7.50 Bargain — Aldgate
+DESCRIPTION:£7.50 Not valid on bank holidays. Pre-book. https://www.cityb
+ ouldering.co.uk/pricing
+LOCATION:33 Aldgate High Street\, London EC3N 1AH
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_aldgate-8@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£9.50 Student Saver — Aldgate
+DESCRIPTION:£9.50 Students/concession only (ID). https://www.cityboulderi
+ ng.co.uk/pricing
+LOCATION:33 Aldgate High Street\, London EC3N 1AH
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_aldgate-9@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240106T170000
+DTEND:20240106T200000
+RRULE:FREQ=WEEKLY;BYDAY=SA
+SUMMARY:£8.50 BOGOF (£17 for 2\, students £15 for 2) — Aldgate
+DESCRIPTION:£8.50 Pre-book. https://www.citybouldering.co.uk/pricing
+LOCATION:33 Aldgate High Street\, London EC3N 1AH
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_whitecity-10@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240102T090000
+DTEND:20240102T150000
+RRULE:FREQ=WEEKLY;BYDAY=TU
+SUMMARY:£7.50 Bargain — White City
+DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+LOCATION:Ariel Way\, White City\, London W12 7HB
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_whitecity-11@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240107T170000
+DTEND:20240107T210000
+RRULE:FREQ=WEEKLY;BYDAY=SU
+SUMMARY:£7.50 Bargain — White City
+DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+LOCATION:Ariel Way\, White City\, London W12 7HB
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_whitecity-12@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240104
+DTEND;VALUE=DATE:20240105
+RRULE:FREQ=WEEKLY;BYDAY=TH
+SUMMARY:£9.50 Student Saver — White City
+DESCRIPTION:£9.50 Students/concession only (ID). https://www.cityboulderi
+ ng.co.uk/pricing
+LOCATION:Ariel Way\, White City\, London W12 7HB
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_stratford-13@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240103T090000
+DTEND:20240103T150000
+RRULE:FREQ=WEEKLY;BYDAY=WE
+SUMMARY:£7.50 Bargain — Stratford
+DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+LOCATION:234 High Street\, Stratford\, London E15 2JA
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_stratford-14@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240106T160000
+DTEND:20240106T210000
+RRULE:FREQ=WEEKLY;BYDAY=SA
+SUMMARY:£7.50 Bargain — Stratford
+DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+LOCATION:234 High Street\, Stratford\, London E15 2JA
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_stratford-15@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240101
+DTEND;VALUE=DATE:20240102
+RRULE:FREQ=WEEKLY;BYDAY=MO
+SUMMARY:£9.50 Student Saver — Stratford
+DESCRIPTION:£9.50 Students/concession only (ID). https://www.cityboulderi
+ ng.co.uk/pricing
+LOCATION:234 High Street\, Stratford\, London E15 2JA
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-cb_stratford-16@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£9.50 Student Saver — Stratford
+DESCRIPTION:£9.50 Students/concession only (ID). https://www.cityboulderi
+ ng.co.uk/pricing
+LOCATION:234 High Street\, Stratford\, London E15 2JA
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-mileend-17@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240101T070000
+DTEND:20240101T093000
+RRULE:FREQ=WEEKLY;BYDAY=MO
+SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
+DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
+ .uk/memberships-and-entries
+LOCATION:Haverfield Road\, London E3 5BN
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-mileend-18@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240102T070000
+DTEND:20240102T093000
+RRULE:FREQ=WEEKLY;BYDAY=TU
+SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
+DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
+ .uk/memberships-and-entries
+LOCATION:Haverfield Road\, London E3 5BN
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-mileend-19@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240103T070000
+DTEND:20240103T093000
+RRULE:FREQ=WEEKLY;BYDAY=WE
+SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
+DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
+ .uk/memberships-and-entries
+LOCATION:Haverfield Road\, London E3 5BN
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-mileend-20@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240104T070000
+DTEND:20240104T093000
+RRULE:FREQ=WEEKLY;BYDAY=TH
+SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
+DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
+ .uk/memberships-and-entries
+LOCATION:Haverfield Road\, London E3 5BN
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-mileend-21@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240105T070000
+DTEND:20240105T093000
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
+DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
+ .uk/memberships-and-entries
+LOCATION:Haverfield Road\, London E3 5BN
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-mileend-22@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240103
+DTEND;VALUE=DATE:20240104
+RRULE:FREQ=WEEKLY;BYDAY=WE
+SUMMARY:£7.00 Student Saver — Mile End Climbing Wall
+DESCRIPTION:£7.00 Students/concession only (ID). https://www.mileendwall.
+ org.uk/memberships-and-entries
+LOCATION:Haverfield Road\, London E3 5BN
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-mileend-23@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£7.00 Student Saver — Mile End Climbing Wall
+DESCRIPTION:£7.00 Students/concession only (ID). https://www.mileendwall.
+ org.uk/memberships-and-entries
+LOCATION:Haverfield Road\, London E3 5BN
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-the_font_wandsworth-24@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240106
+DTEND;VALUE=DATE:20240107
+RRULE:FREQ=WEEKLY;BYDAY=SA
+SUMMARY:£10.50 Student Saver — Font Wandsworth
+DESCRIPTION:£10.50 Students/concession only (ID). https://www.the-font.co
+ .uk/wandsworth/prices
+LOCATION:30 Lydden Road\, London SW18 4LR
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-the_font_borough-25@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240106
+DTEND;VALUE=DATE:20240107
+RRULE:FREQ=WEEKLY;BYDAY=SA
+SUMMARY:£10.50 Student Saver — Font Borough
+DESCRIPTION:£10.50 Students/concession only (ID). https://www.the-font.co
+ .uk/borough/prices
+LOCATION:Unit 1B\, Triptych Place\, 185 Park Street\, Bankside\, London SE
+ 1 9BL
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-the_font_hounslow-26@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240106
+DTEND;VALUE=DATE:20240107
+RRULE:FREQ=WEEKLY;BYDAY=SA
+SUMMARY:£10.50 Student Saver — Font Hounslow
+DESCRIPTION:£10.50 Students/concession only (ID). https://www.the-font.co
+ .uk/hounslow/prices
+LOCATION:High Street Quarter\, 9 Smithy Lane\, Hounslow TW3 1EH
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-yonder-27@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240102
+DTEND;VALUE=DATE:20240103
+RRULE:FREQ=WEEKLY;BYDAY=TU
+SUMMARY:£8.00 Student Saver — Yonder Climbing
+DESCRIPTION:£8.00 Students/concession only (ID). https://www.thisisyonder
+ .com/yonder-climbing
+LOCATION:4-6 Hookers Road\, Walthamstow\, London E17 6DP
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-yonder-28@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£8.00 Student Saver — Yonder Climbing
+DESCRIPTION:£8.00 Students/concession only (ID). https://www.thisisyonder
+ .com/yonder-climbing
+LOCATION:4-6 Hookers Road\, Walthamstow\, London E17 6DP
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-rise-29@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240102T060000
+DTEND:20240102T100000
+RRULE:FREQ=WEEKLY;BYDAY=TU
+SUMMARY:£7.50 super off-peak — Rise Climbing
+DESCRIPTION:£7.50 https://www.rise-climbing.com/entry-memberships
+LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
+ A
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-rise-30@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240104T060000
+DTEND:20240104T100000
+RRULE:FREQ=WEEKLY;BYDAY=TH
+SUMMARY:£7.50 super off-peak — Rise Climbing
+DESCRIPTION:£7.50 https://www.rise-climbing.com/entry-memberships
+LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
+ A
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-rise-31@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£7.50 Student Friday — Rise Climbing
+DESCRIPTION:£7.50 Students/concession only (ID). https://www.rise-climbin
+ g.com/entry-memberships
+LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
+ A
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-rise-32@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£5.00 Board Friday (board only) — Rise Climbing
+DESCRIPTION:£5.00 https://www.rise-climbing.com/entry-memberships
+LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
+ A
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-climbing_co_fulham-33@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240101T100000
+DTEND:20240101T160000
+RRULE:FREQ=WEEKLY;BYDAY=MO
+SUMMARY:£7.50 Bargain — Climbing Co Fulham
+DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+LOCATION:5 Parsons Green Depot\, 33-35 Parsons Green Lane\, London SW6 4HH
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-climbing_co_fulham-34@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240102
+DTEND;VALUE=DATE:20240103
+RRULE:FREQ=WEEKLY;BYDAY=TU
+SUMMARY:£9.50 Student Saver — Climbing Co Fulham
+DESCRIPTION:£9.50 Students/concession only (ID). https://www.cityboulderi
+ ng.co.uk/pricing
+LOCATION:5 Parsons Green Depot\, 33-35 Parsons Green Lane\, London SW6 4HH
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_vauxwall_west-35@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240107T080000
+DTEND:20240107T100000
+RRULE:FREQ=WEEKLY;BYDAY=SU
+SUMMARY:£8.00 Magic Time — VauxWall West
+DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
+ es.co.uk/prices/
+LOCATION:Arches 45b-47c\, South Lambeth Road\, Vauxhall\, London SW8 1SR
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_vauxwall_east-36@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240101T090000
+DTEND:20240101T160000
+RRULE:FREQ=WEEKLY;BYDAY=MO
+SUMMARY:£8.00 Magic Time — VauxWall East
+DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
+ es.co.uk/prices/
+LOCATION:1 Cabanel Place\, Lollard Street\, London SE11 6BD
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_harrowall-37@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240105T200000
+DTEND:20240105T230000
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£8.00 Magic Time — HarroWall
+DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
+ es.co.uk/prices/
+LOCATION:Unit 2a & 3a\, Neptune Trading Estate\, Neptune Road\, Harrow HA1
+  4HX
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_croywall-38@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240102T060000
+DTEND:20240102T160000
+RRULE:FREQ=WEEKLY;BYDAY=TU
+SUMMARY:£8.00 Magic Time — CroyWall
+DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
+ es.co.uk/prices/
+LOCATION:Unit 7 New South Quarter\, Whitestone Way\, Croydon CR0 4WN
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_croywall-39@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART;VALUE=DATE:20240105
+DTEND;VALUE=DATE:20240106
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£9.50 Student Friday — CroyWall
+DESCRIPTION:£9.50 Students/concession only (ID). https://londonclimbingce
+ ntres.co.uk/prices/
+LOCATION:Unit 7 New South Quarter\, Whitestone Way\, Croydon CR0 4WN
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_ravenswall-40@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240105T060000
+DTEND:20240105T160000
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:£8.00 Magic Time — RavensWall
+DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
+ es.co.uk/prices/
+LOCATION:Arch 105\, Ravenscourt Road\, London W6 0UQ
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_canarywall-41@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240107T090000
+DTEND:20240107T110000
+RRULE:FREQ=WEEKLY;BYDAY=SU
+SUMMARY:£8.00 Magic Time — CanaryWall
+DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
+ es.co.uk/prices/
+LOCATION:21-23 Trinidad Street\, Poplar\, London E14 8AA
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_bethwall-42@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240106T080000
+DTEND:20240106T100000
+RRULE:FREQ=WEEKLY;BYDAY=SA
+SUMMARY:£8.00 Magic Time — BethWall Green
+DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
+ es.co.uk/prices/
+LOCATION:Arches 243-247\, Hollybush Place\, London E2 9QX
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_eustonwall-43@londonclimbingfinder
+DTSTAMP:20260701T000000Z
+DTSTART:20240106T170000
+DTEND:20240106T210000
+RRULE:FREQ=WEEKLY;BYDAY=SA
+SUMMARY:£8.00 Magic Time — EustonWall
+DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
+ es.co.uk/prices/
+LOCATION:350 Euston Road\, London NW1 3AX
+END:VEVENT
+END:VCALENDAR

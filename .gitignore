@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+gym_notes.json
+gym_ratings.json
+report.txt
