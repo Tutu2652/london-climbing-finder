@@ -139,6 +139,10 @@
     <div class="ctl"><label for="zone">Zone</label>
       <select id="zone"><option value="">Any</option></select>
     </div>
+    <div class="ctl"><label for="ac">Air‑conditioning</label>
+      <!-- Air‑conditioning filter: "AC" shows all gyms with any level of air con, while "All" shows every gym regardless of AC. -->
+      <select id="ac"><option value="">All</option><option value="ac">AC</option></select>
+    </div>
     <div class="ctl"><label for="mode">Cheapest mode</label>
       <select id="mode"><option value="day">Best price all day</option><option value="time">At selected time</option></select>
     </div>
@@ -2895,6 +2899,63 @@ const DATA = {
     }
   ]
 };
+// Air-conditioning information by gym ID. "full" = fully air conditioned/HVAC; "partial" = only some areas are air conditioned;
+// "none" = no confirmed air conditioning. Additional gyms not listed here default to "none".
+const AC_STATUS = {
+  lcc_bethwall: 'full',
+  lcc_vauxwall_east: 'full',
+  lcc_vauxwall_west: 'full',
+  lcc_eustonwall: 'full',
+  climbingdistrict_londonfields: 'full',
+  yonder: 'full',
+  cb_aldgate: 'partial',
+  // Climbing District Bermondsey has partial AC in the training room/slab wall
+  arch_bermondsey: 'partial'
+};
+
+// Provide human-readable descriptions for each gym's air‑conditioning. These strings describe where AC is installed or how it operates.
+// If a gym isn't listed here it is assumed to have no confirmed AC and will not display any AC note in the Facilities column.
+const AC_DESC = {
+  lcc_bethwall: 'fully air conditioned',
+  lcc_vauxwall_east: 'air‑conditioned (~20°C regulated)',
+  lcc_vauxwall_west: 'fully air conditioned',
+  lcc_eustonwall: 'fully air conditioned',
+  climbingdistrict_londonfields: 'air conditioned',
+  yonder: 'air conditioning and fans',
+  cb_aldgate: 'AC in annex only',
+  arch_bermondsey: 'AC in training room/slab wall'
+};
+
+// Attach an `ac` property to every gym for later filtering and display, and store a descriptive string in `ac_desc`.
+DATA.gyms.forEach(g => {
+  g.ac = AC_STATUS[g.id] || 'none';
+  g.ac_desc = AC_DESC[g.id] || '';
+  // Create a sanitized facilities string that strips out any legacy AC notes like "AC available". Remove empty commas and trim whitespace.
+  if(typeof g.facilities === 'string'){
+    let fac = g.facilities;
+    // Remove the substring "AC available" (case-insensitive) and any surrounding comma/space punctuation.
+    fac = fac.replace(/\bAC available\b/ig, '').replace(/,\s*,/g, ',').replace(/^\s*,\s*|\s*,\s*$/g, '');
+    // Normalize multiple commas and spaces
+    fac = fac.replace(/\s*,\s*/g, ', ');
+    g.facilities_clean = fac.trim();
+  } else {
+    g.facilities_clean = g.facilities;
+  }
+});
+
+// Short label for displaying AC status in contexts where a concise badge is required (e.g. map popup).
+// Returns "AC" for fully air‑conditioned sites, "Partial" for partially air‑conditioned sites, or an empty string when none.
+function acShort(g){
+  const v = g.ac;
+  if(v === 'full') return 'AC';
+  if(v === 'partial') return 'Partial';
+  return '';
+}
+
+// Long description used in the Facilities column and other descriptive contexts. Returns an empty string when no AC information is available.
+function acDesc(g){
+  return g.ac_desc || '';
+}
 const WD = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
 /* ----- price logic (mirrors london_climbing_prices.py) ----- */
@@ -3349,19 +3410,24 @@ function whenFromInputs(){
   return new Date(Y,M-1,D,h,m);
 }
 function activeFilters(){
-  return {conc: el.getElementById("who").value==="conc",
-          type: el.getElementById("type").value,
-          zone: el.getElementById("zone").value};
+  return {
+    conc: el.getElementById("who").value === "conc",
+    type: el.getElementById("type").value,
+    zone: el.getElementById("zone").value,
+    ac: el.getElementById("ac") ? el.getElementById("ac").value : ""
+  };
 }
 
 /* ----- views ----- */
 function viewCheapest(){
-  const when=whenFromInputs(), {conc,type,zone}=activeFilters();
+  const when=whenFromInputs(), {conc,type,zone,ac}=activeFilters();
   const mode=el.getElementById("mode").value;   // "day" or "time"
   let rows=[];
   for(const g of DATA.gyms){
     if(type && !g.type.includes(type)) continue;
     if(zone && String(g.zone)!==zone) continue;
+    // Apply air‑conditioning filter. When the AC filter is set to "AC" (value="ac"), include gyms with any AC and exclude those without AC.
+    if(ac === 'ac' && g.ac === 'none') continue;
     if(mode==="day"){
       const b=bestOnDay(g,when,conc); if(!b) continue;
       const seen=new Set([b.price.toFixed(2)]); const alts=[];
@@ -3376,6 +3442,7 @@ function viewCheapest(){
   rows.sort((a,b)=>a.price-b.price);
   const who=conc?"student / concession":"adult";
   const bhBanner = isBH(when) ? `<div class="note" style="color:var(--accent2)">Heads up: ${when.toDateString()} is a UK bank holiday, so some off-peak, Magic Time and Bargain deals do not apply.</div>` : "";
+  // Build header without a dedicated Air con column. AC status is appended to the Facilities column instead.
   let html=bhBanner+`<div class="card"><table><thead><tr><th class="rank">#</th><th>Gym</th><th>Price</th><th>When to go</th><th>Travel</th><th>Facilities</th><th>Zone</th><th>Go</th></tr></thead><tbody>`;
   if(!rows.length) html+=`<tr><td colspan="8" class="note">No priced gyms match these filters.</td></tr>`;
   rows.forEach((r,i)=>{
@@ -3386,7 +3453,7 @@ function viewCheapest(){
       <td><span class="price">${f(r.price)}</span> <span class="pill ${r.kind==='off'?'off':r.kind==='magic'?'magic':'peak'}">${r.label}</span>${(r.alts||[]).map(o=>`<div class="meta">also ${f(o.price)} ${esc(o.label)} · ${esc(o.when)}</div>`).join('')}</td>
       <td class="meta">${r.when||''}</td>
       <td class="meta">${travelStr(r.g)}</td>
-      <td class="meta">${r.g.facilities||'—'}</td>
+      <td class="meta">${(r.g.facilities_clean||'—')}${acDesc(r.g) ? ' · ' + acDesc(r.g) : ''}</td>
       <td>${r.g.zone}</td>
       <td class="meta"><a href="${d.gmap}" target="_blank" rel="noopener">directions</a></td></tr>`;
   });
@@ -3467,11 +3534,13 @@ function offBest(g,conc){
 }
 function viewAll(){
   const rank=b=> b==='London Climbing Centres'?0 : (b==='Independent'?2:1);
-  const {conc,type,zone}=activeFilters();
+  const {conc,type,zone,ac}=activeFilters();
   const grouped = ALL_SORT==="chain";
   let gyms=[...DATA.gyms];
   if(type) gyms=gyms.filter(g=>g.type.includes(type));
   if(zone) gyms=gyms.filter(g=>String(g.zone)===zone);
+  // Apply air‑conditioning filter. When the AC filter is set to "AC" (value="ac"), include gyms with any AC and exclude those without AC.
+  if(ac === 'ac') gyms = gyms.filter(g => g.ac !== 'none');
   if(grouped){
     gyms.sort((a,b)=> rank(a.brand)-rank(b.brand) || a.brand.localeCompare(b.brand) || a.zone-b.zone || a.name.localeCompare(b.name));
   }else if(ALL_SORT==="peak"){
@@ -3486,14 +3555,19 @@ function viewAll(){
   const noLoc = ALL_SORT==="distance" && !START_COORD ? ` <span class="meta">— set your location above for distances</span>` : "";
   const whoTxt = conc ? 'student/concession' : 'adult';
   const priceHint = (ALL_SORT==="peak"||ALL_SORT==="offpeak") ? ` <span class="meta">— ${whoTxt} prices (change via “Climber” above)</span>` : "";
-  const filterTxt=[type?type:'', zone?('zone '+zone):''].filter(Boolean).join(' · ');
+  const filterParts=[];
+  if(type) filterParts.push(type);
+  if(zone) filterParts.push('zone '+zone);
+  if(ac) filterParts.push('AC');
+  const filterTxt=filterParts.join(' · ');
   const filterHint=filterTxt
-    ? ` <span class="meta">— showing ${esc(filterTxt)} (change Type/Zone at the top)</span>`
-    : ` <span class="meta">— tip: filter by Type or Zone using the dropdowns at the top</span>`;
+    ? ` <span class="meta">— showing ${esc(filterTxt)} (change filters at the top)</span>`
+    : ` <span class="meta">— tip: filter by Type, Zone or Air‑conditioning using the dropdowns at the top</span>`;
   const sortBar=`<div style="padding:10px 14px 0"><label class="meta" style="margin-right:6px">Sort</label>`+
     `<select aria-label="Sort gyms" onchange="setAllSort(this.value)" style="padding:6px 8px">`+
     opt("chain","By chain")+opt("peak","Cheapest — peak")+opt("offpeak","Cheapest — off-peak")+opt("distance","Nearest first")+
     `</select>${noLoc}${priceHint}${filterHint}</div>`;
+  // Build header without a dedicated Air con column; AC status will be appended to the Facilities column.
   let html=`<div class="card">`+sortBar+`<div class="tscroll"><table><thead><tr><th>Gym</th><th>Type</th><th>Peak</th><th>Off-peak &amp; cheap slots</th><th>Membership / passes</th><th>Facilities</th><th>Opening hours</th><th>Instagram</th><th>Address</th><th>Travel</th><th>Zone</th><th>Go</th></tr></thead><tbody>`;
   if(!gyms.length) html+=`<tr><td colspan="12" class="note">No gyms match the current Type/Zone filter — change them at the top of the page.</td></tr>`;
   let lastBrand=null;
@@ -3509,7 +3583,7 @@ function viewAll(){
       <td class="price">${f(g.payg.adult_peak)}${cp!=null?`<div class="meta">${f(cp)} conc</div>`:''}</td>
       <td class="meta">${dealsCell(g)}</td>
       <td class="meta">${memPass}</td>
-      <td class="meta">${g.facilities||'—'}</td>
+      <td class="meta">${(g.facilities_clean||'—')}${acDesc(g) ? ' · ' + acDesc(g) : ''}</td>
       <td class="meta">${hoursSummary(g)}</td>
       <td class="meta">${igUrl(g)?`<a href="${igUrl(g)}" target="_blank" rel="noopener">@${esc(g.instagram)}</a>`:'—'}</td>
       <td class="meta">${esc(g.address||((g.area||'')+' '+(g.postcode||'')))}</td>
@@ -3752,16 +3826,24 @@ function viewMap(){
   </div>`;
 }
 function renderMapList(){
-  const conc=activeFilters().conc, when=whenFromInputs();
-  const rows=DATA.gyms.map(g=>{
+  const {conc,type,zone,ac} = activeFilters(), when=whenFromInputs();
+  const rows=DATA.gyms.filter(g=>{
+    if(type && !g.type.includes(type)) return false;
+    if(zone && String(g.zone)!==zone) return false;
+    // Apply air‑conditioning filter for the map list: when "AC" is selected (ac === 'ac'), include gyms with any AC and exclude those without AC.
+    if(ac === 'ac' && g.ac === 'none') return false;
+    return true;
+  }).map(g=>{
     const b=bestOnDay(g,when,conc)||{price:null,when:""};
     const km=START_COORD?haversineKm(START_COORD,[g.lat,g.lng]):null;
     return {g,price:b.price,best:b,km};
   });
   rows.sort((a,b)=>(a.km==null?1e9:a.km)-(b.km==null?1e9:b.km));
+  // Build header without a dedicated AC column; AC status will be appended to the gym description.
   let html=`<table><thead><tr><th>Gym</th><th>Dist</th><th>Travel</th><th>Cheapest today</th><th>Best time</th><th>Go</th></tr></thead><tbody>`;
   rows.forEach(r=>{ const d=dirLinks(r.g);
-    html+=`<tr><td><a href="${r.g.website}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${r.g.name}</a><div class="meta">${r.g.area} · zone ${r.g.zone}</div>${noteCell(r.g.id)}</td>
+    // Append AC status to the gym meta description rather than using its own column
+    html+=`<tr><td><a href="${r.g.website}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${r.g.name}</a><div class="meta">${r.g.area} · zone ${r.g.zone}${acDesc(r.g) ? ' · ' + acDesc(r.g) : ''}</div>${noteCell(r.g.id)}</td>
       <td class="meta">${r.km==null?'-':r.km.toFixed(1)+' km'}</td>
       <td class="meta">${travelStr(r.g)}</td>
       <td><span class="price">${f(r.price)}</span> ${r.best.label?`<span class="pill ${r.best.kind==='off'?'off':r.best.kind==='magic'?'magic':'peak'}">${r.best.label}</span>`:''}</td>
@@ -3777,16 +3859,33 @@ function initMap(){
   if(MAP){ MAP.remove(); MAP=null; }
   MAP=L.map("map").setView([51.505,-0.09],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(MAP);
-  const conc=activeFilters().conc, when=whenFromInputs();
-  const priced=DATA.gyms.map(g=>({g,b:bestOnDay(g,when,conc)})).filter(x=>x.b);
-  const minp=Math.min(...priced.map(x=>x.b.price));
+  // Apply the same filters to the map as the map list: type, zone and AC, in addition to who/time.
+  const {conc,type,zone,ac} = activeFilters(), when=whenFromInputs();
+  // Determine the cheapest price among gyms that pass the filters (for colouring markers)
+  const priced=DATA.gyms.filter(g=>{
+    if(type && !g.type.includes(type)) return false;
+    if(zone && String(g.zone)!==zone) return false;
+    // Apply air‑conditioning filter: when "AC" is selected (ac === 'ac'), include gyms with any AC and exclude those without AC.
+    if(ac === 'ac' && g.ac === 'none') return false;
+    return true;
+  }).map(g=>({g,b:bestOnDay(g,when,conc)})).filter(x=>x.b);
+  const minp = priced.length ? Math.min(...priced.map(x=>x.b.price)) : Infinity;
   const pts=[];
   DATA.gyms.forEach(g=>{
+    // Skip gyms that don't match the Type, Zone or AC filters
+    if(type && !g.type.includes(type)) return;
+    if(zone && String(g.zone)!==zone) return;
+    if(ac === 'ac' && g.ac === 'none') return;
     const b=bestOnDay(g,when,conc);
+    // If no price available (closed or no valid slot), skip from map
+    if(!b) return;
     const cheap = b && b.price===minp;
     const d=dirLinks(g);
-    const m=L.circleMarker([g.lat,g.lng],{radius:7,color:cheap?"#5db07a":"#e2a13c",fillColor:cheap?"#5db07a":"#e2a13c",fillOpacity:.85,weight:1}).addTo(MAP);
-    m.bindPopup(`<b>${g.name}</b><br>${g.area} · zone ${g.zone}<br>Cheapest today: <b>${f(b?b.price:null)}</b>${b&&b.when?" ("+b.when+")":""}<br><a href="${d.gmap}" target="_blank" rel="noopener">Directions</a> · <a href="${g.prices_url}" target="_blank" rel="noopener">Prices</a>`);
+    const marker=L.circleMarker([g.lat,g.lng],{radius:7,color:cheap?"#5db07a":"#e2a13c",fillColor:cheap?"#5db07a":"#e2a13c",fillOpacity:.85,weight:1}).addTo(MAP);
+    // Include AC information in the popup. If none, omit the AC line.
+    const desc = acDesc(g);
+    const acLine = desc ? `<br>AC: ${desc}` : '';
+    marker.bindPopup(`<b>${g.name}</b><br>${g.area} · zone ${g.zone}<br>Cheapest today: <b>${f(b?b.price:null)}</b>${b&&b.when?" ("+b.when+")":""}${acLine}<br><a href="${d.gmap}" target="_blank" rel="noopener">Directions</a> · <a href="${g.prices_url}" target="_blank" rel="noopener">Prices</a>`);
     pts.push([g.lat,g.lng]);
   });
   const drawStart=()=>{
@@ -3843,7 +3942,11 @@ document.querySelectorAll(".tab").forEach(t=>{
     else if(e.key==="ArrowLeft"||e.key==="ArrowUp"){ e.preventDefault(); selectTab(tabs[(i-1+tabs.length)%tabs.length].dataset.view,true); }
   });
 });
-["date","time","who","type","zone","mode"].forEach(id=>el.getElementById(id).addEventListener("change",render));
+// Re-render whenever any filter input changes, including air-con
+["date","time","who","type","zone","ac","mode"].forEach(id => {
+  const elId = el.getElementById(id);
+  if(elId) elId.addEventListener("change", render);
+});
 el.getElementById("now").addEventListener("click",()=>{setNow();render();});
 el.getElementById("startloc").value = START==="" ? "" : (/^[-0-9.]+,[-0-9.]+$/.test(START)?"My location":START);
 el.getElementById("startloc").addEventListener("change",e=>setStart(e.target.value));
