@@ -158,5 +158,26 @@ console.log(JSON.stringify(out));
                          "JS/Python pricing diverged:\n" + "\n".join(mismatches[:40]))
 
 
+class DataValidation(unittest.TestCase):
+    """Schema checks for hand-edited fields in gyms.json."""
+
+    def test_ac_fields(self):
+        for g in DATA["gyms"]:
+            if "ac" in g:
+                self.assertIn(g["ac"], ("full", "partial"),
+                              "%s: ac must be 'full' or 'partial' (omit for none)" % g["id"])
+                self.assertTrue(g.get("ac_note"),
+                                "%s: gyms with ac set need an ac_note" % g["id"])
+            if "ac_note" in g:
+                self.assertIn("ac", g, "%s: ac_note without ac level" % g["id"])
+
+    def test_no_legacy_ac_text_in_facilities(self):
+        # AC lives in the ac/ac_note fields now, not in free-text facilities.
+        for g in DATA["gyms"]:
+            fac = (g.get("facilities") or "").lower()
+            self.assertNotIn("ac available", fac,
+                             "%s: move AC info to ac/ac_note" % g["id"])
+
+
 if __name__ == "__main__":
     unittest.main()

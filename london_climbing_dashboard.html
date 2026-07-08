@@ -143,7 +143,8 @@ const DATA = {
       "Off-peak / peak split: where a gym states exact times they are used; otherwise off-peak is assumed to be weekday daytime until 16:00 and is flagged 'offpeak_assumed'. Peak = weekday evenings + all weekend.",
       "'magic_slots' are special cheap windows (e.g. LCC 'Magic Time' £8, Rise super off-peak £7.50, student-saver days). Slots labelled 'student'/'concession' only apply to concession holders.",
       "Multi-site brands share one price list but off-peak windows differ per centre. City Bouldering is split into separate entries (Aldgate, White City, Stratford, Climbing Co Fulham) because each has its own off-peak schedule. 'offpeak_window' may be a single object or a list of objects (e.g. Stratford has different weekday windows).",
-      "Where a value is null it was not publicly listed; run the scraper or check the website."
+      "Where a value is null it was not publicly listed; run the scraper or check the website.",
+      "'ac' ('full'|'partial', absent = no confirmed AC) and 'ac_note' describe air conditioning. User-curated July 2026; verify against gym websites when updating."
     ]
   },
   "student_promotions": [
@@ -359,7 +360,9 @@ const DATA = {
       "events_url": "https://climbingdistrict.uk/activities/workshops-socials/",
       "instagram": "climbingdistrictlondon",
       "classes_url": "https://climbingdistrict.uk/activities/introduction-lessons/",
-      "class_info": "[Introduction Lessons](https://climbingdistrict.uk/activities/introduction-lessons/) £20 (1hr small group)."
+      "class_info": "[Introduction Lessons](https://climbingdistrict.uk/activities/introduction-lessons/) £20 (1hr small group).",
+      "ac": "partial",
+      "ac_note": "AC in training room/slab wall"
     },
     {
       "id": "stronghold",
@@ -513,7 +516,7 @@ const DATA = {
         "method": "regex",
         "needs_js": false
       },
-      "facilities": "Bouldering, Kilter board, AC available",
+      "facilities": "Bouldering, Kilter board",
       "membership": {
         "full_monthly": 72,
         "concession_monthly": 62
@@ -558,7 +561,9 @@ const DATA = {
       "socials": [
         "[Climb With Us](https://climbingdistrict.uk/activities/workshops-socials/) — 1.5hr coached social, £5 (excl. entry), V1-3 & V3-5",
         "[Sister Sessions](https://climbingdistrict.uk/activities/sister-sessions/) (Women+)"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "air conditioned"
     },
     {
       "id": "cb_aldgate",
@@ -688,7 +693,9 @@ const DATA = {
       "socials": [
         "[Beginner's Social](https://www.citybouldering.co.uk/events/beginner) — new boulderers (see website for time)",
         "[Monday Madness](https://www.citybouldering.co.uk/events/monday-madness-social) — Mon 19:00-20:30, coached on the new set, £17 (members free)"
-      ]
+      ],
+      "ac": "partial",
+      "ac_note": "AC in annex only"
     },
     {
       "id": "cb_whitecity",
@@ -1427,7 +1434,9 @@ const DATA = {
       "events_url": "https://www.thisisyonder.com/events-calender",
       "instagram": "yonder.climbing",
       "classes_url": "https://www.thisisyonder.com/coaching-courses-intro",
-      "class_info": "[The Boulder Experience](https://www.thisisyonder.com/coaching-courses-intro) £25 (1hr intro, incl. kit + day entry). [Ground Up bouldering essentials](https://www.thisisyonder.com/coaching-courses-intro) £85 (3x1.5hr, incl. membership during course + 20% off shoes)."
+      "class_info": "[The Boulder Experience](https://www.thisisyonder.com/coaching-courses-intro) £25 (1hr intro, incl. kit + day entry). [Ground Up bouldering essentials](https://www.thisisyonder.com/coaching-courses-intro) £85 (3x1.5hr, incl. membership during course + 20% off shoes).",
+      "ac": "full",
+      "ac_note": "air conditioning and fans"
     },
     {
       "id": "the_reach",
@@ -2075,7 +2084,9 @@ const DATA = {
       "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
       "socials": [
         "Women+ Social"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "fully air conditioned"
     },
     {
       "id": "lcc_vauxwall_east",
@@ -2174,7 +2185,9 @@ const DATA = {
       "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
       "socials": [
         "Boulderama — coached bouldering (free)"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "air-conditioned (~20°C regulated)"
     },
     {
       "id": "lcc_harrowall",
@@ -2639,7 +2652,7 @@ const DATA = {
         "method": "regex",
         "needs_js": false
       },
-      "facilities": "Bouldering, AC available",
+      "facilities": "Bouldering",
       "membership": {
         "full_monthly": 85,
         "concession_monthly": 75
@@ -2685,7 +2698,9 @@ const DATA = {
         "Boulderama — coached bouldering (free)",
         "Women+ Social",
         "Board Social (Women+)"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "fully air conditioned"
     },
     {
       "id": "lcc_eustonwall",
@@ -2786,7 +2801,9 @@ const DATA = {
         "Boulderama — coached bouldering (free)",
         "Women+ Social",
         "Board Social (Women+)"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "fully air conditioned"
     }
   ],
   "limited_promotions": [
