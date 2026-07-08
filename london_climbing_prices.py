@@ -704,7 +704,10 @@ def cmd_price(data, args):
     if gym.get("offpeak_assumed"):
         print("  note: off-peak window is an assumption, not confirmed for this gym.")
     if gym.get("facilities"):
-        print("  facilities: %s" % gym["facilities"])
+        fac = gym["facilities"]
+        if gym.get("ac_note"):
+            fac += " | " + gym["ac_note"]
+        print("  facilities: %s" % fac)
     if hours_summary(gym):
         st = open_state(gym, when)
         print("  hours: %s%s" % (hours_summary(gym), ("  [%s]" % st) if st else ""))
@@ -909,7 +912,10 @@ def main(argv=None):
                 gym["zone"], gym["name"], fmt_price(p["adult_peak"]),
                 fmt_price(p["adult_offpeak"]), fmt_price(p["concession_peak"])))
             if gym.get("facilities"):
-                print("      %s" % gym["facilities"])
+                fac = gym["facilities"]
+                if gym.get("ac_note"):
+                    fac += " | " + gym["ac_note"]
+                print("      %s" % fac)
             if hours_summary(gym):
                 print("      hours: %s" % hours_summary(gym))
     elif args.cmd == "memberships":

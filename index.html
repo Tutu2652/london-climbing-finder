@@ -141,7 +141,7 @@
     </div>
     <div class="ctl"><label for="ac">Air‑conditioning</label>
       <!-- Air‑conditioning filter: "AC" shows all gyms with any level of air con, while "All" shows every gym regardless of AC. -->
-      <select id="ac"><option value="">All</option><option value="ac">AC</option></select>
+      <select id="ac"><option value="">All</option><option value="ac">Any AC</option><option value="full">Full AC only</option></select>
     </div>
     <div class="ctl"><label for="mode">Cheapest mode</label>
       <select id="mode"><option value="day">Best price all day</option><option value="time">At selected time</option></select>
@@ -195,7 +195,8 @@ const DATA = {
       "Off-peak / peak split: where a gym states exact times they are used; otherwise off-peak is assumed to be weekday daytime until 16:00 and is flagged 'offpeak_assumed'. Peak = weekday evenings + all weekend.",
       "'magic_slots' are special cheap windows (e.g. LCC 'Magic Time' £8, Rise super off-peak £7.50, student-saver days). Slots labelled 'student'/'concession' only apply to concession holders.",
       "Multi-site brands share one price list but off-peak windows differ per centre. City Bouldering is split into separate entries (Aldgate, White City, Stratford, Climbing Co Fulham) because each has its own off-peak schedule. 'offpeak_window' may be a single object or a list of objects (e.g. Stratford has different weekday windows).",
-      "Where a value is null it was not publicly listed; run the scraper or check the website."
+      "Where a value is null it was not publicly listed; run the scraper or check the website.",
+      "'ac' ('full'|'partial', absent = no confirmed AC) and 'ac_note' describe air conditioning. User-curated July 2026; verify against gym websites when updating."
     ]
   },
   "student_promotions": [
@@ -411,7 +412,9 @@ const DATA = {
       "events_url": "https://climbingdistrict.uk/activities/workshops-socials/",
       "instagram": "climbingdistrictlondon",
       "classes_url": "https://climbingdistrict.uk/activities/introduction-lessons/",
-      "class_info": "[Introduction Lessons](https://climbingdistrict.uk/activities/introduction-lessons/) £20 (1hr small group)."
+      "class_info": "[Introduction Lessons](https://climbingdistrict.uk/activities/introduction-lessons/) £20 (1hr small group).",
+      "ac": "partial",
+      "ac_note": "AC in training room/slab wall"
     },
     {
       "id": "stronghold",
@@ -565,7 +568,7 @@ const DATA = {
         "method": "regex",
         "needs_js": false
       },
-      "facilities": "Bouldering, Kilter board, AC available",
+      "facilities": "Bouldering, Kilter board",
       "membership": {
         "full_monthly": 72,
         "concession_monthly": 62
@@ -610,7 +613,9 @@ const DATA = {
       "socials": [
         "[Climb With Us](https://climbingdistrict.uk/activities/workshops-socials/) — 1.5hr coached social, £5 (excl. entry), V1-3 & V3-5",
         "[Sister Sessions](https://climbingdistrict.uk/activities/sister-sessions/) (Women+)"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "air conditioned"
     },
     {
       "id": "cb_aldgate",
@@ -740,7 +745,9 @@ const DATA = {
       "socials": [
         "[Beginner's Social](https://www.citybouldering.co.uk/events/beginner) — new boulderers (see website for time)",
         "[Monday Madness](https://www.citybouldering.co.uk/events/monday-madness-social) — Mon 19:00-20:30, coached on the new set, £17 (members free)"
-      ]
+      ],
+      "ac": "partial",
+      "ac_note": "AC in annex only"
     },
     {
       "id": "cb_whitecity",
@@ -1479,7 +1486,9 @@ const DATA = {
       "events_url": "https://www.thisisyonder.com/events-calender",
       "instagram": "yonder.climbing",
       "classes_url": "https://www.thisisyonder.com/coaching-courses-intro",
-      "class_info": "[The Boulder Experience](https://www.thisisyonder.com/coaching-courses-intro) £25 (1hr intro, incl. kit + day entry). [Ground Up bouldering essentials](https://www.thisisyonder.com/coaching-courses-intro) £85 (3x1.5hr, incl. membership during course + 20% off shoes)."
+      "class_info": "[The Boulder Experience](https://www.thisisyonder.com/coaching-courses-intro) £25 (1hr intro, incl. kit + day entry). [Ground Up bouldering essentials](https://www.thisisyonder.com/coaching-courses-intro) £85 (3x1.5hr, incl. membership during course + 20% off shoes).",
+      "ac": "full",
+      "ac_note": "air conditioning and fans"
     },
     {
       "id": "the_reach",
@@ -2127,7 +2136,9 @@ const DATA = {
       "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
       "socials": [
         "Women+ Social"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "fully air conditioned"
     },
     {
       "id": "lcc_vauxwall_east",
@@ -2226,7 +2237,9 @@ const DATA = {
       "class_info": "[Bouldering Basics](https://londonclimbingcentres.co.uk/classes-courses/) £35 -> £17.50 with code NEW50 (1hr, incl. shoes + registration); [Foundation Course](https://londonclimbingcentres.co.uk/classes-courses/) £80 (3x1hr); [Route Setting Course](https://londonclimbingcentres.co.uk/route-setting-courses/) £150 (full day, 8am-5pm).",
       "socials": [
         "Boulderama — coached bouldering (free)"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "air-conditioned (~20°C regulated)"
     },
     {
       "id": "lcc_harrowall",
@@ -2691,7 +2704,7 @@ const DATA = {
         "method": "regex",
         "needs_js": false
       },
-      "facilities": "Bouldering, AC available",
+      "facilities": "Bouldering",
       "membership": {
         "full_monthly": 85,
         "concession_monthly": 75
@@ -2737,7 +2750,9 @@ const DATA = {
         "Boulderama — coached bouldering (free)",
         "Women+ Social",
         "Board Social (Women+)"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "fully air conditioned"
     },
     {
       "id": "lcc_eustonwall",
@@ -2838,7 +2853,9 @@ const DATA = {
         "Boulderama — coached bouldering (free)",
         "Women+ Social",
         "Board Social (Women+)"
-      ]
+      ],
+      "ac": "full",
+      "ac_note": "fully air conditioned"
     }
   ],
   "limited_promotions": [
@@ -2899,62 +2916,15 @@ const DATA = {
     }
   ]
 };
-// Air-conditioning information by gym ID. "full" = fully air conditioned/HVAC; "partial" = only some areas are air conditioned;
-// "none" = no confirmed air conditioning. Additional gyms not listed here default to "none".
-const AC_STATUS = {
-  lcc_bethwall: 'full',
-  lcc_vauxwall_east: 'full',
-  lcc_vauxwall_west: 'full',
-  lcc_eustonwall: 'full',
-  climbingdistrict_londonfields: 'full',
-  yonder: 'full',
-  cb_aldgate: 'partial',
-  // Climbing District Bermondsey has partial AC in the training room/slab wall
-  arch_bermondsey: 'partial'
-};
-
-// Provide human-readable descriptions for each gym's air‑conditioning. These strings describe where AC is installed or how it operates.
-// If a gym isn't listed here it is assumed to have no confirmed AC and will not display any AC note in the Facilities column.
-const AC_DESC = {
-  lcc_bethwall: 'fully air conditioned',
-  lcc_vauxwall_east: 'air‑conditioned (~20°C regulated)',
-  lcc_vauxwall_west: 'fully air conditioned',
-  lcc_eustonwall: 'fully air conditioned',
-  climbingdistrict_londonfields: 'air conditioned',
-  yonder: 'air conditioning and fans',
-  cb_aldgate: 'AC in annex only',
-  arch_bermondsey: 'AC in training room/slab wall'
-};
-
-// Attach an `ac` property to every gym for later filtering and display, and store a descriptive string in `ac_desc`.
-DATA.gyms.forEach(g => {
-  g.ac = AC_STATUS[g.id] || 'none';
-  g.ac_desc = AC_DESC[g.id] || '';
-  // Create a sanitized facilities string that strips out any legacy AC notes like "AC available". Remove empty commas and trim whitespace.
-  if(typeof g.facilities === 'string'){
-    let fac = g.facilities;
-    // Remove the substring "AC available" (case-insensitive) and any surrounding comma/space punctuation.
-    fac = fac.replace(/\bAC available\b/ig, '').replace(/,\s*,/g, ',').replace(/^\s*,\s*|\s*,\s*$/g, '');
-    // Normalize multiple commas and spaces
-    fac = fac.replace(/\s*,\s*/g, ', ');
-    g.facilities_clean = fac.trim();
-  } else {
-    g.facilities_clean = g.facilities;
-  }
-});
-
-// Short label for displaying AC status in contexts where a concise badge is required (e.g. map popup).
-// Returns "AC" for fully air‑conditioned sites, "Partial" for partially air‑conditioned sites, or an empty string when none.
-function acShort(g){
-  const v = g.ac;
-  if(v === 'full') return 'AC';
-  if(v === 'partial') return 'Partial';
-  return '';
-}
-
-// Long description used in the Facilities column and other descriptive contexts. Returns an empty string when no AC information is available.
-function acDesc(g){
-  return g.ac_desc || '';
+/* ----- air conditioning (data lives in gyms.json: per-gym `ac` and `ac_note`) ----- */
+// ac: 'full' | 'partial' | absent (no confirmed AC).
+const acLevel = g => g.ac || 'none';
+const acDesc  = g => g.ac_note || '';
+// filter value: '' = all gyms, 'ac' = any AC (full or partial), 'full' = full AC only.
+function acMatch(g, ac){
+  if(!ac) return true;
+  if(ac === 'full') return acLevel(g) === 'full';
+  return acLevel(g) !== 'none';
 }
 const WD = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
@@ -3426,8 +3396,7 @@ function viewCheapest(){
   for(const g of DATA.gyms){
     if(type && !g.type.includes(type)) continue;
     if(zone && String(g.zone)!==zone) continue;
-    // Apply air‑conditioning filter. When the AC filter is set to "AC" (value="ac"), include gyms with any AC and exclude those without AC.
-    if(ac === 'ac' && g.ac === 'none') continue;
+    if(!acMatch(g,ac)) continue;
     if(mode==="day"){
       const b=bestOnDay(g,when,conc); if(!b) continue;
       const seen=new Set([b.price.toFixed(2)]); const alts=[];
@@ -3453,7 +3422,7 @@ function viewCheapest(){
       <td><span class="price">${f(r.price)}</span> <span class="pill ${r.kind==='off'?'off':r.kind==='magic'?'magic':'peak'}">${r.label}</span>${(r.alts||[]).map(o=>`<div class="meta">also ${f(o.price)} ${esc(o.label)} · ${esc(o.when)}</div>`).join('')}</td>
       <td class="meta">${r.when||''}</td>
       <td class="meta">${travelStr(r.g)}</td>
-      <td class="meta">${(r.g.facilities_clean||'—')}${acDesc(r.g) ? ' · ' + acDesc(r.g) : ''}</td>
+      <td class="meta">${(r.g.facilities||'—')}${acDesc(r.g) ? ' · ' + acDesc(r.g) : ''}</td>
       <td>${r.g.zone}</td>
       <td class="meta"><a href="${d.gmap}" target="_blank" rel="noopener">directions</a></td></tr>`;
   });
@@ -3539,8 +3508,7 @@ function viewAll(){
   let gyms=[...DATA.gyms];
   if(type) gyms=gyms.filter(g=>g.type.includes(type));
   if(zone) gyms=gyms.filter(g=>String(g.zone)===zone);
-  // Apply air‑conditioning filter. When the AC filter is set to "AC" (value="ac"), include gyms with any AC and exclude those without AC.
-  if(ac === 'ac') gyms = gyms.filter(g => g.ac !== 'none');
+  if(ac) gyms = gyms.filter(g => acMatch(g,ac));
   if(grouped){
     gyms.sort((a,b)=> rank(a.brand)-rank(b.brand) || a.brand.localeCompare(b.brand) || a.zone-b.zone || a.name.localeCompare(b.name));
   }else if(ALL_SORT==="peak"){
@@ -3558,7 +3526,7 @@ function viewAll(){
   const filterParts=[];
   if(type) filterParts.push(type);
   if(zone) filterParts.push('zone '+zone);
-  if(ac) filterParts.push('AC');
+  if(ac) filterParts.push(ac==='full'?'full AC':'AC');
   const filterTxt=filterParts.join(' · ');
   const filterHint=filterTxt
     ? ` <span class="meta">— showing ${esc(filterTxt)} (change filters at the top)</span>`
@@ -3583,7 +3551,7 @@ function viewAll(){
       <td class="price">${f(g.payg.adult_peak)}${cp!=null?`<div class="meta">${f(cp)} conc</div>`:''}</td>
       <td class="meta">${dealsCell(g)}</td>
       <td class="meta">${memPass}</td>
-      <td class="meta">${(g.facilities_clean||'—')}${acDesc(g) ? ' · ' + acDesc(g) : ''}</td>
+      <td class="meta">${(g.facilities||'—')}${acDesc(g) ? ' · ' + acDesc(g) : ''}</td>
       <td class="meta">${hoursSummary(g)}</td>
       <td class="meta">${igUrl(g)?`<a href="${igUrl(g)}" target="_blank" rel="noopener">@${esc(g.instagram)}</a>`:'—'}</td>
       <td class="meta">${esc(g.address||((g.area||'')+' '+(g.postcode||'')))}</td>
@@ -3830,8 +3798,7 @@ function renderMapList(){
   const rows=DATA.gyms.filter(g=>{
     if(type && !g.type.includes(type)) return false;
     if(zone && String(g.zone)!==zone) return false;
-    // Apply air‑conditioning filter for the map list: when "AC" is selected (ac === 'ac'), include gyms with any AC and exclude those without AC.
-    if(ac === 'ac' && g.ac === 'none') return false;
+    if(!acMatch(g,ac)) return false;
     return true;
   }).map(g=>{
     const b=bestOnDay(g,when,conc)||{price:null,when:""};
@@ -3865,8 +3832,7 @@ function initMap(){
   const priced=DATA.gyms.filter(g=>{
     if(type && !g.type.includes(type)) return false;
     if(zone && String(g.zone)!==zone) return false;
-    // Apply air‑conditioning filter: when "AC" is selected (ac === 'ac'), include gyms with any AC and exclude those without AC.
-    if(ac === 'ac' && g.ac === 'none') return false;
+    if(!acMatch(g,ac)) return false;
     return true;
   }).map(g=>({g,b:bestOnDay(g,when,conc)})).filter(x=>x.b);
   const minp = priced.length ? Math.min(...priced.map(x=>x.b.price)) : Infinity;
@@ -3875,10 +3841,8 @@ function initMap(){
     // Skip gyms that don't match the Type, Zone or AC filters
     if(type && !g.type.includes(type)) return;
     if(zone && String(g.zone)!==zone) return;
-    if(ac === 'ac' && g.ac === 'none') return;
+    if(!acMatch(g,ac)) return;
     const b=bestOnDay(g,when,conc);
-    // If no price available (closed or no valid slot), skip from map
-    if(!b) return;
     const cheap = b && b.price===minp;
     const d=dirLinks(g);
     const marker=L.circleMarker([g.lat,g.lng],{radius:7,color:cheap?"#5db07a":"#e2a13c",fillColor:cheap?"#5db07a":"#e2a13c",fillOpacity:.85,weight:1}).addTo(MAP);
