@@ -61,6 +61,35 @@ is exactly how City Bouldering's 10%-off summer sale went unnoticed.
 
 Once you record a flagged offer in `limited_promotions`, its prices count as known and it
 stops being reported. That "record it to silence it" loop is what keeps the report short.
+
+## Limited-time offers and expiry
+
+Each `limited_promotions` entry carries an **`expires`** date (`YYYY-MM-DD`), or `null`.
+`null` is the common case and means *no end date known* — not "runs forever". Most gyms
+never state one on their website: of the offers tracked here, only Westway's does, and
+that one turned out to have ended on 2024-01-31 while still being advertised.
+
+Whenever `expires` is set, **`expires_source`** must say where the date came from — a URL,
+or something like `"in-gym poster, seen 2026-08-05"`. A date with no stated origin is the
+dangerous case, because later nobody can tell a real end date from a guess. A test enforces
+this. Off-website sources are fine and often the only ones there are: City Bouldering's
+summer sale ends 2026-08-31 according to a poster in the gym, and nothing on their site
+says so. What is *not* fine is inferring a date from an offer's name — "Summer 2026 sale"
+is not evidence that it stops on 31 August.
+
+Watch out for the two different things a page can mean by a date. Climbing District's
+Summer Pass says *"valid for 3 months from the date of purchase"* — that is how long your
+pass lasts once bought, not when the offer stops being sold. Only the latter is `expires`.
+
+Once past its `expires` date an offer is treated as expired everywhere: hidden on the site
+and in `promos` (use `promos --all` to see it), and — deliberately — its prices stop
+counting as "known", so if a gym is still advertising it past the stated end date the
+weekly check surfaces it again rather than staying quiet.
+
+```
+python3 london_climbing_prices.py promos          # live offers only
+python3 london_climbing_prices.py promos --all    # include expired
+```
 Membership prices are not existence-checked: `prices_url` is the day-pass page and several
 brands don't publish membership rates there at all, so absence would mean "not listed" far
 more often than "changed". Membership deals still surface via the promo scan.

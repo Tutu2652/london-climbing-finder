@@ -72,9 +72,14 @@ class GoldenTests(unittest.TestCase):
         self.assertGreater(price, 5.0)
 
     def test_board_only_slot_never_prices_standard_entry(self):
-        # Rise "Board Friday (board only)" £5 must NOT be offered as day entry.
+        # Rise "Board Friday (board only)" £7.50 must NOT be offered as day entry.
         price, label = self.price("rise", "2026-07-10", "12:00", conc=False)
-        self.assertGreater(price, 5.0, "board-only slot leaked into pricing")
+        self.assertEqual(price, 12.5)
+        self.assertNotIn("Board", label, "board-only slot leaked into pricing")
+
+    def test_rise_current_peak_price(self):
+        price, _ = self.price("rise", "2026-07-10", "18:00", conc=False)
+        self.assertEqual(price, 16.0)
 
     def test_student_saver_concession_only(self):
         # CD Bermondsey Monday £5 Student Saver: concession yes, adult no.
@@ -187,6 +192,27 @@ class DataValidation(unittest.TestCase):
             self.assertNotIn(p["id"], ids, "duplicate promo id %s" % p["id"])
             ids.add(p["id"])
 
+    def test_every_promo_has_an_expires_key(self):
+        # null is fine and normal (most gyms publish no end date); the key
+        # must still be present so "no end date" is explicit, not an omission.
+        for p in DATA.get("limited_promotions", []):
+            self.assertIn("expires", p, "%s: add expires (null if none)" % p["id"])
+            if p["expires"] is not None:
+                dt.date.fromisoformat(p["expires"])  # raises if malformed
+                # A date with no stated origin is the dangerous case: nobody
+                # can later tell a real end date from a guessed one.
+                self.assertTrue(p.get("expires_source"),
+                                "%s: expires needs expires_source saying where "
+                                "the date came from" % p["id"])
+
+    def test_expired_promos_are_marked_expired(self):
+        today = dt.date.today()
+        for p in DATA.get("limited_promotions", []):
+            if p.get("expires") and dt.date.fromisoformat(p["expires"]) < today:
+                self.assertEqual(p["status"], "expired",
+                                 "%s ended %s but status is %r"
+                                 % (p["id"], p["expires"], p["status"]))
+
 
 # A trimmed copy of the City Bouldering pricing markup as it looked on
 # 2026-08-04 - the summer sale the old existence-only check could not see.
@@ -247,6 +273,23 @@ class PromoDetection(unittest.TestCase):
     def test_offer_as_a_verb_is_not_a_promo(self):
         hits = self.cli.promo_candidates(PROSE_FIXTURE, set())
         self.assertEqual(hits, [], "matched 'offer' used as a verb")
+
+    def test_expired_promo_stops_suppressing_detection(self):
+        # A recorded offer normally silences its own re-detection. Once it is
+        # past its end date that suppression must lift, so a gym still running
+        # the offer shows up again.
+        data = {"limited_promotions": [
+            {"id": "x", "brand": "City Bouldering", "price": "£133.20",
+             "details": "", "valid": "", "expires": "2024-01-31",
+             "status": "expired"}]}
+        live = self.cli.promo_amounts_known(data, {"City Bouldering"})
+        self.assertNotIn(133.2, live)
+        data["limited_promotions"][0].update(expires="2099-01-01", status="active")
+        self.assertIn(133.2, self.cli.promo_amounts_known(data, {"City Bouldering"}))
+
+    def test_promo_with_no_expiry_is_live(self):
+        p = {"id": "x", "status": "active", "expires": None}
+        self.assertFalse(self.cli.promo_expired(p, dt.date(2030, 1, 1)))
 
     def test_overlapping_hits_collapse(self):
         # "10% OFF" and "SUMMER SALE" both match inside one block; the block
