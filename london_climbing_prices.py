@@ -599,10 +599,40 @@ def known_amounts(gyms):
     return known
 
 
-def promo_amounts_known(data, brands):
-    """Amounts already recorded in limited_promotions for these brands."""
+def promo_expired(promo, today=None):
+    """
+    True if the offer's published end date has passed. 'expires' is null for
+    most offers because most gyms never publish one - absence means "no end
+    date known", never "runs forever", so an explicit status of 'expired'
+    counts too.
+    """
+    if promo.get("status") == "expired":
+        return True
+    when = promo.get("expires")
+    if not when:
+        return False
+    try:
+        return dt.date.fromisoformat(when) < (today or dt.date.today())
+    except ValueError:
+        return False
+
+
+def live_promos(data, today=None):
+    """Offers that have not passed their published end date."""
+    return [p for p in data.get("limited_promotions", [])
+            if not promo_expired(p, today)]
+
+
+def promo_amounts_known(data, brands, today=None):
+    """
+    Amounts already recorded in limited_promotions for these brands.
+
+    Expired offers are excluded on purpose: if a gym is still advertising an
+    offer past its stated end date, that is worth surfacing again rather than
+    staying silent because we once recorded it.
+    """
     known = set()
-    for p in data.get("limited_promotions", []):
+    for p in live_promos(data, today):
         if brands and p.get("brand") not in brands:
             continue
         known |= _amounts_in(p.get("price", "")) | _amounts_in(p.get("details", ""))
@@ -970,7 +1000,9 @@ def main(argv=None):
     sub.add_parser("memberships", help="monthly membership prices (full + concession)")
     sub.add_parser("refresh")
     sub.add_parser("check", help="re-check stored prices against live pages, report changes")
-    sub.add_parser("promos", help="limited-time / seasonal offers")
+    pr = sub.add_parser("promos", help="limited-time / seasonal offers")
+    pr.add_argument("--all", action="store_true",
+                    help="include offers past their published end date")
 
     args = p.parse_args(argv)
     data = load_data()
@@ -1066,16 +1098,36 @@ def main(argv=None):
     elif args.cmd == "check":
         check_prices(data)
     elif args.cmd == "promos":
-        ps = data.get("limited_promotions", [])
+        all_ps = data.get("limited_promotions", [])
+        today = dt.date.today()
+        live = live_promos(data, today)
+        ps = all_ps if args.all else live
         print("\nLimited-time / seasonal offers\n%s" % ("-" * 50))
         if not ps:
             print("None tracked right now.")
         for p in ps:
-            tag = " (verify)" if p.get("status") == "unverified" else ""
+            bits = []
+            if p.get("status") == "unverified":
+                bits.append("verify")
+            if promo_expired(p, today):
+                bits.append("EXPIRED %s" % (p.get("expires") or ""))
+            elif p.get("expires"):
+                left = (dt.date.fromisoformat(p["expires"]) - today).days
+                bits.append("ends %s (%d day%s left)"
+                            % (p["expires"], left, "" if left == 1 else "s"))
+            tag = ("  [%s]" % "; ".join(bits)) if bits else ""
             print("  %-42s %-26s %s%s" % (
                 p.get("title", ""), p.get("price", ""), p.get("valid", ""), tag))
             if p.get("details"):
                 print("      %s  [%s]" % (p["details"], p.get("brand", "")))
+        hidden = len(all_ps) - len(live)
+        if hidden and not args.all:
+            print("\n%d expired offer%s hidden. Show with: promos --all"
+                  % (hidden, "" if hidden == 1 else "s"))
+        undated = sum(1 for p in live if not p.get("expires"))
+        if undated:
+            print("\n%d live offer%s have no published end date - most gyms "
+                  "don't state one." % (undated, " " if undated == 1 else "s"))
     else:
         interactive(data)
 

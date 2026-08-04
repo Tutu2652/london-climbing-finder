@@ -184,8 +184,9 @@
 const DATA = {
   "_meta": {
     "currency": "GBP",
-    "last_research_date": "2026-07-01",
+    "last_research_date": "2026-08-05",
     "sources": [
+      "official gym websites audited 2026-08-05",
       "web research 2026-07-01",
       "user Google Sheet (incorporated 2026-07-01)"
     ],
@@ -207,7 +208,7 @@ const DATA = {
     },
     {
       "scope": "City Bouldering (Aldgate, White City, Stratford, Climbing Co Fulham)",
-      "offer": "Bargain £7.50 and Student Saver £9.50 run on different days per centre (see each gym's note). Student Saver anytime: Aldgate Fri, White City Thu, Stratford Mon & Fri, Fulham Tue. Aldgate also runs BOGOF (£17 for two) Saturday eves 5-8pm.",
+      "offer": "Bargain £7.50 and Student Saver £9.50 run on different days per centre (see each gym's note). Student Saver anytime: Aldgate Fri, White City Thu, Stratford Mon & Fri, Fulham Tue. Aldgate also runs BOGOF (£17 for two) Saturday eves 5-8pm. Fulham student memberships: 3 months £170, 6 months £320, 12 months £590.",
       "source": "https://www.citybouldering.co.uk/pricing"
     },
     {
@@ -261,7 +262,7 @@ const DATA = {
       },
       "offpeak_assumed": false,
       "magic_slots": [],
-      "student_note": "Concession £12.50 peak / £10.50 off-peak (Mon-Fri 8am-5pm) for students, under-16s, over-65s and unwaged. Show ID.",
+      "student_note": "Concession £12.50 peak / £10.50 off-peak (Mon-Fri 8am-5pm) for students, under-18s, over-60s, eligible benefits and Blue Light holders. Show ID. Step-free entry £5 for disabilities that make stairs unsafe.",
       "registration_fee": 3.0,
       "verified": true,
       "last_checked": "2026-07-01",
@@ -309,6 +310,7 @@ const DATA = {
       },
       "hours_assumed": false,
       "instagram": "thecastleclimbingcentre",
+      "events_url": "https://www.castle-climbing.co.uk/events",
       "classes_url": "https://www.castle-climbing.co.uk/climbing-courses",
       "class_info": "[Taster session](https://www.castle-climbing.co.uk/climbing-courses) £45 (90min); [Bouldering Fundamentals](https://www.castle-climbing.co.uk/climbing-courses) (4-week) and [Learn to Top Rope](https://www.castle-climbing.co.uk/climbing-courses) (1-day) courses; [Bouldering & Roped Climbing Fundamentals 6-week](https://www.castle-climbing.co.uk/climbing-courses) £235 (incl. FREE membership worth £114); [private tuition](https://www.castle-climbing.co.uk/climbing-courses) from 1hr.",
       "socials": [
@@ -700,7 +702,7 @@ const DATA = {
         "method": "regex",
         "needs_js": false
       },
-      "facilities": "Bouldering, Kilter board, training area, showers",
+      "facilities": "Bouldering (100+ problems), traverse, Kilter board, gym/training area, showers",
       "membership": {
         "full_monthly": 85,
         "concession_monthly": 75
@@ -1097,6 +1099,7 @@ const DATA = {
       },
       "hours_assumed": false,
       "instagram": "mileendclimbing",
+      "events_url": "https://www.mileendwall.org.uk/index.php/socials-and-events",
       "classes_url": "https://www.mileendwall.org.uk/",
       "class_info": "[Bouldering Induction](https://www.mileendwall.org.uk/index.php/courses/categories/bouldering-courses) £23 (1hr); [Roped Climbing Induction](https://www.mileendwall.org.uk/index.php/courses/categories/roped-courses) £75 (5h45m); [Lead Climbing Essentials](https://www.mileendwall.org.uk/index.php/courses/categories/roped-courses) £120 (7h30m); [Beginner Setting Experience](https://www.mileendwall.org.uk/index.php/courses/categories/route-setting) £120. Ages 14+.",
       "route_setting_url": "https://www.mileendwall.org.uk/about-us",
@@ -1113,9 +1116,9 @@ const DATA = {
       "area": "Wandsworth",
       "borough": "Wandsworth",
       "zone": 2,
-      "postcode": "SW18",
-      "lat": 51.4614,
-      "lng": -0.1996,
+      "postcode": "SW18 4TF",
+      "lat": 51.4549,
+      "lng": -0.1931,
       "website": "https://www.the-font.co.uk/wandsworth",
       "prices_url": "https://www.the-font.co.uk/wandsworth/prices",
       "payg": {
@@ -1160,9 +1163,9 @@ const DATA = {
       "facilities": "Bouldering, ropes/auto-belay, fitness, yoga",
       "membership": {
         "full_monthly": 80,
-        "concession_monthly": 62
+        "concession_monthly": 65
       },
-      "address": "30 Lydden Road, London SW18 4LR",
+      "address": "52-58 Garratt Lane, London SW18 4TF",
       "passes": "5 passes £85 (£72.50 conc); 10 passes £155 (£130 conc)",
       "hours": {
         "Mon": [
@@ -1258,7 +1261,7 @@ const DATA = {
       "facilities": "Bouldering, fitness",
       "membership": {
         "full_monthly": 80,
-        "concession_monthly": 62
+        "concession_monthly": 65
       },
       "address": "Unit 1B, Triptych Place, 185 Park Street, Bankside, London SE1 9BL",
       "passes": "5 passes £85 (£72.50 conc); 10 passes £155 (£130 conc)",
@@ -1354,10 +1357,10 @@ const DATA = {
         "method": "regex",
         "needs_js": false
       },
-      "facilities": "Bouldering, fitness",
+      "facilities": "Bouldering, MoonBoard, Kilter board, fitness gym, café, showers, lockers, workspace",
       "membership": {
         "full_monthly": 75,
-        "concession_monthly": 62
+        "concession_monthly": 60
       },
       "address": "High Street Quarter, 9 Smithy Lane, Hounslow TW3 1EH",
       "passes": "5 passes £80 (£67.50 conc); 10 passes £150 (£125 conc)",
@@ -1395,7 +1398,12 @@ const DATA = {
       "events_url": "https://www.the-font.co.uk/whats-on",
       "instagram": "thefonthounslow",
       "classes_url": "https://www.the-font.co.uk/adult-coaching",
-      "class_info": "Bouldering intro sessions & coaching workshops (prices at booking). Roped climbing & workshops run at Wandsworth."
+      "class_info": "Bouldering intro sessions & coaching workshops (prices at booking). Roped climbing & workshops run at Wandsworth.",
+      "socials": [
+        "[Board Social](https://www.the-font.co.uk/news-and-articles/social-schedule-hounslow) — Mon 18:30-20:30",
+        "[Women’s Social](https://www.the-font.co.uk/news-and-articles/social-schedule-hounslow) — Wed 19:00-20:30",
+        "[Open Social](https://www.the-font.co.uk/news-and-articles/social-schedule-hounslow) — Thu 18:00-20:00"
+      ]
     },
     {
       "id": "yonder",
@@ -1483,10 +1491,14 @@ const DATA = {
         "4f12153b-a6fa-4ede-a729-cc89a619f2de/PASS+PACKS_1.jpg"
       ],
       "price_image_note": "Prices are image boards on thisisyonder.com/yonder-climbing; auto-check watches whether these image assets are swapped (a change means prices likely changed - re-read the board manually).",
-      "events_url": "https://www.thisisyonder.com/events-calender",
+      "events_url": "https://www.thisisyonder.com/events-social-and-courses",
       "instagram": "yonder.climbing",
       "classes_url": "https://www.thisisyonder.com/coaching-courses-intro",
       "class_info": "[The Boulder Experience](https://www.thisisyonder.com/coaching-courses-intro) £25 (1hr intro, incl. kit + day entry). [Ground Up bouldering essentials](https://www.thisisyonder.com/coaching-courses-intro) £85 (3x1.5hr, incl. membership during course + 20% off shoes).",
+      "socials": [
+        "[Boulder Buds socials](https://www.thisisyonder.com/events-social-and-courses) — open, queer and running-club sessions (see calendar)",
+        "[BSL Bouldering Social](https://www.thisisyonder.com/events-social-and-courses) — selected Mondays 18:30-21:30, £9.50 incl. shoes"
+      ],
       "ac": "full",
       "ac_note": "air conditioning and fans"
     },
@@ -1525,7 +1537,7 @@ const DATA = {
       "offpeak_assumed": false,
       "magic_slots": [],
       "student_note": "Concession £12 peak / £10 off-peak (students, over-65s, paraclimbers, means-tested benefits). Off-peak Mon-Fri before 4pm.",
-      "registration_fee": null,
+      "registration_fee": 5.0,
       "verified": true,
       "last_checked": "2026-07-01",
       "scrape": {
@@ -1591,10 +1603,10 @@ const DATA = {
       "website": "https://www.rise-climbing.com/",
       "prices_url": "https://www.rise-climbing.com/entry-memberships",
       "payg": {
-        "adult_peak": 14.0,
-        "adult_offpeak": 11.0,
-        "concession_peak": 10.5,
-        "concession_offpeak": 9.0
+        "adult_peak": 16.0,
+        "adult_offpeak": 12.5,
+        "concession_peak": 12.0,
+        "concession_offpeak": 10.5
       },
       "offpeak_window": {
         "days": [
@@ -1609,7 +1621,7 @@ const DATA = {
         "concession_only": false,
         "except_bank_holidays": true
       },
-      "offpeak_assumed": true,
+      "offpeak_assumed": false,
       "magic_slots": [
         {
           "days": [
@@ -1636,11 +1648,11 @@ const DATA = {
           ],
           "start": "00:00",
           "end": "23:59",
-          "price": 5.0,
+          "price": 7.5,
           "label": "Board Friday (board only)"
         }
       ],
-      "student_note": "Concession £10.50 peak / £9 off-peak (Mon-Fri before 4pm, excl. bank holidays). Super off-peak £7.50 Tue & Thu 6-10am. Student Fridays £7.50 (incl. shoes); Board Friday £5 (board only). Pay-what-you-can available.",
+      "student_note": "Concession £12 peak / £10.50 off-peak (Mon-Fri before 4pm, excl. bank holidays). Super off-peak £7.50 Tue & Thu before 10am. Student Fridays £7.50 (incl. shoes); Board Friday £7.50 (board only). Pay-what-you-can available.",
       "registration_fee": null,
       "verified": true,
       "last_checked": "2026-07-01",
@@ -1649,13 +1661,13 @@ const DATA = {
         "method": "regex",
         "needs_js": true
       },
-      "facilities": "Bouldering, Moonboard, training area, showers",
+      "facilities": "Bouldering, traverse, TB2, MoonBoard, set board, gym/training area, café/bar, showers",
       "membership": {
-        "full_monthly": 58,
-        "concession_monthly": 46.5
+        "full_monthly": 68.5,
+        "concession_monthly": 55.5
       },
       "address": "Unit 6, Caxton Works, Hoy Street, Canning Town, London E16 1ZA",
-      "passes": "10 punches £115 (£95 conc)",
+      "passes": "10 punches £135 (£105 conc, no expiry); 1-month pass £75 (£62 conc)",
       "hours": {
         "Mon": [
           "10:00",
@@ -1810,7 +1822,7 @@ const DATA = {
         "method": "regex",
         "needs_js": true
       },
-      "facilities": "Ropes (350+ routes), lead, top-rope, auto-belay (8), bouldering, outdoor",
+      "facilities": "Ropes (350+ routes), lead, top-rope, auto-belay (8), bouldering, training rooms/boards",
       "membership": {
         "full_monthly": 82,
         "concession_monthly": 68
@@ -1819,24 +1831,24 @@ const DATA = {
       "passes": "5 for £50; 10 for £90; 20 for £170",
       "hours": {
         "Mon": [
-          "07:00",
-          "22:00"
+          "08:00",
+          "21:45"
         ],
         "Tue": [
-          "07:00",
-          "22:00"
+          "08:00",
+          "21:45"
         ],
         "Wed": [
-          "07:00",
-          "22:00"
+          "08:00",
+          "21:45"
         ],
         "Thu": [
-          "07:00",
-          "22:00"
+          "08:00",
+          "21:45"
         ],
         "Fri": [
-          "07:00",
-          "22:00"
+          "08:00",
+          "21:45"
         ],
         "Sat": [
           "08:00",
@@ -1844,13 +1856,18 @@ const DATA = {
         ],
         "Sun": [
           "08:00",
-          "22:00"
+          "20:00"
         ]
       },
       "hours_assumed": false,
       "instagram": "westway_climbing",
-      "classes_url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/climbing-centre/",
-      "class_info": "[Coaching & courses](https://www.everyoneactive.com/centre/westway-sports-fitness-centre/climbing-centre/) (prices at booking)."
+      "events_url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/climbing-events/",
+      "classes_url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/adult-climbing/",
+      "class_info": "[Adult taster](https://www.everyoneactive.com/centre/westway-sports-fitness-centre/adult-climbing/) £30 (90min, incl. shoes + harness); beginner course £120; 1-to-1 coaching from £65/hr.",
+      "socials": [
+        "[Adult Club Night](https://www.everyoneactive.com/centre/westway-sports-fitness-centre/adult-climbing/) — Mon & Wed 19:00-21:00 (competent rope climbers, free with membership or pay entry)",
+        "[Women’s Climbing Morning](https://www.everyoneactive.com/centre/westway-sports-fitness-centre/adult-climbing/) — Wed 10:00-12:00 (instructor-led, free with membership or pay entry)"
+      ]
     },
     {
       "id": "climbing_co_fulham",
@@ -1894,7 +1911,7 @@ const DATA = {
           "label": "Student Saver (concession)"
         }
       ],
-      "student_note": "Concession £14 (peak price at all times). Bargain £7.50 Mondays; Student Saver £9.50 Tuesdays.",
+      "student_note": "Concession £14 (peak price at all times). Bargain £7.50 Mondays; Student Saver £9.50 Tuesdays. Fulham-only student membership: 3 months £170, 6 months £320, 12 months £590.",
       "registration_fee": 3.0,
       "verified": true,
       "last_checked": "2026-07-01",
@@ -1903,7 +1920,7 @@ const DATA = {
         "method": "regex",
         "needs_js": false
       },
-      "facilities": "Bouldering",
+      "facilities": "Bouldering, training area, showers/changing, café, retail shop",
       "membership": {
         "full_monthly": 59.99,
         "concession_monthly": null
@@ -1991,7 +2008,7 @@ const DATA = {
         "method": "regex",
         "needs_js": true
       },
-      "facilities": "Bouldering, fitness gym",
+      "facilities": "Bouldering, fitness gym, studio classes, sauna/cold plunge, café, showers/lockers, free parking",
       "membership": {
         "full_monthly": 82,
         "concession_monthly": 66
@@ -2860,12 +2877,26 @@ const DATA = {
   ],
   "limited_promotions": [
     {
+      "id": "cb-two-week-taster",
+      "brand": "City Bouldering",
+      "title": "First-timer: 2 weeks unlimited",
+      "details": "2 weeks unlimited entry to the climbing facilities and gym for new customers at Aldgate, White City, Stratford or Climbing Co Fulham",
+      "price": "£36",
+      "valid": "Ongoing intro offer",
+      "expires": null,
+      "source": "https://www.citybouldering.co.uk/pricing",
+      "first_seen": "2026-08-05",
+      "status": "active"
+    },
+    {
       "id": "cb-summer-10pass",
       "brand": "City Bouldering",
       "title": "10% off Summer Sale - 10 Climb Pass",
-      "details": "10-climb pass, 10% off. Valid at Aldgate, White City, Stratford and Climbing Co Fulham. Was £148 / £130 concession",
+      "details": "10-climb pass, 10% off. Valid at Aldgate, White City and Stratford (not Fulham). Was £148 / £130 concession",
       "price": "£133.20 (£117 concession)",
       "valid": "Summer 2026 sale",
+      "expires": "2026-08-31",
+      "expires_source": "In-gym poster reported by user 2026-08-05; not stated on the website",
       "source": "https://www.citybouldering.co.uk/pricing",
       "first_seen": "2026-08-04",
       "status": "active"
@@ -2874,9 +2905,11 @@ const DATA = {
       "id": "cb-summer-20pass",
       "brand": "City Bouldering",
       "title": "10% off Summer Sale - 20 Climb Pass",
-      "details": "20-climb pass, 10% off. Valid at Aldgate, White City, Stratford and Climbing Co Fulham. Was £280 / £246 concession",
+      "details": "20-climb pass, 10% off. Valid at Aldgate, White City and Stratford (not Fulham). Was £280 / £246 concession",
       "price": "£252 (£221.40 concession)",
       "valid": "Summer 2026 sale",
+      "expires": "2026-08-31",
+      "expires_source": "In-gym poster reported by user 2026-08-05; not stated on the website",
       "source": "https://www.citybouldering.co.uk/pricing",
       "first_seen": "2026-08-04",
       "status": "active"
@@ -2888,6 +2921,8 @@ const DATA = {
       "details": "6-month membership, 10% off. Memberships are valid at all City Bouldering centres. Was £465 / £400 concession",
       "price": "£418.50 (£360 concession)",
       "valid": "Summer 2026 sale",
+      "expires": "2026-08-31",
+      "expires_source": "In-gym poster reported by user 2026-08-05; not stated on the website",
       "source": "https://www.citybouldering.co.uk/pricing",
       "first_seen": "2026-08-04",
       "status": "active"
@@ -2899,6 +2934,8 @@ const DATA = {
       "details": "12-month membership, 10% off. Memberships are valid at all City Bouldering centres. Was £875 / £765 concession",
       "price": "£787.50 (£688.50 concession)",
       "valid": "Summer 2026 sale",
+      "expires": "2026-08-31",
+      "expires_source": "In-gym poster reported by user 2026-08-05; not stated on the website",
       "source": "https://www.citybouldering.co.uk/pricing",
       "first_seen": "2026-08-04",
       "status": "active"
@@ -2910,6 +2947,7 @@ const DATA = {
       "details": "10-entry pass, use anytime, valid 3 months from purchase",
       "price": "£99 (£89 concession)",
       "valid": "Summer 2026 seasonal offer",
+      "expires": null,
       "source": "https://climbingdistrict.uk/pricing/",
       "first_seen": "2026-07-01",
       "status": "active"
@@ -2921,6 +2959,7 @@ const DATA = {
       "details": "5-entry pass, valid 2 months from purchase",
       "price": "£49 (£40 concession)",
       "valid": "Summer 2026 seasonal offer",
+      "expires": null,
       "source": "https://climbingdistrict.uk/pricing/",
       "first_seen": "2026-07-01",
       "status": "active"
@@ -2928,10 +2967,11 @@ const DATA = {
     {
       "id": "lcc-first-month",
       "brand": "London Climbing Centres",
-      "title": "First-timer: a month for £50",
-      "details": "One month's unlimited climbing for £50 (incl. shoe hire); claim within 3 months of your first visit",
-      "price": "£50",
+      "title": "New-climber discount card",
+      "details": "Claim within 3 months of your first visit: £5 off visit two, one month unlimited for £50 incl. shoes, or £20 off La Sportiva Tarantulas (RRP £85). Not valid on the first visit or Magic Time entry",
+      "price": "£5 off / £50 month / £20 off shoes",
       "valid": "Ongoing intro offer",
+      "expires": null,
       "source": "https://londonclimbingcentres.co.uk/prices/",
       "first_seen": "2026-07-01",
       "status": "active"
@@ -2943,9 +2983,11 @@ const DATA = {
       "details": "Everyone Active promo on annual climbing memberships (verify current status)",
       "price": "25% off annual",
       "valid": "Check current status",
+      "expires": "2024-01-31",
+      "expires_source": "https://www.everyoneactive.com/promotion/25-off-annual-climbing-memberships/ (\"Limited-time offer ends January 31st 2024\")",
       "source": "https://www.everyoneactive.com/promotion/25-off-annual-climbing-memberships/",
       "first_seen": "2026-07-01",
-      "status": "unverified"
+      "status": "expired"
     },
     {
       "id": "sub-intro",
@@ -2954,6 +2996,7 @@ const DATA = {
       "details": "2 weeks unlimited climbing for new customers",
       "price": "£30",
       "valid": "Ongoing intro offer",
+      "expires": null,
       "source": "https://brixton.substation.co.uk/climbing/climbing-intro-offer",
       "first_seen": "2026-07-01",
       "status": "active"
@@ -3638,20 +3681,34 @@ function viewMemberships(){
   return html;
 }
 
+// An offer is past it if it says so, or if its published end date has gone by.
+// Most offers have expires:null — gyms rarely publish one, and null means "no
+// end date known", not "runs forever".
+function promoExpired(p){
+  if(p.status==='expired') return true;
+  if(!p.expires) return false;
+  const today=new Date().toISOString().slice(0,10);
+  return p.expires < today;
+}
+
 function viewPromos(){
-  const ps=DATA.limited_promotions||[];
+  const all=DATA.limited_promotions||[];
+  const ps=all.filter(p=>!promoExpired(p));
+  const hidden=all.length-ps.length;
   let html=`<div class="card"><table><thead><tr><th>Offer</th><th>Chain</th><th>Price</th><th>Details</th><th>Valid</th></tr></thead><tbody>`;
   if(!ps.length) html+=`<tr><td colspan="5" class="note">No limited-time offers running right now — check back soon, or see the standing deals under All gyms &amp; deals and Student discounts.</td></tr>`;
   ps.forEach(p=>{
     const flag = p.status==='unverified'?' <span class="flag">verify</span>':'';
+    const ends = p.expires ? `<br><span class="meta" title="${esc(p.expires_source||'')}">ends ${esc(p.expires)}</span>` : '';
     html+=`<tr>
       <td><a href="${p.source}" target="_blank" rel="noopener" style="color:inherit">${esc(p.title)}</a>${flag}</td>
       <td class="meta">${esc(p.brand)}</td>
       <td class="price">${esc(p.price||'')}</td>
       <td class="meta">${esc(p.details||'')}</td>
-      <td class="meta" style="color:var(--accent2)">${esc(p.valid||'')}</td></tr>`;
+      <td class="meta" style="color:var(--accent2)">${esc(p.valid||'')}${ends}</td></tr>`;
   });
-  html+=`</tbody></table><div class="note">Limited-time / seasonal offers (separate from the standing deals in "Off-peak & cheap slots"). The weekly price-check task re-reads these pages and flags new or expired offers. City Bouldering's June-only Stratford bargain has ended; their current standing deals (Bargain £7.50, Student Saver £9.50, BOGOF) are in the deals view. "verify" = not reconfirmed this session.</div></div>`;
+  const note = hidden ? ` ${hidden} offer${hidden===1?'':'s'} past ${hidden===1?'its':'their'} published end date ${hidden===1?'is':'are'} hidden.` : '';
+  html+=`</tbody></table><div class="note">Limited-time / seasonal offers (separate from the standing deals in "Off-peak & cheap slots"). The weekly price-check task re-reads these pages and flags new or expired offers.${note} Most gyms don't publish an end date, so an offer without one may still stop at any time — check the link before you buy. City Bouldering's June-only Stratford bargain has ended; their current standing deals (Bargain £7.50, Student Saver £9.50, BOGOF) are in the deals view. "verify" = not reconfirmed this session.</div></div>`;
   return html;
 }
 
