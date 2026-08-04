@@ -30,6 +30,7 @@ JavaScript.
 
 import argparse
 import datetime as dt
+import html as _html
 import json
 import os
 import re
@@ -528,10 +529,18 @@ def refresh_prices(data, verbose=True):
     return data
 
 
+def _page_text(html):
+    """
+    De-tag a page and decode entities. Sites are inconsistent about writing
+    '£' literally vs as '&pound;' / '&#163;', so decode before hunting for
+    amounts or a price would be invisible on half the pages.
+    """
+    return re.sub(r"\s+", " ", _html.unescape(re.sub(r"<[^>]+>", " ", html)))
+
+
 def _all_amounts(html):
     """Every GBP amount on a page, as a set of normalised strings."""
-    text = re.sub(r"<[^>]+>", " ", html)
-    return set(re.findall(r"£\s?(\d{1,3}(?:\.\d{1,2})?)", text))
+    return set(re.findall(r"£\s?(\d{1,3}(?:\.\d{1,2})?)", _page_text(html)))
 
 
 def _amount_variants(v):
@@ -541,49 +550,169 @@ def _amount_variants(v):
     return out
 
 
+# Wording gyms use when they put a deal on a page. Matched against the
+# de-tagged page text; the amounts near a hit are what we actually inspect.
+# "offer" only counts in its noun sense - a bare \boffers?\b also matches
+# prose like "our gyms offer world-class bouldering".
+PROMO_RE = re.compile(
+    r"(\d{1,2}\s?%\s?off"
+    r"|\bsale\b"
+    r"|(?:special|intro(?:ductory)?|limited|exclusive|seasonal|summer|winter"
+    r"|launch|new)\s+offers?\b"
+    r"|promo(?:tion)?s?\b"
+    r"|limited time"
+    r"|\bbogof\b"
+    r"|free trial)", re.I)
+
+# Fields whose free text can contain £ amounts we already know about.
+_TEXT_PRICE_FIELDS = ("passes", "class_info", "student_note", "note", "ac_note")
+
+
+def _amounts_in(text):
+    """GBP amounts in free text, as floats (so £133.20 == £133.2)."""
+    return {float(a) for a in re.findall(r"£\s?(\d{1,3}(?:\.\d{1,2})?)", text or "")}
+
+
+def known_amounts(gyms):
+    """
+    Every GBP amount gyms.json already records for `gyms`, as floats. Used as
+    the baseline for "is this number on the page new?", so that a promo we
+    already track does not get reported week after week.
+    """
+    known = set()
+    for gym in gyms:
+        for v in (gym.get("payg") or {}).values():
+            if isinstance(v, (int, float)):
+                known.add(float(v))
+        for v in (gym.get("membership") or {}).values():
+            if isinstance(v, (int, float)):
+                known.add(float(v))
+        if isinstance(gym.get("registration_fee"), (int, float)):
+            known.add(float(gym["registration_fee"]))
+        for slot in gym.get("magic_slots") or []:
+            if isinstance(slot.get("price"), (int, float)):
+                known.add(float(slot["price"]))
+        blobs = [gym.get(f) or "" for f in _TEXT_PRICE_FIELDS]
+        blobs.extend(gym.get("socials") or [])
+        for blob in blobs:
+            known |= _amounts_in(blob)
+    return known
+
+
+def promo_amounts_known(data, brands):
+    """Amounts already recorded in limited_promotions for these brands."""
+    known = set()
+    for p in data.get("limited_promotions", []):
+        if brands and p.get("brand") not in brands:
+            continue
+        known |= _amounts_in(p.get("price", "")) | _amounts_in(p.get("details", ""))
+    return known
+
+
+def promo_candidates(html, known, radius=140):
+    """
+    Find promo-flavoured blocks whose prices we do not already record.
+
+    Returns [(snippet, [new amounts])]. Gating on promo wording is what keeps
+    this quiet: a pricing page is full of unrelated numbers (shoe hire, courses,
+    deposits), but only a handful sit next to "sale" / "% off" / "offer".
+    """
+    text = _page_text(html)
+    out, seen = [], set()
+    for m in PROMO_RE.finditer(text):
+        chunk = text[max(0, m.start() - radius): m.end() + radius]
+        new = sorted(_amounts_in(chunk) - known)
+        if not new:
+            continue
+        # Overlapping hits (a page saying "SUMMER SALE" three times in one
+        # block) collapse to a single report via their amount set.
+        key = frozenset(new)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append((chunk.strip(), new))
+    return out
+
+
 def check_prices(data, verbose=True):
     """
-    Robust price re-check. For each gym whose price page is server-rendered
-    (not a JS booking widget), fetch it and confirm the stored headline prices
-    (adult peak and concession peak) still appear on the page. Anything that no
-    longer matches is reported as a likely change to review. Read-only.
+    Robust price re-check. For each price page that is server-rendered (not a
+    JS booking widget), fetch it once and:
+
+      * confirm the stored headline prices (adult peak, concession peak) still
+        appear -> catches prices that CHANGED;
+      * scan for promo wording next to amounts we do not already record ->
+        catches offers that were ADDED.
+
+    The second half is the point: a pure discount leaves the old prices on the
+    page untouched, so an existence check alone can never see it. Read-only.
+
+    Membership prices are deliberately NOT existence-checked here: prices_url
+    is the day-pass page, and several brands (LCC for one) do not publish
+    membership rates on it at all, so absence means "not listed" far more often
+    than "changed". Membership deals still surface via the promo scan.
     """
-    changed, unreachable, skipped, ok = [], [], 0, 0
+    changed, offers, unreachable, skipped, ok = [], [], [], 0, 0
+
+    # Several gyms share one pricing page (e.g. all four City Bouldering
+    # sites). Group by URL so we fetch once and report an offer once.
+    by_url = {}
     for gym in data["gyms"]:
         sc = gym.get("scrape", {})
         url = sc.get("url") or gym.get("prices_url")
         if sc.get("needs_js") or not url:
             skipped += 1
             continue
+        by_url.setdefault(url, []).append(gym)
+
+    for url, gyms in by_url.items():
         try:
-            amounts = _all_amounts(_fetch(url))
+            html = _fetch(url)
         except Exception:
-            unreachable.append(gym["name"])
+            unreachable.extend(g["name"] for g in gyms)
             continue
+        amounts = _all_amounts(html)
         if not amounts:
-            unreachable.append(gym["name"])
+            unreachable.extend(g["name"] for g in gyms)
             continue
-        missing = []
-        for key in ("adult_peak", "concession_peak"):
-            v = gym["payg"].get(key)
-            if v is not None and not (_amount_variants(v) & amounts):
-                missing.append("%s %s" % (key.replace("_", " "), fmt_price(v)))
-        if missing:
-            changed.append((gym["name"], missing, url))
-        else:
-            ok += 1
+
+        for gym in gyms:
+            missing = []
+            for key in ("adult_peak", "concession_peak"):
+                v = gym["payg"].get(key)
+                if v is not None and not (_amount_variants(v) & amounts):
+                    missing.append("%s %s" % (key.replace("_", " "), fmt_price(v)))
+            if missing:
+                changed.append((gym["name"], missing, url))
+            else:
+                ok += 1
+
+        brands = {g.get("brand") for g in gyms}
+        baseline = known_amounts(gyms) | promo_amounts_known(data, brands)
+        for snippet, new in promo_candidates(html, baseline):
+            offers.append((sorted(brands)[0] if brands else gyms[0]["name"],
+                           snippet, new, url))
+
     print("\nPrice re-check (%s)\n%s" % (dt.date.today().isoformat(), "-" * 50))
-    print("%d matched, %d to review, %d unreachable, %d skipped (JS-only pages)."
-          % (ok, len(changed), len(unreachable), skipped))
+    print("%d matched, %d to review, %d new offer(s), %d unreachable, "
+          "%d skipped (JS-only pages)."
+          % (ok, len(changed), len(offers), len(unreachable), skipped))
     if changed:
         print("\nTO REVIEW - stored price no longer found on page:")
         for name, miss, url in changed:
             print("  * %s: %s\n      %s" % (name, "; ".join(miss), url))
+    if offers:
+        print("\nNEW OFFERS - promo wording with prices not in gyms.json:")
+        for brand, snippet, new, url in offers:
+            print("  * %s: %s" % (brand, ", ".join(fmt_price(a) for a in new)))
+            print("      ...%s..." % snippet[:220])
+            print("      %s" % url)
     if unreachable and verbose:
         print("\nCould not fetch: %s" % ", ".join(unreachable))
-    if not changed:
-        print("\nNo headline price changes detected on the readable pages.")
-    return changed
+    if not changed and not offers:
+        print("\nNo headline price changes or new offers detected on the "
+              "readable pages.")
+    return changed, offers
 
 
 # --------------------------------------------------------------------------- #
@@ -943,7 +1072,7 @@ def main(argv=None):
             print("None tracked right now.")
         for p in ps:
             tag = " (verify)" if p.get("status") == "unverified" else ""
-            print("  %-34s %-18s %s%s" % (
+            print("  %-42s %-26s %s%s" % (
                 p.get("title", ""), p.get("price", ""), p.get("valid", ""), tag))
             if p.get("details"):
                 print("      %s  [%s]" % (p["details"], p.get("brand", "")))

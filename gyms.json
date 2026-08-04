@@ -2677,6 +2677,50 @@
   ],
   "limited_promotions": [
     {
+      "id": "cb-summer-10pass",
+      "brand": "City Bouldering",
+      "title": "10% off Summer Sale - 10 Climb Pass",
+      "details": "10-climb pass, 10% off. Aldgate, White City & Stratford only (not Climbing Co Fulham). Was £148 / £130 concession",
+      "price": "£133.20 (£117 concession)",
+      "valid": "Summer 2026 sale",
+      "source": "https://www.citybouldering.co.uk/pricing",
+      "first_seen": "2026-08-04",
+      "status": "active"
+    },
+    {
+      "id": "cb-summer-20pass",
+      "brand": "City Bouldering",
+      "title": "10% off Summer Sale - 20 Climb Pass",
+      "details": "20-climb pass, 10% off. Aldgate, White City & Stratford only (not Climbing Co Fulham). Was £280 / £246 concession",
+      "price": "£252 (£221.40 concession)",
+      "valid": "Summer 2026 sale",
+      "source": "https://www.citybouldering.co.uk/pricing",
+      "first_seen": "2026-08-04",
+      "status": "active"
+    },
+    {
+      "id": "cb-summer-6mo",
+      "brand": "City Bouldering",
+      "title": "10% off Summer Sale - 6 Month Membership",
+      "details": "6-month membership, 10% off. Aldgate, White City & Stratford only (not Climbing Co Fulham). Was £465 / £400 concession",
+      "price": "£418.50 (£360 concession)",
+      "valid": "Summer 2026 sale",
+      "source": "https://www.citybouldering.co.uk/pricing",
+      "first_seen": "2026-08-04",
+      "status": "active"
+    },
+    {
+      "id": "cb-summer-12mo",
+      "brand": "City Bouldering",
+      "title": "10% off Summer Sale - 12 Month Membership",
+      "details": "12-month membership, 10% off. Aldgate, White City & Stratford only (not Climbing Co Fulham). Was £875 / £765 concession",
+      "price": "£787.50 (£688.50 concession)",
+      "valid": "Summer 2026 sale",
+      "source": "https://www.citybouldering.co.uk/pricing",
+      "first_seen": "2026-08-04",
+      "status": "active"
+    },
+    {
       "id": "cd-summer-10",
       "brand": "Climbing District",
       "title": "Summer Pass (10 entries)",

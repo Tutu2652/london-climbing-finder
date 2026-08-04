@@ -36,12 +36,20 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('report.txt', 'utf8');
-            if (report.includes('TO REVIEW')) {
+            const changed = report.includes('TO REVIEW');
+            const offers = report.includes('NEW OFFERS');
+            if (changed || offers) {
               const today = new Date().toISOString().slice(0, 10);
+              const what = changed && offers ? 'price changes and new offers'
+                         : changed ? 'price changes' : 'new offers';
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: `Climbing price changes detected (${today})`,
-                body: "The weekly check found prices that no longer match the stored data. Review and update `gyms.json`, then push.\n\n```\n" + report + "\n```",
+                title: `Climbing ${what} detected (${today})`,
+                body: "The weekly check found something that does not match the stored data.\n\n"
+                      + "- **TO REVIEW** = a stored price is no longer on the gym's page.\n"
+                      + "- **NEW OFFERS** = promo wording next to prices that are not in `gyms.json`.\n"
+                      + "  Add real ones to `limited_promotions` (that also stops them being re-reported).\n\n"
+                      + "Update `gyms.json`, run `python3 tools/sync_data.py`, then push.\n\n```\n" + report + "\n```",
               });
             }
