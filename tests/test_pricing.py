@@ -178,6 +178,83 @@ class DataValidation(unittest.TestCase):
             self.assertNotIn("ac available", fac,
                              "%s: move AC info to ac/ac_note" % g["id"])
 
+    def test_limited_promotions_shape(self):
+        ids = set()
+        for p in DATA.get("limited_promotions", []):
+            for field in ("id", "brand", "title", "price", "source", "status"):
+                self.assertTrue(p.get(field), "promo %r missing %s" % (p, field))
+            self.assertIn(p["status"], ("active", "unverified", "expired"))
+            self.assertNotIn(p["id"], ids, "duplicate promo id %s" % p["id"])
+            ids.add(p["id"])
+
+
+# A trimmed copy of the City Bouldering pricing markup as it looked on
+# 2026-08-04 - the summer sale the old existence-only check could not see.
+PROMO_FIXTURE = """
+<div class="pricing_heading"><div>Offers &amp; Promos</div>
+  <div>Adult</div><div>Concession</div></div>
+<div class="pricing_row">
+  <div class="pricing-discount">10% OFF</div>
+  <div class="text-weight-bold">SUMMER SALE - 10 Climb Pass</div>
+  <div class="membership-price">&pound;133.2</div><div class="compare-price">&pound;148</div>
+  <div class="membership-price">&pound;117</div><div class="compare-price">&pound;130</div>
+</div>
+"""
+
+# Prose that merely uses "offer" as a verb must not count as a promo.
+PROSE_FIXTURE = """
+<p>Members pay an entry fee of just &pound;7.00 per visit. Our gyms offer
+world-class bouldering on weekly reset walls.</p>
+"""
+
+
+class PromoDetection(unittest.TestCase):
+    """
+    The weekly check must notice offers that are ADDED to a page, not just
+    prices that vanish from it. A discount leaves the old prices in place, so
+    an existence check alone reports nothing.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.cli = load_cli()
+        # The four CB sites share one pricing page.
+        cls.gyms = [g for g in DATA["gyms"] if g.get("brand") == "City Bouldering"]
+
+    def test_detects_unrecorded_sale_prices(self):
+        # Baseline that knows the gyms but NOT the summer sale.
+        known = self.cli.known_amounts(self.gyms)
+        hits = self.cli.promo_candidates(PROMO_FIXTURE, known)
+        self.assertTrue(hits, "summer sale block was not flagged")
+        found = {a for _, amounts in hits for a in amounts}
+        self.assertIn(133.2, found)
+        self.assertIn(117.0, found)
+        # The pre-sale prices are already in gyms.json, so they are not "new".
+        self.assertNotIn(148.0, found)
+        self.assertNotIn(130.0, found)
+
+    def test_silent_once_promo_is_recorded(self):
+        known = (self.cli.known_amounts(self.gyms)
+                 | self.cli.promo_amounts_known(DATA, {"City Bouldering"}))
+        self.assertEqual(self.cli.promo_candidates(PROMO_FIXTURE, known), [],
+                         "a promo recorded in limited_promotions still reported")
+
+    def test_price_written_with_trailing_zero_still_matches(self):
+        # gyms.json records "£133.20"; the page renders "£133.2".
+        known = self.cli._amounts_in("£133.20 (£117 concession)")
+        self.assertIn(133.2, known)
+
+    def test_offer_as_a_verb_is_not_a_promo(self):
+        hits = self.cli.promo_candidates(PROSE_FIXTURE, set())
+        self.assertEqual(hits, [], "matched 'offer' used as a verb")
+
+    def test_overlapping_hits_collapse(self):
+        # "10% OFF" and "SUMMER SALE" both match inside one block; the block
+        # should be reported once, not twice.
+        hits = self.cli.promo_candidates(PROMO_FIXTURE,
+                                         self.cli.known_amounts(self.gyms))
+        self.assertEqual(len(hits), 1, "same block reported %d times" % len(hits))
+
 
 if __name__ == "__main__":
     unittest.main()

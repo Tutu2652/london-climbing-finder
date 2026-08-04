@@ -46,13 +46,30 @@ python3 london_climbing_prices.py cheapest --scrape                 # try a live
 
 ## Keeping prices fresh
 
-`check` fetches each gym's server-rendered price page and confirms the stored headline
-prices (adult peak, concession peak) still appear; anything that no longer matches is
-reported as a likely change to review (it never edits data itself). Pages that load prices
-through JavaScript booking widgets are skipped. The **`price-check.yml` GitHub Action**
-runs this automatically every Monday ~9am and opens a GitHub Issue if anything changed
-(you can also trigger it from the repo's Actions tab). Opening hours are stored per gym; the tool shows an
-open / closed / "opens HH:MM" indicator for the date and time you pick.
+`check` fetches each gym's server-rendered price page (once per page — several gyms share
+one) and reports two different things, never editing data itself:
+
+- **TO REVIEW** — a stored headline price (adult peak, concession peak) no longer appears
+  on the page, so it probably *changed*.
+- **NEW OFFERS** — promo wording ("10% off", "sale", "summer offer", "promo", "BOGOF")
+  sits next to GBP amounts that are *not* recorded anywhere in `gyms.json`, so an offer
+  was probably *added*.
+
+The second check exists because the first cannot see a discount: a new offer leaves the
+old prices on the page untouched, so an existence check alone reports "all matched". That
+is exactly how City Bouldering's 10%-off summer sale went unnoticed.
+
+Once you record a flagged offer in `limited_promotions`, its prices count as known and it
+stops being reported. That "record it to silence it" loop is what keeps the report short.
+Membership prices are not existence-checked: `prices_url` is the day-pass page and several
+brands don't publish membership rates there at all, so absence would mean "not listed" far
+more often than "changed". Membership deals still surface via the promo scan.
+
+Pages that load prices through JavaScript booking widgets are skipped. The
+**`price-check.yml` GitHub Action** runs this automatically every Monday ~9am and opens a
+GitHub Issue on either kind of finding (you can also trigger it from the repo's Actions
+tab). Opening hours are stored per gym; the tool shows an open / closed / "opens HH:MM"
+indicator for the date and time you pick.
 
 ## Cheapest by date vs by time
 
