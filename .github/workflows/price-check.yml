@@ -19,9 +19,14 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install browser checker
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+
       - name: Run price re-check
         run: |
-          python london_climbing_prices.py check | tee report.txt
+          python london_climbing_prices.py check --browser | tee report.txt
           {
             echo "### London climbing price check"
             echo ""

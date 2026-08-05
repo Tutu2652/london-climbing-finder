@@ -23,9 +23,9 @@ Student discounts:       python3 london_climbing_prices.py students
 Browse by zone:          python3 london_climbing_prices.py zones
 Try live scrape:         python3 london_climbing_prices.py cheapest --scrape
 
-No third-party packages are required. `--scrape` uses only the standard library
-(urllib) and degrades gracefully when a site blocks it or renders prices in
-JavaScript.
+No third-party packages are required for normal use. The weekly checker can
+optionally use Playwright (`check --browser`) to inspect prices rendered by
+JavaScript-heavy pages; without it, those pages are reported for manual review.
 """
 
 import argparse
@@ -455,6 +455,27 @@ def _fetch(url, timeout=15):
     return raw.decode("utf-8", errors="ignore")
 
 
+def _fetch_rendered(url, timeout=30):
+    """Return the post-JavaScript DOM using optional Playwright/Chromium."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError as exc:
+        raise RuntimeError(
+            "Playwright is not installed; run `pip install playwright` and "
+            "`playwright install chromium`") from exc
+    with sync_playwright() as runtime:
+        browser = runtime.chromium.launch(headless=True)
+        try:
+            page = browser.new_page(viewport={"width": 1280, "height": 1000})
+            page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+            # Booking widgets often fill after DOMContentLoaded and never reach
+            # networkidle because of analytics or polling.
+            page.wait_for_timeout(2500)
+            return page.content()
+        finally:
+            browser.close()
+
+
 def _prices_near(html, keyword, radius=160):
     """
     Return GBP amounts appearing within `radius` chars of a keyword.
@@ -664,10 +685,10 @@ def promo_candidates(html, known, radius=140):
     return out
 
 
-def check_prices(data, verbose=True):
+def check_prices(data, verbose=True, browser=False):
     """
-    Robust price re-check. For each price page that is server-rendered (not a
-    JS booking widget), fetch it once and:
+    Robust price re-check. Fetch each static price page once; when browser=True,
+    render JavaScript-heavy pages in Chromium as well. Then:
 
       * confirm the stored headline prices (adult peak, concession peak) still
         appear -> catches prices that CHANGED;
@@ -682,7 +703,7 @@ def check_prices(data, verbose=True):
     membership rates on it at all, so absence means "not listed" far more often
     than "changed". Membership deals still surface via the promo scan.
     """
-    changed, offers, unreachable, skipped, ok = [], [], [], 0, 0
+    changed, offers, unreachable, skipped, ok = [], [], [], [], 0
 
     # Several gyms share one pricing page (e.g. all four City Bouldering
     # sites). Group by URL so we fetch once and report an offer once.
@@ -690,20 +711,25 @@ def check_prices(data, verbose=True):
     for gym in data["gyms"]:
         sc = gym.get("scrape", {})
         url = sc.get("url") or gym.get("prices_url")
-        if sc.get("needs_js") or not url:
-            skipped += 1
+        if not url:
+            skipped.append(gym["name"] + " (no price URL)")
+            continue
+        if sc.get("needs_js") and not browser:
+            skipped.append(gym["name"] + " (JavaScript page; rerun with --browser)")
             continue
         by_url.setdefault(url, []).append(gym)
 
     for url, gyms in by_url.items():
         try:
-            html = _fetch(url)
-        except Exception:
-            unreachable.extend(g["name"] for g in gyms)
+            needs_browser = any(g.get("scrape", {}).get("needs_js") for g in gyms)
+            html = _fetch_rendered(url) if needs_browser else _fetch(url)
+        except Exception as exc:
+            detail = str(exc).splitlines()[0][:140]
+            unreachable.extend("%s (%s)" % (g["name"], detail) for g in gyms)
             continue
         amounts = _all_amounts(html)
         if not amounts:
-            unreachable.extend(g["name"] for g in gyms)
+            unreachable.extend(g["name"] + " (page loaded but no readable £ amounts)" for g in gyms)
             continue
 
         for gym in gyms:
@@ -724,9 +750,9 @@ def check_prices(data, verbose=True):
                            snippet, new, url))
 
     print("\nPrice re-check (%s)\n%s" % (dt.date.today().isoformat(), "-" * 50))
-    print("%d matched, %d to review, %d new offer(s), %d unreachable, "
-          "%d skipped (JS-only pages)."
-          % (ok, len(changed), len(offers), len(unreachable), skipped))
+    print("%d matched, %d to review, %d new offer(s), %d unreadable, "
+          "%d skipped."
+          % (ok, len(changed), len(offers), len(unreachable), len(skipped)))
     if changed:
         print("\nTO REVIEW - stored price no longer found on page:")
         for name, miss, url in changed:
@@ -737,8 +763,10 @@ def check_prices(data, verbose=True):
             print("  * %s: %s" % (brand, ", ".join(fmt_price(a) for a in new)))
             print("      ...%s..." % snippet[:220])
             print("      %s" % url)
-    if unreachable and verbose:
-        print("\nCould not fetch: %s" % ", ".join(unreachable))
+    if (unreachable or skipped) and verbose:
+        print("\nMANUAL CHECK NEEDED - automated verification was incomplete:")
+        for name in unreachable + skipped:
+            print("  * %s" % name)
     if not changed and not offers:
         print("\nNo headline price changes or new offers detected on the "
               "readable pages.")
@@ -999,7 +1027,9 @@ def main(argv=None):
     sub.add_parser("all", help="every gym with key prices + facilities")
     sub.add_parser("memberships", help="monthly membership prices (full + concession)")
     sub.add_parser("refresh")
-    sub.add_parser("check", help="re-check stored prices against live pages, report changes")
+    check_parser = sub.add_parser("check", help="re-check stored prices against live pages, report changes")
+    check_parser.add_argument("--browser", action="store_true",
+                              help="render JavaScript-heavy price pages with Playwright")
     pr = sub.add_parser("promos", help="limited-time / seasonal offers")
     pr.add_argument("--all", action="store_true",
                     help="include offers past their published end date")
@@ -1096,7 +1126,7 @@ def main(argv=None):
     elif args.cmd == "refresh":
         refresh_prices(data)
     elif args.cmd == "check":
-        check_prices(data)
+        check_prices(data, browser=args.browser)
     elif args.cmd == "promos":
         all_ps = data.get("limited_promotions", [])
         today = dt.date.today()

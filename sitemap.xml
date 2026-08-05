@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://london-climbing-finder.pages.dev/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
+  <url><loc>https://london-climbing-finder.pages.dev/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/castle/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/arch-bermondsey/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/stronghold/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/climbingdistrict-londonfields/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/cb-aldgate/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/cb-whitecity/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/cb-stratford/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/mileend/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/the-font-wandsworth/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/the-font-borough/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/the-font-hounslow/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/yonder/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/the-reach/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/rise/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/sen/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/westway/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/climbing-co-fulham/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/substation-brixton/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/lcc-vauxwall-west/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/lcc-vauxwall-east/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/lcc-harrowall/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/lcc-croywall/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/lcc-ravenswall/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/lcc-canarywall/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/lcc-bethwall/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://london-climbing-finder.pages.dev/gyms/lcc-eustonwall/</loc><lastmod>2026-08-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
 </urlset>

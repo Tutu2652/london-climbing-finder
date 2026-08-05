@@ -5,8 +5,8 @@ Single-source-of-truth sync for the London Climbing Finder.
 gyms.json is the ONLY place data should be edited. This script pushes it into
 every derived copy:
 
-  * index.html                     — replaces the embedded `const DATA = {...};`
-  * london_climbing_dashboard.html — same (offline version)
+  * assets/data.js                 — browser-friendly data file used by index.html
+  * london_climbing_dashboard.html — replaces its embedded `const DATA = {...};`
   * london-climbing-deals-all.ics  — regenerated from magic_slots
   * london-climbing-deals-no-student.ics — same, minus student/concession slots
 
@@ -21,9 +21,12 @@ import os
 import re
 import sys
 
+from generate_gym_pages import build_targets as build_gym_page_targets
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GYMS_JSON = os.path.join(ROOT, "gyms.json")
-HTML_FILES = ["index.html", "london_climbing_dashboard.html"]
+HTML_FILES = ["london_climbing_dashboard.html"]
+DATA_JS = os.path.join("assets", "data.js")
 ICS_ALL = "london-climbing-deals-all.ics"
 ICS_NS = "london-climbing-deals-no-student.ics"
 
@@ -36,6 +39,11 @@ DATA_END = "\n};"
 # --------------------------------------------------------------------------- #
 def data_block(data):
     return DATA_START + json.dumps(data, indent=2, ensure_ascii=False) + ";"
+
+
+def data_js(data):
+    return "window.CLIMBING_DATA = " + json.dumps(
+        data, indent=2, ensure_ascii=False) + ";\n"
 
 
 def inject_html(src, data):
@@ -196,8 +204,11 @@ def main():
         with open(path, encoding="utf-8") as fh:
             src = fh.read()
         targets[path] = inject_html(src, data)
+    targets[os.path.join(ROOT, DATA_JS)] = data_js(data)
     targets[os.path.join(ROOT, ICS_ALL)] = build_ics(data, "all")
     targets[os.path.join(ROOT, ICS_NS)] = build_ics(data, "ns")
+    for rel, content in build_gym_page_targets(data).items():
+        targets[os.path.join(ROOT, rel)] = content
 
     stale = []
     for path, new in targets.items():
@@ -209,6 +220,7 @@ def main():
         if old != new:
             stale.append(path)
             if not check:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
                 with open(path, "w", encoding="utf-8", newline="") as fh:
                     fh.write(new)
 

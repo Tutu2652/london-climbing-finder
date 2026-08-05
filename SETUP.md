@@ -4,10 +4,11 @@ This repo is a ready-to-publish website (Cloudflare Pages) + a weekly price-chec
 (GitHub Actions).
 
 - `gyms.json` — all the gym data. **The single source of truth: edit only this.**
-- `tools/sync_data.py` — pushes `gyms.json` into `index.html`,
-  `london_climbing_dashboard.html` and the two `.ics` deal calendars. Run it after
+- `tools/sync_data.py` — generates `assets/data.js`, updates the offline dashboard,
+  and regenerates the gym pages, sitemap and two `.ics` deal calendars. Run it after
   every data edit; CI fails if you forget.
-- `index.html` — the site itself (static, no build step).
+- `index.html` — the site shell (static, no build step), with code and data split into
+  `assets/styles.css`, `assets/app.js`, and generated `assets/data.js`.
 - `london_climbing_prices.py` — the command-line tool + the checker used by the weekly job.
 - `firebase-config.js` — config for optional "Sign in with Google" notes/ratings sync
   (see `FIREBASE-SETUP.md`); the site works without it.
