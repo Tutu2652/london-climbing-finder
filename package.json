@@ -1,0 +1,7 @@
+{
+  "name": "london-climbing-finder-checks",
+  "private": true,
+  "devDependencies": {
+    "axe-core": "4.12.1"
+  }
+}

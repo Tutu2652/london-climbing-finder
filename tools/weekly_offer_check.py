@@ -60,17 +60,17 @@ def brand_prefix(brand):
     return slugify(brand or "gym", 6)
 
 
-def find_offers(cli, data, verbose=True):
+def find_offers(cli, data, verbose=True, browser=False):
     """Run the live check and return its NEW OFFERS findings."""
     if not verbose:
         buf, sys.stdout = sys.stdout, open(os.devnull, "w")
         try:
-            changed, offers = cli.check_prices(data)
+            changed, offers = cli.check_prices(data, browser=browser)
         finally:
             sys.stdout.close()
             sys.stdout = buf
     else:
-        changed, offers = cli.check_prices(data)
+        changed, offers = cli.check_prices(data, browser=browser)
     return changed, offers
 
 
@@ -117,8 +117,8 @@ def build_draft(cli, offers, existing_ids):
     return out
 
 
-def cmd_draft(cli, data):
-    changed, offers = find_offers(cli, data)
+def cmd_draft(cli, data, browser=False):
+    changed, offers = find_offers(cli, data, browser=browser)
     if not offers:
         print("\nNothing to draft - no unrecorded offers found.")
         return 0
@@ -225,6 +225,8 @@ def main():
                    help="write skeleton entries for each new offer to offers-draft.json")
     g.add_argument("--apply", action="store_true",
                    help="merge the edited draft into gyms.json, then sync and test")
+    ap.add_argument("--browser", action="store_true",
+                    help="render JavaScript-heavy pages with Playwright")
     args = ap.parse_args()
 
     cli = load_cli()
@@ -233,9 +235,9 @@ def main():
     if args.apply:
         return cmd_apply(cli, data)
     if args.draft:
-        return cmd_draft(cli, data)
+        return cmd_draft(cli, data, browser=args.browser)
 
-    changed, offers = find_offers(cli, data)
+    changed, offers = find_offers(cli, data, browser=args.browser)
     if offers:
         print("\n-> %d unrecorded offer(s). Draft entries for them with:"
               "\n     python3 tools/weekly_offer_check.py --draft" % len(offers))

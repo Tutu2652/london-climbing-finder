@@ -18,8 +18,21 @@ jobs:
         with:
           python-version: "3.x"
 
-      # gyms.json is the single source of truth. Fail if the embedded copies
-      # in the HTML files or the .ics calendars have drifted.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install accessibility rules
+        run: npm ci
+
+      - name: Install browser for accessibility checks
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+
+      # gyms.json is the single source of truth. Fail if generated data, gym
+      # pages, the offline dashboard or .ics calendars have drifted.
       - name: Check derived files are in sync with gyms.json
         run: python3 tools/sync_data.py --check
 
@@ -27,3 +40,6 @@ jobs:
       # runner, so the parity test always runs in CI).
       - name: Run pricing tests
         run: python3 -m unittest discover -s tests -v
+
+      - name: Run accessibility and responsive-layout checks
+        run: python3 tools/accessibility_check.py

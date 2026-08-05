@@ -1,0 +1,133 @@
+:root{
+    --bg:#0f1115; --card:#181b22; --card2:#1f232c; --ink:#e8ebf0; --mut:#9aa3b2;
+    --line:#2a2f3a; --accent:#5db07a; --accent2:#e2a13c; --warn:#c96a5a; --chip:#262b35;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink)}
+  .skip-link{position:absolute;left:-9999px;top:8px;z-index:2000;background:#fff;color:#111;padding:9px 12px;border-radius:6px}
+  .skip-link:focus{left:8px}
+  header{padding:22px 20px 12px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:22px}
+  .sub{color:var(--mut);font-size:13px;margin-top:4px}
+  .wrap{max-width:960px;margin:0 auto;padding:18px 20px 60px}
+  /* Only the dense comparison view breaks out of the comfortable reading
+     width. Other tabs, controls and footer keep the 960px measure. */
+  #view.wide-view{width:min(1460px,calc(100vw - 32px));margin-left:50%;transform:translateX(-50%)}
+  .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;
+            background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:18px 0}
+  .ctl{display:flex;flex-direction:column;gap:4px}
+  .ctl label{font-size:12px;color:var(--mut)}
+  input,select,button{font:inherit;color:var(--ink);background:var(--card2);
+       border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  button{cursor:pointer;background:var(--accent);color:#06210f;border:none;font-weight:600}
+  button.ghost{background:var(--chip);color:var(--ink);font-weight:500}
+  .toggle{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--mut);padding-bottom:8px}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:12px}
+  .calcol{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px;min-width:0}
+  .calcol h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--accent2)}
+  .calitem{font-size:12px;margin:6px 0;line-height:1.35}
+  .calitem .price{font-size:13px}
+  @media (max-width:760px){ .calgrid{grid-template-columns:1fr} }
+  .btnlink{display:inline-block;margin:4px 6px 0 0;padding:6px 11px;border-radius:8px;background:var(--chip);color:var(--ink);font-size:13px;text-decoration:none;border:1px solid var(--line)}
+  .btnlink:hover{border-color:var(--accent)}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px}
+  .tab{padding:7px 13px;border-radius:20px;background:var(--chip);color:var(--mut);cursor:pointer;font-size:13px;border:1px solid transparent;font-weight:500}
+  .tab.on{background:var(--card2);color:var(--ink);border-color:var(--accent)}
+  .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:-6px 0 14px;font-size:12px;color:var(--mut)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+  .modal-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;max-width:420px;width:100%}
+  .modal-title{font-weight:600;margin-bottom:12px}
+  .modal textarea{width:100%;background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical;font:inherit;margin-top:4px}
+  .modal-actions{display:flex;gap:8px;margin-top:14px}
+  .starpick{display:flex;gap:5px;font-size:28px;color:var(--accent2);margin-top:4px}
+  .starbtn{line-height:1;user-select:none;cursor:pointer}
+  .starbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 0;margin-bottom:16px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px}
+  th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  .price{font-weight:700;font-variant-numeric:tabular-nums}
+  .rank{color:var(--mut);width:26px}
+  .best .price{color:var(--accent)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--chip);color:var(--mut)}
+  .pill.off{background:#16321f;color:#7fd29a}
+  .pill.magic{background:#3a2c12;color:#e8bd6e}
+  .pill.peak{background:#2a2230;color:#c79ad4}
+  .flag{color:var(--warn);font-size:11px}
+  .note{color:var(--mut);font-size:12px;padding:4px 14px 10px}
+  .zonegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:12px}
+  .znum{font-size:12px;color:var(--accent2);font-weight:700;letter-spacing:.05em}
+  .gymline{padding:8px 0;border-bottom:1px solid var(--line)}
+  .gymline:last-child{border:none}
+  .gymline a{color:var(--ink);text-decoration:none}
+  .gymline a:hover{text-decoration:underline}
+  .meta{color:var(--mut);font-size:12px}
+  .hidden{display:none}
+  footer{color:var(--mut);font-size:12px;margin-top:20px;line-height:1.6}
+  a{color:var(--accent)}
+  a:focus-visible,input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+  #map{height:400px;border-radius:10px;margin:0 12px 8px;z-index:0}
+  .leaflet-popup-content{font:13px -apple-system,Arial,sans-serif}
+  .startbar{display:flex;gap:8px;align-items:flex-end;padding:12px 14px 4px;flex-wrap:wrap}
+  .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tscroll table{min-width:1180px}
+  .mobile-expand-cell{display:none}
+  .mobile-value{display:contents}
+  /* ---- phone / narrow screens ---- */
+  @media (max-width:760px){
+    .wrap{padding:9px 10px 40px}
+    header{padding:13px 12px 8px}
+    h1{font-size:19px}
+    th,td{padding:7px 9px;font-size:13px}
+    .card{overflow:visible}
+    .controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 8px;padding:9px;margin:12px 0}
+    .controls>.ctl{min-width:0!important}
+    .controls>.ctl:first-child{grid-column:1/2}
+    .controls>button{align-self:end;min-height:39px}
+    .ctl{gap:2px}
+    .ctl input,.ctl select{width:100%;min-width:0;padding:7px 8px}
+    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:5px;margin:3px 0 10px;padding:2px 1px 5px;scrollbar-width:thin}
+    .tab{padding:6px 11px;font-size:12px}
+    .tab{flex:0 0 auto;white-space:nowrap}
+    .legend{margin:-2px 0 10px;gap:6px;font-size:11px}
+    #map{height:300px;margin:0 8px 8px}
+    .zonegrid{grid-template-columns:1fr}
+    .pill{font-size:10px}
+    /* Tables become readable cards on phones. The table semantics remain in
+       the DOM for assistive technology; JavaScript supplies each field label. */
+    .responsive-table,.responsive-table tbody{display:block;width:100%}
+    .responsive-table thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .responsive-table tr{position:relative;display:block;margin:7px 8px;border:1px solid var(--line);border-radius:10px;background:var(--card2);overflow:hidden}
+    .responsive-table tr.section-row{margin:11px 8px 4px;border:0;background:transparent}
+    .responsive-table td{display:grid;grid-template-columns:minmax(78px,29%) minmax(0,1fr);gap:7px;padding:7px 9px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+    .responsive-table td:last-child{border-bottom:0}
+    .responsive-table td::before{content:attr(data-label);color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+    .responsive-table .mobile-value{display:block;min-width:0}
+    .responsive-table td[data-label="Gym"]{grid-template-columns:1fr;padding-top:9px;padding-bottom:9px;font-size:14px;font-weight:600}
+    .responsive-table td[data-label="Gym"]::before{content:none}
+    .responsive-table td[data-label="#"]{position:absolute;z-index:1;top:7px;right:8px;display:block;width:auto;padding:2px 7px;border:0;border-radius:10px;background:var(--chip);font-size:11px}
+    .responsive-table td[data-label="#"]::before{content:none}
+    .responsive-table td[data-label="#"]+td[data-label="Gym"]{padding-right:42px}
+    .responsive-table td.empty-value{display:none}
+    .responsive-table td[data-label="Price"] .mobile-value,
+    .responsive-table td[data-label="Peak"] .mobile-value{display:flex;align-items:center;flex-wrap:wrap;gap:3px 5px}
+    .responsive-table td[data-label="Price"] .mobile-value>.meta,
+    .responsive-table td[data-label="Peak"] .mobile-value>.meta{flex-basis:100%}
+    .responsive-table td[data-label="Go"] .mobile-value{display:flex;gap:6px;flex-wrap:wrap}
+    .cheapest-comparison td[data-label="Zone"]{display:none}
+    .responsive-table tr.section-row td{display:block;padding:4px 2px;border:0}
+    .responsive-table tr.section-row td::before{content:none}
+    .responsive-table .rank{width:auto}
+    .tscroll{overflow:visible}
+    .tscroll .responsive-table{min-width:0}
+    #view.wide-view{width:auto;margin-left:0;transform:none}
+    /* The All Gyms card starts with decision-making essentials. Secondary
+       fields stay available without forcing every card to be full length. */
+    .gym-comparison tr:not(.expanded) td[data-mobile="secondary"]{display:none}
+    .gym-comparison .mobile-expand-cell{display:block;padding:6px 8px;background:var(--card)}
+    .gym-comparison .mobile-expand-cell::before{content:none}
+    .gym-comparison .mobile-expand{width:100%;min-height:38px;padding:6px 9px;background:var(--chip);color:var(--ink);font-weight:600}
+  }

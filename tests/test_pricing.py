@@ -3,7 +3,7 @@
 Pricing tests.
 
 1. Golden tests: known gyms/dates must produce known prices (Python CLI logic).
-2. Parity test: the JS pricing logic embedded in index.html must agree with the
+2. Parity test: the JS pricing logic in assets/app.js must agree with the
    Python logic for every gym across a spread of dates (weekday / weekend /
    bank holiday), both adult and concession. This is what stops the two
    implementations drifting apart. Requires node; skipped if unavailable.
@@ -104,11 +104,12 @@ class GoldenTests(unittest.TestCase):
 
 @unittest.skipUnless(shutil.which("node"), "node not installed")
 class JsPythonParity(unittest.TestCase):
-    """index.html's JS pricing must match the Python CLI for all gyms/dates."""
+    """The deployed app's JS pricing must match the Python CLI for all gyms/dates."""
 
     @classmethod
     def setUpClass(cls):
-        src = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
+        with open(os.path.join(ROOT, "assets", "app.js"), encoding="utf-8") as fh:
+            src = fh.read()
         wd = re.search(r"^const WD = .*$", src, re.M).group(0)
         start = src.index("/* ----- price logic")
         end = src.index("// All the distinct deal options")
@@ -212,6 +213,31 @@ class DataValidation(unittest.TestCase):
                 self.assertEqual(p["status"], "expired",
                                  "%s ended %s but status is %r"
                                  % (p["id"], p["expires"], p["status"]))
+
+    def test_every_gym_has_an_indexable_page_and_sitemap_entry(self):
+        with open(os.path.join(ROOT, "sitemap.xml"), encoding="utf-8") as fh:
+            sitemap = fh.read()
+        for gym in DATA["gyms"]:
+            slug = gym["id"].replace("_", "-")
+            page = os.path.join(ROOT, "gyms", slug, "index.html")
+            self.assertTrue(os.path.exists(page), "%s detail page is missing" % gym["id"])
+            with open(page, encoding="utf-8") as fh:
+                markup = fh.read()
+            self.assertIn("<h1>%s</h1>" % gym["name"], markup)
+            self.assertIn('rel="canonical"', markup)
+            self.assertIn("/gyms/%s/" % slug, sitemap)
+
+    def test_main_app_is_split_and_uses_file_safe_gym_links(self):
+        with open(os.path.join(ROOT, "assets", "app.js"), encoding="utf-8") as fh:
+            app = fh.read()
+        self.assertIn('+"/index.html"', app.replace(" ", ""))
+        self.assertNotIn("const DATA = {", app)
+        with open(os.path.join(ROOT, "index.html"), encoding="utf-8") as fh:
+            shell = fh.read()
+        self.assertIn('src="assets/data.js"', shell)
+        self.assertIn('src="assets/app.js"', shell)
+        self.assertIn('href="assets/styles.css"', shell)
+        self.assertNotIn("const DATA = {", shell)
 
 
 # A trimmed copy of the City Bouldering pricing markup as it looked on

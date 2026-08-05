@@ -8,22 +8,35 @@ gym, find off-peak deals, list student/concession discounts, and browse by tube 
 - **gyms.json** — THE single source of truth for all data. Edit only this, then run
   `python3 tools/sync_data.py` to push the change into every derived file below.
 - **index.html** — the deployed site (Cloudflare Pages: https://london-climbing-finder.pages.dev/).
-  Embeds a copy of `gyms.json` (kept in sync by `tools/sync_data.py`).
+  It is a small HTML shell: styling lives in `assets/styles.css`, interaction and pricing
+  logic in `assets/app.js`, and the generated data copy in `assets/data.js`. On phones,
+  the All Gyms comparison uses compact expandable cards.
+- **gyms/*/index.html** — one crawlable, no-JavaScript detail page per gym, including
+  prices, deals, hours, structured data and links to official sources. Generated from
+  `gyms.json`; do not edit these pages by hand.
 - **london_climbing_dashboard.html** — offline version; open in any browser, no install.
   Also embeds `gyms.json` via the sync script.
 - **london_climbing_prices.py** — command-line / interactive version (Python 3, no packages).
 - **london-climbing-deals-\*.ics** — subscribable deal calendars, generated from `gyms.json`
   by `tools/sync_data.py` (one with student-only deals, one without).
-- **tools/sync_data.py** — injects `gyms.json` into the HTML files and regenerates the
-  calendars. `--check` (used by CI) fails if any derived file is stale.
+- **tools/sync_data.py** — generates `assets/data.js`, updates the offline dashboard, and
+  regenerates the calendars, gym pages and sitemap. `--check` (used by CI) fails if a
+  derived file is stale.
 - **tests/** — golden pricing tests plus a JS↔Python parity test that proves the site's
   pricing logic matches the CLI's for every gym. Run: `python3 -m unittest discover -s tests`
+- **tools/accessibility_check.py** — opens the live interface and all generated pages in
+  Chromium, runs axe WCAG rules, checks accessible names and keyboard tabs, and verifies
+  that the phone layout has become labelled cards.
 - **.github/workflows/** — `ci.yml` (tests + drift check on every push) and
   `price-check.yml` (weekly live price re-check, opens an Issue on changes).
 
 ## Quick start
 
 Dashboard: double-click `london_climbing_dashboard.html`.
+
+Deployed-site layout locally: run `python3 -m http.server 8000` and open
+`http://localhost:8000/`. Directly opening `index.html` also works, including one-click
+gym links, but browser APIs behave more like production through a local server.
 
 Command line:
 ```
@@ -40,7 +53,8 @@ python3 london_climbing_prices.py students                          # student & 
 python3 london_climbing_prices.py zones                             # gyms grouped by tube zone
 python3 london_climbing_prices.py all                               # every gym: prices + facilities
 python3 london_climbing_prices.py memberships                       # monthly membership (full + concession)
-python3 london_climbing_prices.py check                             # re-check stored prices vs live pages, report changes
+python3 london_climbing_prices.py check                             # fast static-page check
+python3 london_climbing_prices.py check --browser                   # also render JS-heavy booking pages (needs Playwright)
 python3 london_climbing_prices.py cheapest --scrape                 # try a live price refresh first
 ```
 
@@ -94,11 +108,12 @@ Membership prices are not existence-checked: `prices_url` is the day-pass page a
 brands don't publish membership rates there at all, so absence would mean "not listed" far
 more often than "changed". Membership deals still surface via the promo scan.
 
-Pages that load prices through JavaScript booking widgets are skipped. The
-**`price-check.yml` GitHub Action** runs this automatically every Monday ~9am and opens a
-GitHub Issue on either kind of finding (you can also trigger it from the repo's Actions
-tab). Opening hours are stored per gym; the tool shows an open / closed / "opens HH:MM"
-indicator for the date and time you pick.
+By default, pages that need JavaScript are listed under **MANUAL CHECK NEEDED**. Add
+`--browser` to render them with Playwright. The **`price-check.yml` GitHub Action** installs
+Chromium and runs browser mode automatically every Monday ~9am; its summary names every
+unreadable gym, and it opens a GitHub Issue for detected price changes or new offers. You
+can also trigger it from the repo's Actions tab. Opening hours are stored per gym; the tool
+shows an open / closed / "opens HH:MM" indicator for the date and time you pick.
 
 ## Cheapest by date vs by time
 
@@ -146,17 +161,19 @@ automated requests. Anything it cannot read keeps its curated value. It only ove
 price when it can tie a GBP amount to an "off-peak"/"peak" keyword and the value is sane
 (GBP 3–40), so it will not clobber good data with noise.
 
-To make scraping more reliable you can add `requests` + `beautifulsoup4` and, for the
-JavaScript sites, a headless browser (Playwright). The `scrape` block in each gym record
-(`needs_js` flag, URL) is where per-gym rules live.
+The browser checker is intentionally separate from `--scrape`: it is read-only and reports
+possible changes for review. Install it locally with `pip install playwright` followed by
+`playwright install chromium`. The `scrape` block in each gym record (`needs_js` flag, URL)
+controls which pages use browser rendering.
 
 ## Adding or updating a gym
 
 Edit `gyms.json` — copy an existing entry, change the fields — then run:
 
 ```
-python3 tools/sync_data.py                    # push into HTML + calendars
+python3 tools/sync_data.py                    # HTML, calendars, gym pages + sitemap
 python3 -m unittest discover -s tests         # make sure pricing still agrees
+npm ci && python3 tools/accessibility_check.py # requires Playwright + Chromium
 ```
 
 Commit everything the sync script touched. CI fails the build if you forget, so the
