@@ -1,4 +1,4 @@
-:root{
+  :root{
     --bg:#0f1115; --card:#181b22; --card2:#1f232c; --ink:#e8ebf0; --mut:#9aa3b2;
     --line:#2a2f3a; --accent:#5db07a; --accent2:#e2a13c; --warn:#c96a5a; --chip:#262b35;
   }
@@ -7,9 +7,18 @@
        background:var(--bg);color:var(--ink)}
   .skip-link{position:absolute;left:-9999px;top:8px;z-index:2000;background:#fff;color:#111;padding:9px 12px;border-radius:6px}
   .skip-link:focus{left:8px}
-  header{padding:22px 20px 12px;border-bottom:1px solid var(--line)}
-  h1{margin:0;font-size:22px}
-  .sub{color:var(--mut);font-size:13px;margin-top:4px}
+  .site-header{padding:18px 20px 13px;border-bottom:1px solid var(--line)}
+  .header-inner{max-width:960px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+  .brand-lockup{display:flex;align-items:center;gap:11px;min-width:0}
+  .brand-mark{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:1px solid var(--line);border-radius:10px;color:var(--accent);background:var(--card)}
+  .brand-mark svg{width:27px;height:27px;overflow:visible}
+  .brand-mark path{fill:none;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+  .brand-mark circle{fill:currentColor}
+  .eyebrow{color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  h1{margin:0;font-size:22px;line-height:1.2}
+  .tagline{margin-top:2px;color:var(--mut);font-size:12px}
+  .header-status{max-width:410px;text-align:right}
+  .sub{color:var(--mut);font-size:12px;margin-top:3px}
   .wrap{max-width:960px;margin:0 auto;padding:18px 20px 60px}
   /* Only the dense comparison view breaks out of the comfortable reading
      width. Other tabs, controls and footer keep the 960px measure. */
@@ -79,8 +88,16 @@
   /* ---- phone / narrow screens ---- */
   @media (max-width:760px){
     .wrap{padding:9px 10px 40px}
-    header{padding:13px 12px 8px}
-    h1{font-size:19px}
+    .site-header{padding:12px 12px 9px}
+    .header-inner{display:block}
+    .brand-lockup{gap:8px}
+    .brand-mark{flex-basis:34px;width:34px;height:34px;border-radius:8px}
+    .brand-mark svg{width:22px;height:22px}
+    .eyebrow{font-size:9px}
+    h1{font-size:20px}
+    .tagline{font-size:11px;margin-top:0}
+    .header-status{max-width:none;text-align:left;margin-top:7px}
+    .sub{font-size:11px;line-height:1.35}
     th,td{padding:7px 9px;font-size:13px}
     .card{overflow:visible}
     .controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 8px;padding:9px;margin:12px 0}
@@ -131,3 +148,4 @@
     .gym-comparison .mobile-expand-cell::before{content:none}
     .gym-comparison .mobile-expand{width:100%;min-height:38px;padding:6px 9px;background:var(--chip);color:var(--ink);font-weight:600}
   }
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}button:hover{transform:none}}
