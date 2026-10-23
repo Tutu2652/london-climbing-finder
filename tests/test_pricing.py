@@ -164,6 +164,71 @@ console.log(JSON.stringify(out));
                          "JS/Python pricing diverged:\n" + "\n".join(mismatches[:40]))
 
 
+SWIFT_HARNESS = r"""
+import Foundation
+let a = CommandLine.arguments
+let data = try JSONDecoder().decode(ClimbingData.self, from: Data(contentsOf: URL(fileURLWithPath: a[1])))
+let pricer = Pricer(bankHolidays: Set(try JSONDecoder().decode([String].self, from: Data(a[2].utf8))))
+var out: [[Any]] = []
+func pair(_ r: PriceResult) -> [Any] { [r.price as Any? ?? NSNull(), r.label == "no data" ? NSNull() : r.label] }
+for iso in try JSONDecoder().decode([String].self, from: Data(a[3].utf8)) {
+  let p = iso.split(separator: "-").map { Int($0)! }
+  let day = Moment(year: p[0], month: p[1], day: p[2])
+  for conc in [false, true] {
+    for g in data.gyms {
+      let b = pricer.bestOnDay(g, day, conc: conc)
+      out.append([iso, conc, g.id, b.map { [$0.price, $0.label, $0.when] as [Any] } ?? NSNull(),
+                  pair(pricer.applicable(g, day.at(600), conc: conc)),
+                  pair(pricer.applicable(g, day.at(1140), conc: conc))])
+    }
+  }
+}
+print(String(data: try JSONSerialization.data(withJSONObject: out), encoding: .utf8)!)
+"""
+
+
+@unittest.skipUnless(shutil.which("swiftc"), "swiftc not installed")
+class SwiftPythonParity(unittest.TestCase):
+    """The iOS app's Swift pricing (ios/ClimbingFinder/Core) must match the Python CLI."""
+
+    def test_parity(self):
+        import tempfile
+        core = os.path.join(ROOT, "ios", "ClimbingFinder", "Core")
+        with tempfile.TemporaryDirectory() as tmp:
+            main = os.path.join(tmp, "main.swift")
+            with open(main, "w", encoding="utf-8") as fh:
+                fh.write(SWIFT_HARNESS)
+            exe = os.path.join(tmp, "parity")
+            build = subprocess.run(
+                ["swiftc", "-o", exe, os.path.join(core, "Models.swift"),
+                 os.path.join(core, "Pricing.swift"), main],
+                capture_output=True, text=True, timeout=600)
+            if build.returncode != 0:
+                self.fail("swift harness failed to build:\n" + build.stderr[:2000])
+            res = subprocess.run(
+                [exe, os.path.join(ROOT, "gyms.json"),
+                 json.dumps(sorted(BANK_HOLIDAYS)), json.dumps(TEST_DATES)],
+                capture_output=True, text=True, timeout=120, check=True)
+        mismatches = []
+        for iso, conc, gym_id, sw_best, sw_10, sw_19 in json.loads(res.stdout):
+            date = dt.date.fromisoformat(iso)
+            g = GYM[gym_id]
+            b = LCP.best_on_day(g, date, conc)
+            py_best = [b["price"], b["label"], b["when"]] if b else None
+            py_10 = list(LCP.applicable_price(
+                g, dt.datetime.combine(date, dt.time(10, 0)), conc))
+            py_19 = list(LCP.applicable_price(
+                g, dt.datetime.combine(date, dt.time(19, 0)), conc))
+            for name, sw_v, py_v in (("bestOnDay", sw_best, py_best),
+                                     ("10:00", sw_10, py_10),
+                                     ("19:00", sw_19, py_19)):
+                if sw_v != py_v:
+                    mismatches.append("%s %s conc=%s %s: swift=%r py=%r"
+                                      % (iso, gym_id, conc, name, sw_v, py_v))
+        self.assertEqual(mismatches, [],
+                         "Swift/Python pricing diverged:\n" + "\n".join(mismatches[:40]))
+
+
 class DataValidation(unittest.TestCase):
     """Schema checks for hand-edited fields in gyms.json."""
 

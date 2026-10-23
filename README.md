@@ -17,13 +17,16 @@ gym, find off-peak deals, list student/concession discounts, and browse by tube 
 - **london_climbing_dashboard.html** — offline version; open in any browser, no install.
   Also embeds `gyms.json` via the sync script.
 - **london_climbing_prices.py** — command-line / interactive version (Python 3, no packages).
+- **ios/** — native iPhone app (SwiftUI) that bundles `gyms.json` directly. See
+  `ios/README.md` for running it on your phone.
 - **london-climbing-deals-\*.ics** — subscribable deal calendars, generated from `gyms.json`
   by `tools/sync_data.py` (one with student-only deals, one without).
 - **tools/sync_data.py** — generates `assets/data.js`, updates the offline dashboard, and
   regenerates the calendars, gym pages and sitemap. `--check` (used by CI) fails if a
   derived file is stale.
 - **tests/** — golden pricing tests plus a JS↔Python parity test that proves the site's
-  pricing logic matches the CLI's for every gym. Run: `python3 -m unittest discover -s tests`
+  pricing logic matches the CLI's for every gym, and a Swift↔Python one for the iOS app
+  (skipped without `swiftc`). Run: `python3 -m unittest discover -s tests`
 - **tools/accessibility_check.py** — opens the live interface and all generated pages in
   Chromium, runs axe WCAG rules, checks accessible names and keyboard tabs, and verifies
   that the phone layout has become labelled cards.
