@@ -129,16 +129,20 @@ struct GymDetailView: View {
                 Button(model.notes[gym.id] == nil && model.ratings[gym.id] == nil ? "Add note & rating" : "Edit note & rating") {
                     editing = true
                 }
+                AddToGoogleListButton(gym: gym)
             } header: {
                 Text("Your note")
             } footer: {
-                Text("Saved on this iPhone only." + (gym.lastChecked.map { " Prices last checked \($0)." } ?? ""))
+                Text("Saved on this iPhone only. \"Add to Google Maps list\" copies your note and opens the gym in Google Maps: tap Save, pick a list, then paste the note."
+                     + (gym.lastChecked.map { " Prices last checked \($0)." } ?? ""))
             }
         }
         .navigationTitle(gym.name)
         .inlineTitle()
         .toolbar { ToolbarItem(placement: .primaryAction) { FavouriteButton(gymID: gym.id) } }
-        .sheet(isPresented: $editing) { NoteEditor(gym: gym) }
+        .sheet(isPresented: $editing) {
+            NoteEditor(gym: gym, rating: model.ratings[gym.id] ?? 0, note: model.notes[gym.id] ?? "")
+        }
     }
 }
 
@@ -188,8 +192,15 @@ struct NoteEditor: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     let gym: Gym
-    @State private var rating = 0
-    @State private var note = ""
+    @State private var rating: Int
+    @State private var note: String
+
+    /// Starts from the saved values, so opening and saving never loses them.
+    init(gym: Gym, rating: Int, note: String) {
+        self.gym = gym
+        _rating = State(initialValue: rating)
+        _note = State(initialValue: note)
+    }
 
     var body: some View {
         NavigationStack {
@@ -197,12 +208,12 @@ struct NoteEditor: View {
                 Section("Your rating") {
                     HStack(spacing: 14) {
                         ForEach(1...5, id: \.self) { k in
-                            Button { rating = rating == k ? 0 : k } label: {
-                                Image(systemName: k <= rating ? "star.fill" : "star")
-                                    .font(.title2).foregroundStyle(Color.amber)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("\(k) star\(k > 1 ? "s" : "")")
+                            Image(systemName: k <= rating ? "star.fill" : "star")
+                                .font(.title2).foregroundStyle(Color.amber)
+                                .contentShape(Rectangle())
+                                .onTapGesture { rating = rating == k ? 0 : k }
+                                .accessibilityLabel("\(k) star\(k > 1 ? "s" : "")")
+                                .accessibilityAddTraits(.isButton)
                         }
                     }
                 }
@@ -223,10 +234,44 @@ struct NoteEditor: View {
                     }
                 }
             }
-            .onAppear {
-                rating = model.ratings[gym.id] ?? 0
-                note = model.notes[gym.id] ?? ""
-            }
         }
+    }
+}
+
+/// Google Maps has no way for apps to add to your saved lists, so this does the
+/// next best thing: copies your rating and note, then opens the gym in Google
+/// Maps (app, or website if it isn't installed) ready for Save → list → paste.
+@MainActor
+struct AddToGoogleListButton: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
+    let gym: Gym
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            UIPasteboard.general.string = noteText
+            copied = true
+            guard let app = url("comgooglemaps://", "q") else { return }
+            openURL(app) { opened in
+                if !opened, let web = url("https://www.google.com/maps/search/", "query", api: true) { openURL(web) }
+            }
+        } label: {
+            Label(copied ? "Note copied – opening Google Maps" : "Add to Google Maps list", systemImage: "list.bullet.rectangle")
+        }
+    }
+
+    /// e.g. "★★★★☆ Great auto-belays, busy after 6pm". Falls back to the gym's name.
+    private var noteText: String {
+        let stars = model.ratings[gym.id].map { String(repeating: "★", count: $0) + String(repeating: "☆", count: 5 - $0) }
+        let parts = [stars, model.notes[gym.id]].compactMap { $0 }
+        return parts.isEmpty ? gym.name : parts.joined(separator: " ")
+    }
+
+    private func url(_ base: String, _ key: String, api: Bool = false) -> URL? {
+        var c = URLComponents(string: base)!
+        c.queryItems = (api ? [URLQueryItem(name: "api", value: "1")] : [])
+            + [URLQueryItem(name: key, value: gym.name + ", " + (gym.postcode ?? "London"))]
+        return c.url
     }
 }
