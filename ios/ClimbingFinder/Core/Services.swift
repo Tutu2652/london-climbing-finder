@@ -76,6 +76,15 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
     }
 
+    var isAuthorized: Bool {
+        [.authorizedWhenInUse, .authorizedAlways].contains(manager.authorizationStatus)
+    }
+
+    /// Asks once for location access (used by the map's blue dot).
+    func requestAuthorizationIfNeeded() {
+        if manager.authorizationStatus == .notDetermined { manager.requestWhenInUseAuthorization() }
+    }
+
     func currentLocation() async throws -> CLLocation {
         switch manager.authorizationStatus {
         case .denied, .restricted: throw Failure.denied

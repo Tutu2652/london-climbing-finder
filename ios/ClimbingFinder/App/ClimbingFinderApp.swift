@@ -4,16 +4,19 @@ import SwiftUI
 @MainActor
 struct ClimbingFinderApp: App {
     @State private var model = AppModel()
+    @Environment(\.scenePhase) private var scenePhase
+    private let minute = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(model)
                 .tint(.brand)
-                .task {
-                    await model.refreshBankHolidays()
-                    await model.refreshTravel()
+                .task { await model.refreshBankHolidays() }
+                .onChange(of: scenePhase, initial: true) { _, phase in
+                    if phase == .active { Task { await model.becameActive() } }
                 }
+                .onReceive(minute) { _ in model.followClock() }
         }
     }
 }

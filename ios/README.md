@@ -9,7 +9,8 @@ to go), **Map**, **Gyms** (by chain / price / distance, searchable), **Deals** (
 offers, student rates, a weekly calendar of cheap slots), **More** (memberships, classes,
 socials & events, your location). Each gym has a detail page with prices, every deal,
 opening hours, links, public-transport directions in the Google Maps app and your own
-note and star rating, saved on the phone.
+note, star rating and favourite heart, saved on the phone. Prices update from the website
+when you open the app and are kept for offline use.
 
 Not ported: Google sign-in sync and public community reviews (they need Firebase in the
 app); notes stay on the device.
@@ -29,9 +30,23 @@ app); notes stay on the device.
 7. The first time, the phone blocks the app: Settings → General → VPN & Device
    Management → your Apple ID → **Trust**.
 
-With a free Apple ID the install lasts **7 days**; after that, plug in and press Run again.
-A paid Apple Developer Program membership ($99/yr) makes installs last a year and allows
-TestFlight.
+With a free Apple ID the install lasts **7 days**. A paid Apple Developer Program
+membership ($99/yr) makes installs last a year and allows TestFlight.
+
+### Keeping the free install alive automatically
+
+`tools/auto-reinstall.sh <device-udid>` renews the 7-day signing profile when it is within
+3 days of expiring and reinstalls the app over Wi-Fi (or USB). Run it from a LaunchAgent
+twice a day; it does nothing when nothing is due, and retries if the phone is away. The
+phone must have been paired with Xcode by cable once, and be on the same Wi-Fi as the Mac.
+`--force` reinstalls the current code straight away. Find the UDID with
+`xcrun devicectl list devices`; logs go wherever the LaunchAgent sends them.
+
+## Exporting to Google Maps
+
+More → Export to Google Maps writes a KML file of the gyms with your notes, star ratings
+and favourites. Import it at mymaps.google.com (on a computer); the map then appears in
+the Google Maps app under You → Maps. It is a snapshot: export again after editing notes.
 
 ## Updating prices
 

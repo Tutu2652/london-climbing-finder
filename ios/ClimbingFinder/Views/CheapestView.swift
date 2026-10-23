@@ -29,6 +29,7 @@ struct CheapestView: View {
                 Explainer(footer)
             }
         }
+        .refreshable { await model.refreshData(force: true); await model.refreshTravel() }
         .navigationTitle("Cheapest")
         .toolbar { ToolbarItem(placement: .primaryAction) { FilterMenu() } }
     }
@@ -55,9 +56,11 @@ struct CheapestRow: View {
                 .font(.headline.monospacedDigit())
                 .foregroundStyle(rank == 1 ? Color.brand : .secondary)
                 .frame(minWidth: 22)
+            GymLogo(gym: row.gym, size: 40)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(row.gym.name).font(.headline)
+                    FavouriteMark(gymID: row.gym.id)
                     VerifyFlag(gym: row.gym)
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 6) {

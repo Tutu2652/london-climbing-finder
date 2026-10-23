@@ -14,18 +14,23 @@ struct MapTab: View {
         let best = model.cheapest().first?.gym.id
         Map(position: $camera, selection: $selection) {
             ForEach(gyms) { g in
-                Marker(g.shortName, systemImage: "figure.climbing",
-                       coordinate: CLLocationCoordinate2D(latitude: g.lat, longitude: g.lng))
-                    .tint(g.id == best ? Color.brand : Color.peakPurple)
-                    .tag(g.id)
+                Annotation(g.shortName, coordinate: CLLocationCoordinate2D(latitude: g.lat, longitude: g.lng)) {
+                    GymLogo(gym: g, size: selection == g.id ? 40 : 30)
+                        .padding(2)
+                        .background(g.id == best ? Color.brand : .white, in: RoundedRectangle(cornerRadius: 10))
+                        .shadow(radius: 2)
+                }
+                .tag(g.id)
             }
-            if let o = model.origin {
+            UserAnnotation()
+            if let o = model.origin, o.label != Origin.myLocationLabel {
                 Marker(o.label, systemImage: "location.fill",
                        coordinate: CLLocationCoordinate2D(latitude: o.lat, longitude: o.lng))
                     .tint(.blue)
             }
         }
-        .mapControls { MapCompass(); MapScaleView() }
+        .mapControls { MapUserLocationButton(); MapCompass(); MapScaleView() }
+        .onAppear { LocationService.shared.requestAuthorizationIfNeeded() }
         .safeAreaInset(edge: .bottom) {
             if let id = selection, let g = model.gym(id) {
                 MapGymCard(gym: g) { selection = nil }
@@ -53,13 +58,16 @@ private struct MapGymCard: View {
     var body: some View {
         let best = model.pricer.bestOnDay(gym, model.dayMoment, conc: model.concession)
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack {
+                GymLogo(gym: gym, size: 36)
                 Text(gym.name).font(.headline)
+                FavouriteMark(gymID: gym.id)
                 Spacer()
                 Button(action: close) { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
                     .buttonStyle(.plain).accessibilityLabel("Close")
             }
             if let best {
+                Text(model.climberLabel + " · cheapest today").font(.caption).foregroundStyle(.secondary)
                 HStack(spacing: 6) {
                     Text(formatPrice(best.price)).font(.title3.bold())
                     Pill(text: best.label, color: best.kind.color)

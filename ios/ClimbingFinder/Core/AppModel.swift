@@ -10,19 +10,41 @@ enum CheapestMode: String, CaseIterable, Identifiable {
 
 /// Where travel times and distances are measured from.
 struct Origin: Codable, Equatable {
+    static let myLocationLabel = "My location"
     var label: String
     var lat: Double
     var lng: Double
 }
 
+/// Which copy of gyms.json the app is showing.
+enum DataSource: Equatable {
+    case bundled            // built into the app
+    case cached(Date)       // last copy downloaded from the website
+    case website(Date)      // downloaded from the website this session
+
+    var summary: String {
+        switch self {
+        case .bundled: return "Built into the app"
+        case .cached(let d): return "From the website, " + d.formatted(.relative(presentation: .named))
+        case .website(let d): return "From the website, checked " + d.formatted(date: .omitted, time: .shortened)
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class AppModel {
-    let data: ClimbingData
+    private(set) var data: ClimbingData
+    private(set) var dataSource: DataSource
     private(set) var pricer: Pricer
+    private var lastDataCheck: Date?
+    /// Logos from the copy built into the app, used when a downloaded copy lacks them.
+    private let bundledLogos: [String: (url: String, background: String?)]
 
     // Filters shared by the Cheapest, Map and Gyms tabs.
-    var when: Date = .now
+    /// The date and time being priced. Follows the clock unless you pick one yourself.
+    private(set) var when: Date = .now
+    private(set) var whenPinned = false
     var mode: CheapestMode = .day
     var concession: Bool = UserDefaults.standard.bool(forKey: Keys.concession) {
         didSet { UserDefaults.standard.set(concession, forKey: Keys.concession) }
@@ -30,8 +52,12 @@ final class AppModel {
     var typeFilter = ""      // "" | "bouldering" | "ropes"
     var zoneFilter: Int?     // nil = any zone
     var acFilter = ""        // "" | "ac" | "full"
+    var favouritesOnly: Bool = UserDefaults.standard.bool(forKey: Keys.favouritesOnly) {
+        didSet { UserDefaults.standard.set(favouritesOnly, forKey: Keys.favouritesOnly) }
+    }
 
-    // Personal notes & 1-5 ratings, kept on this device.
+    // Personal favourites, notes & 1-5 ratings, kept on this device.
+    private(set) var favourites: Set<String> = AppModel.load(Keys.favourites) ?? []
     private(set) var notes: [String: String] = AppModel.load(Keys.notes) ?? [:]
     private(set) var ratings: [String: Int] = AppModel.load(Keys.ratings) ?? [:]
 
@@ -44,15 +70,37 @@ final class AppModel {
     private(set) var travel: [String: Int] = [:]   // gym id -> minutes by public transport
     private(set) var travelLoading = false
     private var travelFor: Origin?
+    private var travelFetchedAt: Date?
 
     private enum Keys {
         static let concession = "concession", notes = "gymNotes", ratings = "gymRatings"
         static let origin = "origin", bankHolidays = "bankHolidays"
+        static let favourites = "favourites", favouritesOnly = "favouritesOnly"
+    }
+
+    private static let remoteURL = URL(string: "https://london-climbing-finder.pages.dev/gyms.json")!
+    private static var cacheURL: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("gyms.json")
     }
 
     init() {
-        let url = Bundle.main.url(forResource: "gyms", withExtension: "json")!
-        data = try! JSONDecoder().decode(ClimbingData.self, from: Data(contentsOf: url))
+        let bundled = try! JSONDecoder().decode(ClimbingData.self, from: Data(
+            contentsOf: Bundle.main.url(forResource: "gyms", withExtension: "json")!))
+        bundledLogos = Dictionary(uniqueKeysWithValues: bundled.gyms.compactMap { g in
+            g.logo.map { (g.id, ($0, g.logoBackground)) }
+        })
+        // Start from the last website download unless this build carries newer research.
+        if let d = try? Data(contentsOf: Self.cacheURL),
+           let cached = try? JSONDecoder().decode(ClimbingData.self, from: d),
+           (cached.meta.lastResearchDate ?? "") >= (bundled.meta.lastResearchDate ?? "") {
+            let saved = (try? FileManager.default.attributesOfItem(atPath: Self.cacheURL.path))?[.modificationDate] as? Date
+            data = cached
+            dataSource = .cached(saved ?? .now)
+        } else {
+            data = bundled
+            dataSource = .bundled
+        }
         var bh: Set<String> = AppModel.load(Keys.bankHolidays) ?? []
         if bh.isEmpty, let u = Bundle.main.url(forResource: "bank_holidays", withExtension: "json"),
            let d = try? Data(contentsOf: u) {
@@ -64,19 +112,45 @@ final class AppModel {
     var moment: Moment { Moment(when) }
     var dayMoment: Moment { moment.at(0) }
     var isBankHoliday: Bool { pricer.isBankHoliday(moment) }
+    var climberLabel: String { concession ? "Student / concession" : "Adult" }
 
-    var filtersActive: Bool { !typeFilter.isEmpty || zoneFilter != nil || !acFilter.isEmpty }
+    var filtersActive: Bool { !typeFilter.isEmpty || zoneFilter != nil || !acFilter.isEmpty || favouritesOnly }
     var zones: [Int] { Array(Set(data.gyms.map(\.zone))).sorted() }
 
     func matchesFilters(_ g: Gym) -> Bool {
+        if favouritesOnly && !favourites.contains(g.id) { return false }
         if !typeFilter.isEmpty && !g.type.contains(typeFilter) { return false }
         if let z = zoneFilter, g.zone != z { return false }
         return g.matchesAC(acFilter)
     }
 
-    func clearFilters() { typeFilter = ""; zoneFilter = nil; acFilter = "" }
+    func clearFilters() { typeFilter = ""; zoneFilter = nil; acFilter = ""; favouritesOnly = false }
 
     func gym(_ id: String) -> Gym? { data.gyms.first { $0.id == id } }
+
+    func logo(for g: Gym) -> (url: String, background: String?)? {
+        g.logo.map { ($0, g.logoBackground) } ?? bundledLogos[g.id]
+    }
+
+    // MARK: Date & time
+
+    /// A date or time you picked stays put until you tap Now or the day has passed.
+    func pickWhen(_ date: Date) { when = date; whenPinned = true }
+
+    func resetToNow() { when = .now; whenPinned = false }
+
+    /// Called every minute and whenever the app comes back to the screen.
+    func followClock() {
+        if !whenPinned || Moment(when).ymd < Moment(.now).ymd { resetToNow() }
+    }
+
+    func becameActive() async {
+        followClock()
+        if let t = travelFetchedAt, Date.now.timeIntervalSince(t) > 3600 { travel = [:] }  // departures move on
+        await refreshData()
+        await refreshMyLocation()
+        await refreshTravel()
+    }
 
     // MARK: Cheapest ranking
 
@@ -114,7 +188,14 @@ final class AppModel {
         return rows.enumerated().sorted { ($0.element.price, $0.offset) < ($1.element.price, $1.offset) }.map(\.element)
     }
 
-    // MARK: Notes & ratings
+    // MARK: Favourites, notes & ratings
+
+    func isFavourite(_ id: String) -> Bool { favourites.contains(id) }
+
+    func toggleFavourite(_ id: String) {
+        if favourites.remove(id) == nil { favourites.insert(id) }
+        AppModel.save(favourites, Keys.favourites)
+    }
 
     func setNote(_ text: String, for id: String) {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -125,6 +206,26 @@ final class AppModel {
     func setRating(_ r: Int, for id: String) {
         ratings[id] = r == 0 ? nil : r
         AppModel.save(ratings, Keys.ratings)
+    }
+
+    // MARK: Live prices (gyms.json from the website, cached for offline use)
+
+    /// Downloads the deployed gyms.json; keeps the current copy if that fails.
+    /// Checks at most every 30 minutes unless `force` (pull to refresh).
+    func refreshData(force: Bool = false) async {
+        if !force, let last = lastDataCheck, Date.now.timeIntervalSince(last) < 1800 { return }
+        var req = URLRequest(url: Self.remoteURL)
+        req.cachePolicy = .reloadIgnoringLocalCacheData
+        req.timeoutInterval = 15
+        guard let (d, resp) = try? await URLSession.shared.data(for: req),
+              (resp as? HTTPURLResponse)?.statusCode == 200,
+              let fresh = try? JSONDecoder().decode(ClimbingData.self, from: d), !fresh.gyms.isEmpty else { return }
+        lastDataCheck = .now
+        data = fresh
+        dataSource = .website(.now)
+        try? FileManager.default.createDirectory(at: Self.cacheURL.deletingLastPathComponent(),
+                                                 withIntermediateDirectories: true)
+        try? d.write(to: Self.cacheURL, options: .atomic)
     }
 
     // MARK: Location, distance & travel
@@ -140,12 +241,30 @@ final class AppModel {
     }
 
     /// Public-transport journey time to every gym via the free TfL Journey Planner.
+    /// Only fetches gyms still missing a time, so a failed lookup is retried next time.
     func refreshTravel() async {
-        guard let o = origin, travelFor != o, !travelLoading else { return }
+        guard let o = origin, !travelLoading else { return }
+        if travelFor != o { travel = [:]; travelFor = o }
+        let missing = data.gyms.filter { travel[$0.id] == nil }
+        guard !missing.isEmpty else { return }
         travelLoading = true
-        let results = await TravelService.journeyMinutes(from: o, to: data.gyms)
-        if origin == o { travel = results; travelFor = o }
+        let results = await TravelService.journeyMinutes(from: o, to: missing)
+        if origin == o {
+            if travel.isEmpty { travelFetchedAt = .now }
+            travel.merge(results) { $1 }
+        }
         travelLoading = false
+        if origin != o { await refreshTravel() }   // location changed while we were fetching
+    }
+
+    /// Keeps "My location" current when you've moved, without asking for permission again.
+    func refreshMyLocation() async {
+        guard let o = origin, o.label == Origin.myLocationLabel, LocationService.shared.isAuthorized,
+              let l = try? await LocationService.shared.currentLocation() else { return }
+        let here = (l.coordinate.latitude, l.coordinate.longitude)
+        if haversineKm((o.lat, o.lng), here) > 0.3 {
+            origin = Origin(label: Origin.myLocationLabel, lat: here.0, lng: here.1)
+        }
     }
 
     // MARK: Bank holidays (England & Wales, live from gov.uk, cached)

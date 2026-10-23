@@ -50,6 +50,33 @@ struct VerifyFlag: View {
     }
 }
 
+/// Small filled heart next to a favourite gym's name.
+@MainActor
+struct FavouriteMark: View {
+    @Environment(AppModel.self) private var model
+    let gymID: String
+    var body: some View {
+        if model.isFavourite(gymID) {
+            Image(systemName: "heart.fill").font(.caption).foregroundStyle(.pink)
+                .accessibilityLabel("Favourite")
+        }
+    }
+}
+
+/// Heart button that adds or removes a favourite.
+@MainActor
+struct FavouriteButton: View {
+    @Environment(AppModel.self) private var model
+    let gymID: String
+    var body: some View {
+        let on = model.isFavourite(gymID)
+        Button { model.toggleFavourite(gymID) } label: {
+            Label(on ? "Remove favourite" : "Add favourite", systemImage: on ? "heart.fill" : "heart")
+        }
+        .tint(.pink)
+    }
+}
+
 @MainActor
 struct Stars: View {
     let rating: Int

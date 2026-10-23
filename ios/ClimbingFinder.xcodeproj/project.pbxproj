@@ -9,16 +9,22 @@
 /* Begin PBXBuildFile section */
 		AA000000000000000000000C /* gyms.json in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000006 /* gyms.json */; };
 		AA000000000000000000000D /* bank_holidays.json in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000007 /* bank_holidays.json */; };
+		AA0000000000000000000017 /* logos in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000016 /* logos */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		AA0000000000000000000006 /* gyms.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = gyms.json; path = ../gyms.json; sourceTree = SOURCE_ROOT; };
 		AA0000000000000000000007 /* bank_holidays.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = bank_holidays.json; path = ../bank_holidays.json; sourceTree = SOURCE_ROOT; };
+		AA0000000000000000000016 /* logos */ = {isa = PBXFileReference; lastKnownFileType = folder; name = logos; path = ../assets/logos; sourceTree = SOURCE_ROOT; };
 		AA0000000000000000000008 /* ClimbingFinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClimbingFinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AA0000000000000000000003 /* ClimbingFinder */ = {isa = PBXFileSystemSynchronizedRootGroup; path = ClimbingFinder; sourceTree = "<group>"; };
+		AA0000000000000000000003 /* ClimbingFinder */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ClimbingFinder;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,6 +52,7 @@
 			children = (
 				AA0000000000000000000006 /* gyms.json */,
 				AA0000000000000000000007 /* bank_holidays.json */,
+				AA0000000000000000000016 /* logos */,
 			);
 			name = "Shared data";
 			sourceTree = "<group>";
@@ -122,6 +129,7 @@
 			files = (
 				AA000000000000000000000C /* gyms.json in Resources */,
 				AA000000000000000000000D /* bank_holidays.json in Resources */,
+				AA0000000000000000000017 /* logos in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

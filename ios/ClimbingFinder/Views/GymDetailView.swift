@@ -13,8 +13,11 @@ struct GymDetailView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text([gym.brand, gym.area].compactMap { $0 }.joined(separator: " · "))
-                        .font(.subheadline).foregroundStyle(.secondary)
+                    HStack(spacing: 12) {
+                        GymLogo(gym: gym, size: 56)
+                        Text([gym.brand, gym.area].compactMap { $0 }.joined(separator: " · "))
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
                     HStack(spacing: 8) {
                         Pill(text: gym.typeLabel, color: .secondary)
                         Pill(text: "Zone \(gym.zone)", color: .secondary)
@@ -32,6 +35,7 @@ struct GymDetailView: View {
             }
 
             Section {
+                WhenControls(showMode: false)
                 if let best {
                     PriceLine(title: "Cheapest on \(model.when.formatted(.dateTime.weekday(.wide).day().month()))",
                               price: best.price, label: best.label, kind: best.kind, detail: best.when)
@@ -43,8 +47,6 @@ struct GymDetailView: View {
                 }
             } header: {
                 Text(conc ? "Your price · student / concession" : "Your price · adult")
-            } footer: {
-                Text("Change the date, time or climber on the Cheapest tab.")
             }
 
             Section("Day-pass prices") {
@@ -135,6 +137,7 @@ struct GymDetailView: View {
         }
         .navigationTitle(gym.name)
         .inlineTitle()
+        .toolbar { ToolbarItem(placement: .primaryAction) { FavouriteButton(gymID: gym.id) } }
         .sheet(isPresented: $editing) { NoteEditor(gym: gym) }
     }
 }

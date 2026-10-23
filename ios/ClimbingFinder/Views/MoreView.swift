@@ -22,12 +22,29 @@ struct MoreView: View {
                 NavigationLink { ClassesView() } label: { Label("Classes", systemImage: "graduationcap") }
                 NavigationLink { EventsView() } label: { Label("Socials, events & route setting", systemImage: "person.3") }
             }
-            Section("About the data") {
+            Section {
+                NavigationLink { ExportView() } label: { Label("Export to Google Maps", systemImage: "square.and.arrow.up") }
+            } footer: {
+                Text("A file of every gym with your notes, ratings and favourites, for Google My Maps.")
+            }
+            Section {
+                LabeledContent("Prices", value: model.dataSource.summary)
                 if let d = model.data.meta.lastResearchDate { LabeledContent("Prices researched", value: d) }
+                Button {
+                    Task { await model.refreshData(force: true) }
+                } label: {
+                    Label("Check for new prices", systemImage: "arrow.clockwise")
+                }
                 LabeledContent("Gyms", value: "\(model.data.gyms.count)")
                 Link(destination: URL(string: "https://london-climbing-finder.pages.dev/")!) {
                     Label("Open the website", systemImage: "safari")
                 }
+            } header: {
+                Text("About the data")
+            } footer: {
+                Text("Prices come from the website and are saved for offline use; the app checks for updates when you open it.")
+            }
+            Section {
                 Link(destination: URL(string: "https://docs.google.com/forms/d/e/1FAIpQLSdWqho0guto0OG0XumGWdg8GeAbNj2ulPUFpVbSth3MdW83sA/viewform")!) {
                     Label("Report a wrong price or missing deal", systemImage: "exclamationmark.bubble")
                 }
@@ -97,7 +114,7 @@ struct OriginPicker: View {
         busy = true; error = nil
         do {
             let l = try await LocationService.shared.currentLocation()
-            model.origin = Origin(label: "My location", lat: l.coordinate.latitude, lng: l.coordinate.longitude)
+            model.origin = Origin(label: Origin.myLocationLabel, lat: l.coordinate.latitude, lng: l.coordinate.longitude)
         } catch {
             self.error = error.localizedDescription
         }

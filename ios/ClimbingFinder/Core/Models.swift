@@ -64,6 +64,8 @@ struct Gym: Decodable, Identifiable, Hashable {
     let socials: [String]
     let ac: String?
     let acNote: String?
+    let logo: String?
+    let logoBackground: String?
 
     enum CodingKeys: String, CodingKey {
         case id, name, brand, type, area, borough, zone, postcode, lat, lng, website, payg
@@ -72,6 +74,7 @@ struct Gym: Decodable, Identifiable, Hashable {
         case verified, lastChecked = "last_checked", facilities, membership, address, passes, hours
         case hoursAssumed = "hours_assumed", instagram, eventsURL = "events_url", classesURL = "classes_url"
         case classInfo = "class_info", routeSettingURL = "route_setting_url", socials, ac, acNote = "ac_note"
+        case logo, logoBackground = "logo_background"
     }
 
     init(from decoder: Decoder) throws {
@@ -118,6 +121,8 @@ struct Gym: Decodable, Identifiable, Hashable {
         socials = try c.decodeIfPresent([String].self, forKey: .socials) ?? []
         ac = try c.decodeIfPresent(String.self, forKey: .ac)
         acNote = try c.decodeIfPresent(String.self, forKey: .acNote)
+        logo = try c.decodeIfPresent(String.self, forKey: .logo)
+        logoBackground = try c.decodeIfPresent(String.self, forKey: .logoBackground)
     }
 
     static func == (a: Gym, b: Gym) -> Bool { a.id == b.id }

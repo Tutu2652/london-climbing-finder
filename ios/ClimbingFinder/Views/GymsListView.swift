@@ -21,6 +21,10 @@ struct GymsListView: View {
 
     var body: some View {
         List {
+            Section { ClimberPicker() }
+            if sort == .chain && search.isEmpty && !model.favouritesOnly && !favouriteGyms.isEmpty {
+                Section("Favourites") { ForEach(favouriteGyms) { GymRow(gym: $0) } }
+            }
             if sort == .chain {
                 ForEach(brandSections, id: \.0) { brand, gyms in
                     Section(brand) { ForEach(gyms) { GymRow(gym: $0) } }
@@ -38,6 +42,7 @@ struct GymsListView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .refreshable { await model.refreshData(force: true); await model.refreshTravel() }
         #if os(iOS)
         .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always),
                     prompt: "Gym, area, postcode or facility")
@@ -53,6 +58,10 @@ struct GymsListView: View {
             }
             ToolbarItem(placement: .primaryAction) { FilterMenu() }
         }
+    }
+
+    private var favouriteGyms: [Gym] {
+        filtered.filter { model.isFavourite($0.id) }.sorted { $0.name < $1.name }
     }
 
     private var filtered: [Gym] {
@@ -97,9 +106,12 @@ private struct GymRow: View {
     var body: some View {
         let conc = model.concession
         NavigationLink(value: gym) {
+            HStack(alignment: .top, spacing: 12) {
+            GymLogo(gym: gym, size: 44)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(gym.name).font(.headline)
+                    FavouriteMark(gymID: gym.id)
                     VerifyFlag(gym: gym)
                 }
                 Text([gym.area, "Zone \(gym.zone)", gym.typeLabel].compactMap { $0 }.joined(separator: " · "))
@@ -116,6 +128,8 @@ private struct GymRow: View {
                 }
                 NoteSummary(gymID: gym.id)
             }
+            }
         }
+        .swipeActions(edge: .leading) { FavouriteButton(gymID: gym.id) }
     }
 }
