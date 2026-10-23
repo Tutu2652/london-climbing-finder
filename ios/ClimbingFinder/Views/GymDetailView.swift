@@ -34,6 +34,8 @@ struct GymDetailView: View {
                 }
             }
 
+            GymVisitsSection(gym: gym)
+
             Section {
                 WhenControls(showMode: false)
                 if let best {

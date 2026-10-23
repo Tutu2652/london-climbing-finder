@@ -1,4 +1,6 @@
 import SwiftUI
+import Combine
+import SwiftData
 
 @main
 @MainActor
@@ -18,6 +20,7 @@ struct ClimbingFinderApp: App {
                 }
                 .onReceive(minute) { _ in model.followClock() }
         }
+        .modelContainer(for: [ClimbSession.self, Climb.self])
     }
 }
 
@@ -32,8 +35,8 @@ struct RootView: View {
                 .tabItem { Label("Map", systemImage: "map") }.tag("map")
             stack { GymsListView() }
                 .tabItem { Label("Gyms", systemImage: "figure.climbing") }.tag("gyms")
-            stack { DealsView() }
-                .tabItem { Label("Deals", systemImage: "tag") }.tag("deals")
+            stack { LogView() }
+                .tabItem { Label("Log", systemImage: "list.bullet.clipboard") }.tag("log")
             stack { MoreView() }
                 .tabItem { Label("More", systemImage: "ellipsis.circle") }.tag("more")
         }

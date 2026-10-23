@@ -53,3 +53,54 @@ the Google Maps app under You → Maps. It is a snapshot: export again after edi
 Edit `gyms.json` as usual, then rebuild in Xcode. The app has no copy of its own.
 Bank holidays are fetched live from gov.uk (the bundled `bank_holidays.json` is the
 offline fallback); travel times come from TfL's Journey Planner.
+
+## Logbook and visits
+
+The **Log** tab stores sessions and climbs locally with SwiftData. Start a session,
+choose Flash / Send / Attempt, then tap grades. Finished sessions open a visit detail
+screen with entry price, duration, feeling, notes and climbs; **Edit** changes the visit.
+**Visits by gym** lists visit counts and opens each gym's monthly visit history and
+totals. The same history is available from a gym page and Stats.
+
+Stats includes grade pyramids, progress, weekly sessions and a membership comparison
+using logged entry prices and the listed membership price. Independent gyms are
+compared separately. Membership/pass visits do not count as paid day entries.
+
+Use **More → Back up logbook** to export JSON or restore missing sessions. Restore
+validates the file before importing and skips duplicate session IDs. Live sessions
+in backups are restored as finished at their last logged climb (or start if empty).
+
+Run the in-memory logbook regression checks on a Mac with Xcode:
+
+```sh
+xcrun swiftc -parse-as-library ios/ClimbingFinder/Core/Logbook.swift ios/Tests/LogbookChecks.swift -o /tmp/climbing-logbook-checks
+/tmp/climbing-logbook-checks
+```
+
+### Route photos and climb videos
+
+Tap a climb in **Climbs & media** during a session, or **Climbs in order** on a
+finished visit. Link one route photo and one video from Photos. Both flashes/sends
+and attempts support media. Each link can be replaced or removed; unlinking never
+deletes the original from Photos.
+
+Grant Photos access when first linking an item. Limited access works: use **Manage
+allowed photos & videos** to allow the item, then select it with **Link from Photos**.
+The app stores only Photos asset identifiers. Photos handles display/playback and
+may download iCloud originals; the app does not export or retain duplicate media files.
+A missing original or revoked permission shows recovery controls instead of removing
+the link. These local identifiers may need relinking on a different phone/library.
+
+Version 2 JSON backups include the references, not media files, and version 1 backups
+remain supported. Run `zsh ios/Tests/check-logbook.sh` for backup, on-disk migration,
+and reference persistence checks. The migration fixture freezes the pre-media schema.
+
+Manual device checks (requires Photos access and sample media):
+
+- Open a live or finished visit, tap a climb, link a route photo and video, then reopen
+  the app and verify both remain linked and display/play.
+- Try limited Photos access, adding an item via Manage allowed photos & videos.
+- Cancel either picker; verify any previous link remains unchanged.
+- Replace and unlink each media type; verify originals remain in Photos.
+- Remove Photos access or delete a test original; verify the unavailable message and
+  replace/remove controls. Try an iCloud item offline, then Reload when online.

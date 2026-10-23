@@ -18,11 +18,13 @@ struct MoreView: View {
                 Text("Used for public-transport travel times and sorting by distance.")
             }
             Section {
+                NavigationLink { DealsView() } label: { Label("Deals & offers", systemImage: "tag") }
                 NavigationLink { MembershipsView() } label: { Label("Memberships & passes", systemImage: "creditcard") }
                 NavigationLink { ClassesView() } label: { Label("Classes", systemImage: "graduationcap") }
                 NavigationLink { EventsView() } label: { Label("Socials, events & route setting", systemImage: "person.3") }
             }
             Section {
+                NavigationLink { LogbookBackupView() } label: { Label("Back up logbook", systemImage: "externaldrive") }
                 NavigationLink { ExportView() } label: { Label("Export to Google Maps", systemImage: "square.and.arrow.up") }
             } footer: {
                 Text("A file of every gym with your notes, ratings and favourites, for Google My Maps.")
