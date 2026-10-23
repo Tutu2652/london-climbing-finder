@@ -351,8 +351,14 @@ class PromoDetection(unittest.TestCase):
         self.assertNotIn(130.0, found)
 
     def test_silent_once_promo_is_recorded(self):
+        # The fixture is the 2026 summer sale, which has since ended; treat the
+        # recorded City Bouldering offers as live so this stays about recording,
+        # not about today's date (expiry has its own test below).
+        live = {"limited_promotions": [
+            dict(p, expires=None, status="active")
+            for p in DATA["limited_promotions"] if p["brand"] == "City Bouldering"]}
         known = (self.cli.known_amounts(self.gyms)
-                 | self.cli.promo_amounts_known(DATA, {"City Bouldering"}))
+                 | self.cli.promo_amounts_known(live, {"City Bouldering"}))
         self.assertEqual(self.cli.promo_candidates(PROMO_FIXTURE, known), [],
                          "a promo recorded in limited_promotions still reported")
 

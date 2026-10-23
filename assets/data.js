@@ -57,6 +57,8 @@ window.CLIMBING_DATA = {
       "lat": 51.5712,
       "lng": -0.0894,
       "website": "https://www.castle-climbing.co.uk/",
+      "logo": "https://www.castle-climbing.co.uk/dist/images/logo.png",
+      "logo_background": "#1f232c",
       "prices_url": "https://www.castle-climbing.co.uk/prices",
       "payg": {
         "adult_peak": 18.0,
@@ -149,6 +151,7 @@ window.CLIMBING_DATA = {
       "lat": 51.4925,
       "lng": -0.0689,
       "website": "https://climbingdistrict.uk/",
+      "logo": "https://climbingdistrict.uk/app/themes/pitch-theme-sage-10/resources/images/apple-icon-180x180.png",
       "prices_url": "https://climbingdistrict.uk/pricing/",
       "payg": {
         "adult_peak": 15.0,
@@ -247,6 +250,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5896,
       "lng": -0.0599,
       "website": "https://thestrongholduk.com/",
+      "logo": "https://climbingdistrict.uk/app/themes/pitch-theme-sage-10/resources/images/apple-icon-180x180.png",
       "prices_url": "https://climbingdistrict.uk/pricing/",
       "payg": {
         "adult_peak": 15.0,
@@ -347,6 +351,7 @@ window.CLIMBING_DATA = {
       "lat": 51.541,
       "lng": -0.057,
       "website": "https://climbingdistrict.uk/",
+      "logo": "https://climbingdistrict.uk/app/themes/pitch-theme-sage-10/resources/images/apple-icon-180x180.png",
       "prices_url": "https://climbingdistrict.uk/pricing/",
       "payg": {
         "adult_peak": 15.0,
@@ -448,6 +453,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5138,
       "lng": -0.0755,
       "website": "https://www.citybouldering.co.uk/locations/city-bouidering-aldgate",
+      "logo": "https://cdn.prod.website-files.com/63a026cf49f5b171d260017d/63b44d92b616c337e06ff6bc_CB%20webclip.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
       "payg": {
         "adult_peak": 17.0,
@@ -580,6 +586,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5074,
       "lng": -0.2242,
       "website": "https://www.citybouldering.co.uk/locations/city-bouldering-white-city",
+      "logo": "https://cdn.prod.website-files.com/63a026cf49f5b171d260017d/63b44d92b616c337e06ff6bc_CB%20webclip.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
       "payg": {
         "adult_peak": 17.0,
@@ -701,6 +708,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5416,
       "lng": -0.0042,
       "website": "https://www.citybouldering.co.uk/locations/city-bouldering-stratford",
+      "logo": "https://cdn.prod.website-files.com/63a026cf49f5b171d260017d/63b44d92b616c337e06ff6bc_CB%20webclip.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
       "payg": {
         "adult_peak": 17.0,
@@ -834,6 +842,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5265,
       "lng": -0.0333,
       "website": "https://www.mileendwall.org.uk/",
+      "logo": "https://www.mileendwall.org.uk/assets/images/sticker-logo.png",
       "prices_url": "https://www.mileendwall.org.uk/memberships-and-entries",
       "payg": {
         "adult_peak": 14.5,
@@ -937,6 +946,7 @@ window.CLIMBING_DATA = {
       "lat": 51.4549,
       "lng": -0.1931,
       "website": "https://www.the-font.co.uk/wandsworth",
+      "logo": "https://cdn.prod.website-files.com/5f99de1a6f64129317fd451c/5fa9a58b6876c63d39ef4bc0_Webclip.png",
       "prices_url": "https://www.the-font.co.uk/wandsworth/prices",
       "payg": {
         "adult_peak": 18.0,
@@ -1035,6 +1045,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5015,
       "lng": -0.094,
       "website": "https://www.the-font.co.uk/borough",
+      "logo": "https://cdn.prod.website-files.com/5f99de1a6f64129317fd451c/5fa9a58b6876c63d39ef4bc0_Webclip.png",
       "prices_url": "https://www.the-font.co.uk/borough/prices",
       "payg": {
         "adult_peak": 18.0,
@@ -1134,6 +1145,7 @@ window.CLIMBING_DATA = {
       "lat": 51.467,
       "lng": -0.361,
       "website": "https://www.the-font.co.uk/hounslow",
+      "logo": "https://cdn.prod.website-files.com/5f99de1a6f64129317fd451c/5fa9a58b6876c63d39ef4bc0_Webclip.png",
       "prices_url": "https://www.the-font.co.uk/hounslow/prices",
       "payg": {
         "adult_peak": 17.0,
@@ -1234,6 +1246,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5868,
       "lng": -0.0413,
       "website": "https://www.thisisyonder.com/",
+      "logo": "https://images.squarespace-cdn.com/content/v1/5f35301faed3a85bf80f77ed/1597663621244-LVRK6T30NT1OPBAQA29R/favicon.ico?format=300w",
       "prices_url": "https://www.thisisyonder.com/yonder-climbing",
       "payg": {
         "adult_peak": 15.0,
@@ -1331,6 +1344,7 @@ window.CLIMBING_DATA = {
       "lat": 51.49,
       "lng": 0.069,
       "website": "https://thereach.org.uk/",
+      "logo": "https://thereach.org.uk/themes/custom/the_reach_v2/images/apple-touch-icon.png",
       "prices_url": "https://thereach.org.uk/prices",
       "payg": {
         "adult_peak": 15.0,
@@ -1418,6 +1432,7 @@ window.CLIMBING_DATA = {
       "lat": 51.514,
       "lng": 0.008,
       "website": "https://www.rise-climbing.com/",
+      "logo": "https://images.squarespace-cdn.com/content/v1/617967757f4dbb71d86dd1d2/83b83df6-a5bd-4c0e-8c4f-98dba68614c7/favicon.ico?format=300w",
       "prices_url": "https://www.rise-climbing.com/entry-memberships",
       "payg": {
         "adult_peak": 16.0,
@@ -1536,6 +1551,7 @@ window.CLIMBING_DATA = {
       "lat": 51.499,
       "lng": -0.112,
       "website": "https://www.climbinggymsen.co.uk/",
+      "logo": "https://images.squarespace-cdn.com/content/v1/67da760d2181fd659bacda06/f04b1f48-71bc-48ad-b78b-cb7a48ee162c/Sen+Logo.png?format=300w",
       "prices_url": "https://www.climbinggymsen.co.uk/",
       "payg": {
         "adult_peak": 16.0,
@@ -1609,6 +1625,7 @@ window.CLIMBING_DATA = {
       "lat": 51.521,
       "lng": -0.224,
       "website": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/climbing-centre/",
+      "logo": "assets/logos/westway.jpg",
       "prices_url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/pricelist/",
       "payg": {
         "adult_peak": 16.0,
@@ -1698,6 +1715,7 @@ window.CLIMBING_DATA = {
       "lat": 51.4753,
       "lng": -0.2008,
       "website": "https://www.citybouldering.co.uk/locations/climbing-co-fulham",
+      "logo": "https://cdn.prod.website-files.com/63a026cf49f5b171d260017d/63b44d92b616c337e06ff6bc_CB%20webclip.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
       "payg": {
         "adult_peak": 17.0,
@@ -1794,6 +1812,7 @@ window.CLIMBING_DATA = {
       "lat": 51.4487,
       "lng": -0.1219,
       "website": "https://brixton.substation.co.uk/",
+      "logo": "https://cdn.prod.website-files.com/64ca9b9841739b6ec69b0a5b/64e74c7d46100a99336c795f_substation-webclip.webp",
       "prices_url": "https://brixton.substation.co.uk/climbing/book-a-climb",
       "payg": {
         "adult_peak": 17.5,
@@ -1885,6 +1904,7 @@ window.CLIMBING_DATA = {
       "lat": 51.4851,
       "lng": -0.1229,
       "website": "https://londonclimbingcentres.co.uk/centre/vauxwest/",
+      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -1986,6 +2006,7 @@ window.CLIMBING_DATA = {
       "lat": 51.4924,
       "lng": -0.1145,
       "website": "https://londonclimbingcentres.co.uk/centre/vauxeast/",
+      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2087,6 +2108,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5807,
       "lng": -0.3444,
       "website": "https://londonclimbingcentres.co.uk/centre/harrowall/",
+      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2186,6 +2208,7 @@ window.CLIMBING_DATA = {
       "lat": 51.374,
       "lng": -0.1157,
       "website": "https://londonclimbingcentres.co.uk/centre/croywall/",
+      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 15.5,
@@ -2294,6 +2317,7 @@ window.CLIMBING_DATA = {
       "lat": 51.4942,
       "lng": -0.2363,
       "website": "https://londonclimbingcentres.co.uk/centre/ravenswall/",
+      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2396,6 +2420,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5098,
       "lng": -0.0275,
       "website": "https://londonclimbingcentres.co.uk/centre/canarywall/",
+      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2497,6 +2522,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5276,
       "lng": -0.0565,
       "website": "https://londonclimbingcentres.co.uk/centre/bethwall/",
+      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2600,6 +2626,7 @@ window.CLIMBING_DATA = {
       "lat": 51.5255,
       "lng": -0.14,
       "website": "https://londonclimbingcentres.co.uk/centre/eustonwall/",
+      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2694,6 +2721,45 @@ window.CLIMBING_DATA = {
   ],
   "limited_promotions": [
     {
+      "id": "cb-promos-adult-concession-sale-stu",
+      "brand": "City Bouldering",
+      "title": "Student Sale: 9 months for the price of 6",
+      "details": "9 months of unlimited climbing for the price of 6, listed at £400. Student sale; page lists concession eligibility (valid ID) at top.",
+      "price": "£400",
+      "valid": "Student sale",
+      "expires": null,
+      "expires_source": null,
+      "source": "https://www.citybouldering.co.uk/pricing",
+      "first_seen": "2026-09-21",
+      "status": "active"
+    },
+    {
+      "id": "cb-10-off-student-sale-10-off-10-cl",
+      "brand": "City Bouldering",
+      "title": "Student Sale: 10% off 10 Climb Pass",
+      "details": "10% off the 10 climb pass. Listed at £117 against a standard £130 (10% off £130 = £117). Student sale.",
+      "price": "£117 (standard £130)",
+      "valid": "Student sale",
+      "expires": null,
+      "expires_source": null,
+      "source": "https://www.citybouldering.co.uk/pricing",
+      "first_seen": "2026-09-21",
+      "status": "active"
+    },
+    {
+      "id": "cb-10-off-student-sale-10-off-20-cl",
+      "brand": "City Bouldering",
+      "title": "Student Sale: 10% off 20 Climb Pass",
+      "details": "10% off the 20 climb pass. Listed at £221.40 against a standard £246 (10% off £246 = £221.40). Student sale.",
+      "price": "£221.40 (standard £246)",
+      "valid": "Student sale",
+      "expires": null,
+      "expires_source": null,
+      "source": "https://www.citybouldering.co.uk/pricing",
+      "first_seen": "2026-09-21",
+      "status": "active"
+    },
+    {
       "id": "cb-two-week-taster",
       "brand": "City Bouldering",
       "title": "First-timer: 2 weeks unlimited",
@@ -2716,7 +2782,7 @@ window.CLIMBING_DATA = {
       "expires_source": "In-gym poster reported by user 2026-08-05; not stated on the website",
       "source": "https://www.citybouldering.co.uk/pricing",
       "first_seen": "2026-08-04",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "cb-summer-20pass",
@@ -2729,7 +2795,7 @@ window.CLIMBING_DATA = {
       "expires_source": "In-gym poster reported by user 2026-08-05; not stated on the website",
       "source": "https://www.citybouldering.co.uk/pricing",
       "first_seen": "2026-08-04",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "cb-summer-6mo",
@@ -2742,7 +2808,7 @@ window.CLIMBING_DATA = {
       "expires_source": "In-gym poster reported by user 2026-08-05; not stated on the website",
       "source": "https://www.citybouldering.co.uk/pricing",
       "first_seen": "2026-08-04",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "cb-summer-12mo",
@@ -2755,7 +2821,7 @@ window.CLIMBING_DATA = {
       "expires_source": "In-gym poster reported by user 2026-08-05; not stated on the website",
       "source": "https://www.citybouldering.co.uk/pricing",
       "first_seen": "2026-08-04",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "cd-summer-10",
