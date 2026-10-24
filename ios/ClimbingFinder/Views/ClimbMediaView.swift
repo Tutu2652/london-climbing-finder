@@ -33,6 +33,8 @@ struct ClimbMediaView: View {
     @State private var photoMedia = LinkedMediaLoader()
     @State private var videoMedia = LinkedMediaLoader()
     @State private var fullScreen: LinkedMediaKind?
+    @State private var photoLink = MediaLinkState()
+    @State private var videoLink = MediaLinkState()
 
     var body: some View {
         List {
@@ -40,10 +42,10 @@ struct ClimbMediaView: View {
                 LabeledContent("Outcome", value: climb.result.title)
                 LabeledContent("Logged", value: climb.loggedAt.formatted(date: .abbreviated, time: .shortened))
             }
-            LinkedMediaSection(assetID: $climb.routePhotoAssetID, kind: .photo, media: photoMedia) {
+            LinkedMediaSection(assetID: $climb.routePhotoAssetID, kind: .photo, media: photoMedia, link: photoLink) {
                 fullScreen = .photo
             }
-            LinkedMediaSection(assetID: $climb.videoAssetID, kind: .video, media: videoMedia) {
+            LinkedMediaSection(assetID: $climb.videoAssetID, kind: .video, media: videoMedia, link: videoLink) {
                 fullScreen = .video
             }
             Section {
@@ -53,6 +55,8 @@ struct ClimbMediaView: View {
         }
         .navigationTitle(climb.gradeLabel + " · " + climb.result.title)
         .inlineTitle()
+        .background(MediaPickerHost(link: photoLink, kind: .photo))
+        .background(MediaPickerHost(link: videoLink, kind: .video))
         // Present from the stable screen, not a lazily managed List section.
         .fullScreenCover(item: $fullScreen, onDismiss: {
             photoMedia.player?.pause()
@@ -65,7 +69,7 @@ struct ClimbMediaView: View {
         }
         .onDisappear {
             // Covering this screen must not tear down the viewer's media.
-            if fullScreen == nil {
+            if fullScreen == nil && !photoLink.picking && !videoLink.picking && !photoLink.managingAccess && !videoLink.managingAccess {
                 photoMedia.stop()
                 videoMedia.stop()
             }
@@ -82,6 +86,55 @@ private enum LinkedMediaKind: Identifiable {
 }
 
 @MainActor
+@Observable
+private final class MediaLinkState {
+    var selection: PhotosPickerItem?
+    var picking = false
+    var managingAccess = false
+    var message: String?
+    var pendingID: String?
+    var authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    var accessRevision = 0
+    var libraryRevision = 0
+    @ObservationIgnored private var watcher: LibraryWatcher?
+
+    /// iOS's own "Select More Photos…" prompt changes the allowed items without
+    /// backgrounding the app, so watch the library to retry a pending link.
+    func watchLibrary() {
+        guard watcher == nil else { return }
+        watcher = LibraryWatcher { [weak self] in self?.libraryRevision += 1 }
+    }
+}
+
+private final class LibraryWatcher: NSObject, PHPhotoLibraryChangeObserver {
+    private let changed: @MainActor () -> Void
+    init(changed: @escaping @MainActor () -> Void) {
+        self.changed = changed
+        super.init()
+        PHPhotoLibrary.shared().register(self)
+    }
+    deinit { PHPhotoLibrary.shared().unregisterChangeObserver(self) }
+    func photoLibraryDidChange(_ changeInstance: PHChange) {
+        Task { @MainActor in changed() }
+    }
+}
+
+/// Stable presentation host outside the lazy List rows.
+@MainActor
+private struct MediaPickerHost: View {
+    @Bindable var link: MediaLinkState
+    let kind: LinkedMediaKind
+    var body: some View {
+        Color.clear.frame(width: 0, height: 0)
+            .photosPicker(isPresented: $link.picking, selection: $link.selection,
+                          matching: kind.filter, photoLibrary: .shared())
+            .sheet(isPresented: $link.managingAccess, onDismiss: { link.accessRevision += 1 }) {
+                LimitedPhotosAccessPicker { link.managingAccess = false }
+            }
+    }
+}
+
+@MainActor
 private struct LinkedMediaSection: View {
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
@@ -89,13 +142,8 @@ private struct LinkedMediaSection: View {
     @Binding var assetID: String?
     let kind: LinkedMediaKind
     let media: LinkedMediaLoader
+    @Bindable var link: MediaLinkState
     let showFullScreen: () -> Void
-    @State private var selection: PhotosPickerItem?
-    @State private var picking = false
-    @State private var managingAccess = false
-    @State private var message: String?
-    @State private var pendingID: String?
-    @State private var authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
 
     var body: some View {
         Section {
@@ -122,7 +170,7 @@ private struct LinkedMediaSection: View {
             if let error = media.error {
                 Text(error).font(.callout).foregroundStyle(.secondary)
             }
-            if let message { Text(message).font(.callout).foregroundStyle(.secondary) }
+            if let message = link.message { Text(message).font(.callout).foregroundStyle(.secondary) }
             Button(assetID == nil ? "Link from Photos" : "Replace link", systemImage: "photo.on.rectangle") {
                 Task { await choose() }
             }
@@ -132,10 +180,10 @@ private struct LinkedMediaSection: View {
                     save(nil)
                 }
             }
-            if authorization == .limited {
-                Button("Manage allowed photos & videos") { managingAccess = true }
+            if link.authorization == .limited {
+                Button("Manage allowed photos & videos") { link.managingAccess = true }
             }
-            if authorization == .denied || authorization == .restricted {
+            if link.authorization == .denied || link.authorization == .restricted {
                 Button("Open Photos access settings") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 }
@@ -143,25 +191,27 @@ private struct LinkedMediaSection: View {
         } header: {
             Text(kind.title)
         } footer: {
-            if authorization == .limited {
+            if link.authorization == .limited {
                 Text("Allow access to the item first using Manage allowed photos & videos, then link it here.")
             }
         }
-        .photosPicker(isPresented: $picking, selection: $selection, matching: kind.filter, photoLibrary: .shared())
-        .onChange(of: selection) { _, item in
+        .onChange(of: link.selection) { _, item in
             guard let item else { return }
             guard let id = item.itemIdentifier else {
-                message = "This item has no Photos link. Choose an item saved in your Photos library."
+                link.message = "This item has no Photos link. Choose an item saved in your Photos library."
                 return
             }
-            pendingID = id
+            link.pendingID = id
             linkSelection()
         }
-        .sheet(isPresented: $managingAccess, onDismiss: {
-            authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-            if pendingID != nil { linkSelection() } else { reload() }
-        }) {
-            LimitedPhotosAccessPicker { managingAccess = false }
+        .onChange(of: link.accessRevision) {
+            link.authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+            if link.pendingID != nil { linkSelection() } else { reload() }
+        }
+        .onChange(of: link.libraryRevision) {
+            // Only retry; reloading here would restart a playing video on every iCloud sync.
+            link.authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+            if link.pendingID != nil { linkSelection() }
         }
         .task(id: assetID) {
             if media.image == nil && media.player == nil { reload() }
@@ -169,9 +219,9 @@ private struct LinkedMediaSection: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 let current = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-                let accessChanged = current != authorization
-                authorization = current
-                if pendingID != nil {
+                let accessChanged = current != link.authorization
+                link.authorization = current
+                if link.pendingID != nil {
                     linkSelection()
                 } else if accessChanged || (media.image == nil && media.player == nil) {
                     reload()
@@ -183,29 +233,30 @@ private struct LinkedMediaSection: View {
     }
 
     private func choose() async {
-        authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-        if authorization == .notDetermined {
-            authorization = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+        link.authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        if link.authorization == .notDetermined {
+            link.authorization = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
         }
-        guard authorization == .authorized || authorization == .limited else {
-            message = "Photos access is needed to keep a link to the original. You can change access in Settings."
+        guard link.authorization == .authorized || link.authorization == .limited else {
+            link.message = "Photos access is needed to keep a link to the original. You can change access in Settings."
             return
         }
-        message = nil
-        pendingID = nil
-        selection = nil
-        picking = true
+        link.watchLibrary()
+        link.message = nil
+        link.pendingID = nil
+        link.selection = nil
+        link.picking = true
     }
 
     private func linkSelection() {
-        guard let id = pendingID else { return }
+        guard let id = link.pendingID else { return }
         guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [id], options: nil).firstObject,
               asset.mediaType == kind.mediaType else {
-            message = "This item isn't accessible. Allow it using Manage allowed photos & videos, or choose another item."
+            link.message = "This item isn't accessible. Allow it using Manage allowed photos & videos, or choose another item."
             return
         }
         save(id)
-        pendingID = nil
+        link.pendingID = nil
     }
 
     private func save(_ id: String?) {
@@ -213,12 +264,12 @@ private struct LinkedMediaSection: View {
         assetID = id
         do {
             try context.save()
-            message = nil
-            pendingID = nil
+            link.message = nil
+            link.pendingID = nil
             reload()
         } catch {
             assetID = previous
-            message = "Couldn't save this link. Please try again."
+            link.message = "Couldn't save this link. Please try again."
         }
     }
 

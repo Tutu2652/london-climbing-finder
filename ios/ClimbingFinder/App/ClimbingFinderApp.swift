@@ -26,6 +26,8 @@ struct ClimbingFinderApp: App {
 
 struct RootView: View {
     @AppStorage("tab") private var tab = "cheapest"
+    @Environment(\.modelContext) private var context
+    @State private var linkedSession: ClimbSession?
 
     var body: some View {
         TabView(selection: $tab) {
@@ -39,6 +41,24 @@ struct RootView: View {
                 .tabItem { Label("Log", systemImage: "list.bullet.clipboard") }.tag("log")
             stack { MoreView() }
                 .tabItem { Label("More", systemImage: "ellipsis.circle") }.tag("more")
+        }
+        .background(SessionActivityObserver())
+        .onOpenURL { url in
+            guard url.scheme == "climbfinder", url.host == "session",
+                  let id = UUID(uuidString: url.lastPathComponent) else { return }
+            tab = "log"
+            let request = FetchDescriptor<ClimbSession>(predicate: #Predicate { $0.id == id })
+            linkedSession = try? context.fetch(request).first
+        }
+        .sheet(item: $linkedSession) { session in
+            NavigationStack {
+                SessionScreen(session: session)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { linkedSession = nil }
+                        }
+                    }
+            }
         }
     }
 
