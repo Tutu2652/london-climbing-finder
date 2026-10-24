@@ -13,8 +13,8 @@ struct ClimbingLiveActivity: Widget {
             VStack(alignment: .leading, spacing: 12) {
                 Label(context.state.gym, systemImage: "figure.climbing").font(.headline).lineLimit(1)
                 HStack {
-                    SessionTimer(start: context.state.start).font(.title2.bold()).fixedSize()
-                    Spacer()
+                    SessionTimer(start: context.state.start).font(.title2.bold())
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .trailing) {
                         Text("\(context.state.sends) sends").bold()
                         Text("\(context.state.attempts) attempts").font(.caption)
@@ -56,10 +56,12 @@ struct ClimbingLiveActivity: Widget {
 
 /// A stopwatch that stays in h:mm:ss form; `style: .timer` can fall back to spelled-out
 /// "20 hours, 11 minutes", which doesn't fit the compact Dynamic Island.
+/// The range is bounded because the text reserves width for its longest value:
+/// an open-ended range asks for so much that the Lock Screen view lays out empty.
 private struct SessionTimer: View {
     let start: Date
     var body: some View {
-        Text(timerInterval: start...Date.distantFuture, countsDown: false)
+        Text(timerInterval: start...start.addingTimeInterval(24 * 3600), countsDown: false)
             .monospacedDigit()
     }
 }
