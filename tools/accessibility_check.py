@@ -142,12 +142,12 @@ def main():
             for dirpath, _dirs, files in os.walk(os.path.join(ROOT, "gyms")):
                 if "index.html" in files:
                     pages.append(os.path.relpath(dirpath, ROOT).replace(os.sep, "/"))
-            assert len(pages) == 26, "expected 26 generated gym pages, got %d" % len(pages)
+            assert len(pages) == 27, "expected 27 generated gym pages, got %d" % len(pages)
             for rel in sorted(pages):
                 audit_page(desktop, "%s/%s/" % (site, rel))
         finally:
             browser.close()
-    print("Accessibility smoke checks passed for the finder and 26 gym pages.")
+    print("Accessibility smoke checks passed for the finder and 27 gym pages.")
 
 
 if __name__ == "__main__":

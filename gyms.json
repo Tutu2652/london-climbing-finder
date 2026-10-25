@@ -1,8 +1,9 @@
 {
   "_meta": {
     "currency": "GBP",
-    "last_research_date": "2026-08-05",
+    "last_research_date": "2026-10-25",
     "sources": [
+      "Gantry Climbing (new gym) from gantryclimbing.com 2026-10-25",
       "official gym websites audited 2026-08-05",
       "web research 2026-07-01",
       "user Google Sheet (incorporated 2026-07-01)"
@@ -1893,6 +1894,96 @@
       ]
     },
     {
+      "id": "gantry",
+      "name": "Gantry Climbing",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Canada Water / Surrey Quays",
+      "borough": "Southwark",
+      "zone": 2,
+      "postcode": "SE16 7LL",
+      "lat": 51.4954,
+      "lng": -0.0469,
+      "website": "https://gantryclimbing.com/",
+      "logo": "assets/logos/gantry.png",
+      "prices_url": "https://gantryclimbing.com/",
+      "payg": {
+        "adult_peak": 14.0,
+        "adult_offpeak": null,
+        "concession_peak": 12.0,
+        "concession_offpeak": null
+      },
+      "offpeak_window": null,
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Wed"
+          ],
+          "start": "17:00",
+          "end": "22:00",
+          "price": 6.0,
+          "label": "Student Night (concession)"
+        },
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "15:00",
+          "end": "19:00",
+          "price": 8.0,
+          "label": "Sunday Slayer"
+        }
+      ],
+      "student_note": "Concession £12 (students, teachers, NHS & Blue Light, Forces, carers, Blue Badge, PIP/DLA/Attendance Allowance; bring proof); under-18 £9. Student Night £6 Wednesdays from 5pm (student ID).",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-10-25",
+      "scrape": {
+        "url": "https://gantryclimbing.com/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering (120+ problems, V0-V8), training board, circuit wall, gym area, kids wall",
+      "membership": {
+        "full_monthly": 65,
+        "concession_monthly": 55
+      },
+      "address": "24-26 Surrey Quays Shopping Centre, London SE16 7LL",
+      "passes": "10 visits £115 (£100 conc, £75 under-18; valid 12 months); 12 months prepaid £650 (£550 conc)",
+      "hours": {
+        "Mon": [
+          "10:00",
+          "22:00"
+        ],
+        "Tue": [
+          "10:00",
+          "22:00"
+        ],
+        "Wed": [
+          "10:00",
+          "22:00"
+        ],
+        "Thu": [
+          "10:00",
+          "22:00"
+        ],
+        "Fri": [
+          "10:00",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "19:00"
+        ],
+        "Sun": [
+          "09:00",
+          "19:00"
+        ]
+      },
+      "hours_assumed": false
+    },
+    {
       "id": "lcc_vauxwall_west",
       "name": "VauxWall West (LCC)",
       "brand": "London Climbing Centres",
@@ -2882,6 +2973,19 @@
       "expires": null,
       "source": "https://brixton.substation.co.uk/climbing/climbing-intro-offer",
       "first_seen": "2026-07-01",
+      "status": "active"
+    },
+    {
+      "id": "gantry-founding-30",
+      "brand": "Independent",
+      "title": "Gantry: founding member 30% off for life",
+      "details": "First 50 members on a rolling monthly membership get 30% off for as long as it keeps renewing (pausing allowed). First come, first served; conditions apply.",
+      "price": "£46/mo (£39 concession, £28 under-18; standard £65 / £55 / £40)",
+      "valid": "First 50 members",
+      "expires": null,
+      "expires_source": null,
+      "source": "https://gantryclimbing.com/",
+      "first_seen": "2026-10-25",
       "status": "active"
     }
   ]

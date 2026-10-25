@@ -482,7 +482,7 @@ def _prices_near(html, keyword, radius=160):
     `keyword` may be a plain string or a compiled regex (so callers can e.g.
     match 'peak' without also matching the 'peak' inside 'off-peak').
     """
-    text = re.sub(r"<[^>]+>", " ", html)
+    text = re.sub(r"<[^>]+>", " ", _strip_comments(html))
     text = re.sub(r"\s+", " ", text)
     if isinstance(keyword, str):
         keyword = re.compile(re.escape(keyword), re.I)
@@ -550,13 +550,22 @@ def refresh_prices(data, verbose=True):
     return data
 
 
+def _strip_comments(html):
+    """
+    Drop HTML comments. Sites comment out retired offers instead of deleting
+    them (Gantry's beginner session and 6-month prepay), and a price that only
+    survives in a comment is not on offer.
+    """
+    return re.sub(r"<!--.*?-->", " ", html, flags=re.S)
+
+
 def _page_text(html):
     """
     De-tag a page and decode entities. Sites are inconsistent about writing
     '£' literally vs as '&pound;' / '&#163;', so decode before hunting for
     amounts or a price would be invisible on half the pages.
     """
-    return re.sub(r"\s+", " ", _html.unescape(re.sub(r"<[^>]+>", " ", html)))
+    return re.sub(r"\s+", " ", _html.unescape(re.sub(r"<[^>]+>", " ", _strip_comments(html))))
 
 
 def _all_amounts(html):

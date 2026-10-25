@@ -221,6 +221,9 @@ final class AppModel {
               (resp as? HTTPURLResponse)?.statusCode == 200,
               let fresh = try? JSONDecoder().decode(ClimbingData.self, from: d), !fresh.gyms.isEmpty else { return }
         lastDataCheck = .now
+        // Never swap in a website copy older than the data we already have (e.g. a
+        // build carrying a new gym before the site is redeployed).
+        guard (fresh.meta.lastResearchDate ?? "") >= (data.meta.lastResearchDate ?? "") else { return }
         data = fresh
         dataSource = .website(.now)
         try? FileManager.default.createDirectory(at: Self.cacheURL.deletingLastPathComponent(),
