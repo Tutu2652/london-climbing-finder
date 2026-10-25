@@ -59,7 +59,7 @@
       "lat": 51.5712,
       "lng": -0.0894,
       "website": "https://www.castle-climbing.co.uk/",
-      "logo": "https://www.castle-climbing.co.uk/dist/images/logo.png",
+      "logo": "assets/logos/castle.png",
       "logo_background": "#1f232c",
       "prices_url": "https://www.castle-climbing.co.uk/prices",
       "payg": {
@@ -153,7 +153,7 @@
       "lat": 51.4925,
       "lng": -0.0689,
       "website": "https://climbingdistrict.uk/",
-      "logo": "https://climbingdistrict.uk/app/themes/pitch-theme-sage-10/resources/images/apple-icon-180x180.png",
+      "logo": "assets/logos/climbing-district.png",
       "prices_url": "https://climbingdistrict.uk/pricing/",
       "payg": {
         "adult_peak": 15.0,
@@ -252,7 +252,7 @@
       "lat": 51.5896,
       "lng": -0.0599,
       "website": "https://climbingdistrict.uk/climbing-gym/tottenham-hale/",
-      "logo": "https://climbingdistrict.uk/app/themes/pitch-theme-sage-10/resources/images/apple-icon-180x180.png",
+      "logo": "assets/logos/climbing-district.png",
       "prices_url": "https://climbingdistrict.uk/climbing-gym/tottenham-hale/",
       "payg": {
         "adult_peak": 13.0,
@@ -350,7 +350,7 @@
       "lat": 51.541,
       "lng": -0.057,
       "website": "https://climbingdistrict.uk/",
-      "logo": "https://climbingdistrict.uk/app/themes/pitch-theme-sage-10/resources/images/apple-icon-180x180.png",
+      "logo": "assets/logos/climbing-district.png",
       "prices_url": "https://climbingdistrict.uk/pricing/",
       "payg": {
         "adult_peak": 15.0,
@@ -442,7 +442,7 @@
       "lat": 51.5138,
       "lng": -0.0755,
       "website": "https://www.citybouldering.co.uk/locations/city-bouidering-aldgate",
-      "logo": "https://cdn.prod.website-files.com/63a026cf49f5b171d260017d/63b44d92b616c337e06ff6bc_CB%20webclip.png",
+      "logo": "assets/logos/city-bouldering.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
       "payg": {
         "adult_peak": 17.0,
@@ -575,7 +575,7 @@
       "lat": 51.5074,
       "lng": -0.2242,
       "website": "https://www.citybouldering.co.uk/locations/city-bouldering-white-city",
-      "logo": "https://cdn.prod.website-files.com/63a026cf49f5b171d260017d/63b44d92b616c337e06ff6bc_CB%20webclip.png",
+      "logo": "assets/logos/city-bouldering.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
       "payg": {
         "adult_peak": 17.0,
@@ -697,7 +697,7 @@
       "lat": 51.5416,
       "lng": -0.0042,
       "website": "https://www.citybouldering.co.uk/locations/city-bouldering-stratford",
-      "logo": "https://cdn.prod.website-files.com/63a026cf49f5b171d260017d/63b44d92b616c337e06ff6bc_CB%20webclip.png",
+      "logo": "assets/logos/city-bouldering.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
       "payg": {
         "adult_peak": 17.0,
@@ -831,7 +831,7 @@
       "lat": 51.5265,
       "lng": -0.0333,
       "website": "https://www.mileendwall.org.uk/",
-      "logo": "https://www.mileendwall.org.uk/assets/images/sticker-logo.png",
+      "logo": "assets/logos/mileend.png",
       "prices_url": "https://www.mileendwall.org.uk/memberships-and-entries",
       "payg": {
         "adult_peak": 14.5,
@@ -935,7 +935,7 @@
       "lat": 51.4549,
       "lng": -0.1931,
       "website": "https://www.the-font.co.uk/wandsworth",
-      "logo": "https://cdn.prod.website-files.com/5f99de1a6f64129317fd451c/5fa9a58b6876c63d39ef4bc0_Webclip.png",
+      "logo": "assets/logos/the-font.png",
       "prices_url": "https://www.the-font.co.uk/wandsworth/prices",
       "payg": {
         "adult_peak": 18.0,
@@ -1043,7 +1043,7 @@
       "lat": 51.5015,
       "lng": -0.094,
       "website": "https://www.the-font.co.uk/borough",
-      "logo": "https://cdn.prod.website-files.com/5f99de1a6f64129317fd451c/5fa9a58b6876c63d39ef4bc0_Webclip.png",
+      "logo": "assets/logos/the-font.png",
       "prices_url": "https://www.the-font.co.uk/borough/prices",
       "payg": {
         "adult_peak": 18.0,
@@ -1152,7 +1152,7 @@
       "lat": 51.467,
       "lng": -0.361,
       "website": "https://www.the-font.co.uk/hounslow",
-      "logo": "https://cdn.prod.website-files.com/5f99de1a6f64129317fd451c/5fa9a58b6876c63d39ef4bc0_Webclip.png",
+      "logo": "assets/logos/the-font.png",
       "prices_url": "https://www.the-font.co.uk/hounslow/prices",
       "payg": {
         "adult_peak": 17.0,
@@ -1262,7 +1262,7 @@
       "lat": 51.5868,
       "lng": -0.0413,
       "website": "https://www.thisisyonder.com/",
-      "logo": "https://images.squarespace-cdn.com/content/v1/5f35301faed3a85bf80f77ed/1597663621244-LVRK6T30NT1OPBAQA29R/favicon.ico?format=300w",
+      "logo": "assets/logos/yonder.png",
       "prices_url": "https://www.thisisyonder.com/yonder-climbing",
       "payg": {
         "adult_peak": 15.0,
@@ -1360,7 +1360,7 @@
       "lat": 51.49,
       "lng": 0.069,
       "website": "https://thereach.org.uk/",
-      "logo": "https://thereach.org.uk/themes/custom/the_reach_v2/images/apple-touch-icon.png",
+      "logo": "assets/logos/the-reach.png",
       "prices_url": "https://thereach.org.uk/prices",
       "payg": {
         "adult_peak": 15.0,
@@ -1448,7 +1448,7 @@
       "lat": 51.514,
       "lng": 0.008,
       "website": "https://www.rise-climbing.com/",
-      "logo": "https://images.squarespace-cdn.com/content/v1/617967757f4dbb71d86dd1d2/83b83df6-a5bd-4c0e-8c4f-98dba68614c7/favicon.ico?format=300w",
+      "logo": "assets/logos/rise.png",
       "prices_url": "https://www.rise-climbing.com/entry-memberships",
       "payg": {
         "adult_peak": 16.0,
@@ -1567,7 +1567,7 @@
       "lat": 51.499,
       "lng": -0.112,
       "website": "https://www.climbinggymsen.co.uk/",
-      "logo": "https://images.squarespace-cdn.com/content/v1/67da760d2181fd659bacda06/f04b1f48-71bc-48ad-b78b-cb7a48ee162c/Sen+Logo.png?format=300w",
+      "logo": "assets/logos/sen.png",
       "prices_url": "https://www.climbinggymsen.co.uk/",
       "payg": {
         "adult_peak": 16.0,
@@ -1731,7 +1731,7 @@
       "lat": 51.4753,
       "lng": -0.2008,
       "website": "https://www.citybouldering.co.uk/locations/climbing-co-fulham",
-      "logo": "https://cdn.prod.website-files.com/63a026cf49f5b171d260017d/63b44d92b616c337e06ff6bc_CB%20webclip.png",
+      "logo": "assets/logos/city-bouldering.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
       "payg": {
         "adult_peak": 17.0,
@@ -1828,7 +1828,7 @@
       "lat": 51.4487,
       "lng": -0.1219,
       "website": "https://brixton.substation.co.uk/",
-      "logo": "https://cdn.prod.website-files.com/64ca9b9841739b6ec69b0a5b/64e74c7d46100a99336c795f_substation-webclip.webp",
+      "logo": "assets/logos/substation.png",
       "prices_url": "https://brixton.substation.co.uk/climbing/book-a-climb",
       "payg": {
         "adult_peak": 18.0,
@@ -2010,7 +2010,7 @@
       "lat": 51.4851,
       "lng": -0.1229,
       "website": "https://londonclimbingcentres.co.uk/centre/vauxwest/",
-      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
+      "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2112,7 +2112,7 @@
       "lat": 51.4924,
       "lng": -0.1145,
       "website": "https://londonclimbingcentres.co.uk/centre/vauxeast/",
-      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
+      "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2214,7 +2214,7 @@
       "lat": 51.5807,
       "lng": -0.3444,
       "website": "https://londonclimbingcentres.co.uk/centre/harrowall/",
-      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
+      "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2314,7 +2314,7 @@
       "lat": 51.374,
       "lng": -0.1157,
       "website": "https://londonclimbingcentres.co.uk/centre/croywall/",
-      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
+      "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 15.5,
@@ -2423,7 +2423,7 @@
       "lat": 51.4942,
       "lng": -0.2363,
       "website": "https://londonclimbingcentres.co.uk/centre/ravenswall/",
-      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
+      "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2526,7 +2526,7 @@
       "lat": 51.5098,
       "lng": -0.0275,
       "website": "https://londonclimbingcentres.co.uk/centre/canarywall/",
-      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
+      "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2628,7 +2628,7 @@
       "lat": 51.5276,
       "lng": -0.0565,
       "website": "https://londonclimbingcentres.co.uk/centre/bethwall/",
-      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
+      "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,
@@ -2732,7 +2732,7 @@
       "lat": 51.5255,
       "lng": -0.14,
       "website": "https://londonclimbingcentres.co.uk/centre/eustonwall/",
-      "logo": "https://londonclimbingcentres.co.uk/app/uploads/Add-a-heading-300x300.png",
+      "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
       "payg": {
         "adult_peak": 17.0,

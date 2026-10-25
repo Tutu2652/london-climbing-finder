@@ -460,6 +460,23 @@ const el=document;
 // Explicit index.html keeps links one-click navigable when the site is opened
 // directly from disk; deployed canonical URLs remain the cleaner directory form.
 const gymPage=g=>"gyms/"+g.id.replaceAll("_","-")+"/index.html";
+// Logo tile beside a gym name, as in the iOS app: the gym's own logo on white
+// (or its logo_background), else a lettered badge. Initials follow
+// GymLogo.initials in the app, from shortName() below.
+const initials=g=>shortName(g).split(" ").filter(w=>/^\p{L}/u.test(w)&&w!=="The").slice(0,2).map(w=>w[0]).join("").toUpperCase();
+function gymLogo(g){
+  const ini=esc(initials(g));
+  if(!g.logo) return `<span class="gym-logo initials" aria-hidden="true">${ini}</span>`;
+  const bg=g.logo_background?` style="background:${esc(g.logo_background)}"`:"";
+  return `<span class="gym-logo"${bg} aria-hidden="true" data-initials="${ini}"><img src="${esc(g.logo)}" alt="" loading="lazy" decoding="async"></span>`;
+}
+const gymName=g=>`<a class="gym-name" href="${gymPage(g)}">${gymLogo(g)}<span>${g.name}</span></a>`;
+// A logo that fails to load (moved, hotlink-blocked, offline) falls back to the badge.
+document.addEventListener("error",e=>{
+  const tile=e.target.parentElement;
+  if(e.target.tagName!=="IMG"||!tile||!tile.classList.contains("gym-logo")) return;
+  tile.classList.add("initials"); tile.removeAttribute("style"); tile.textContent=tile.dataset.initials;
+},true);
 function whenFromInputs(){
   const d=el.getElementById("date").value, t=el.getElementById("time").value||"12:00";
   const [Y,M,D]=d.split("-").map(Number), [h,m]=t.split(":").map(Number);
@@ -504,7 +521,7 @@ function viewCheapest(){
     const d=dirLinks(r.g);
     html+=`<tr class="${i===0?'best':''}">
       <td class="rank">${i+1}</td>
-      <td><a href="${gymPage(r.g)}" style="color:inherit;text-decoration:none">${r.g.name}</a> ${r.g.verified?'':'<span class="flag">verify</span>'}${openBadge(r.g,when)}${noteCell(r.g.id)}</td>
+      <td>${gymName(r.g)} ${r.g.verified?'':'<span class="flag">verify</span>'}${openBadge(r.g,when)}${noteCell(r.g.id)}</td>
       <td><span class="price">${f(r.price)}</span> <span class="pill ${r.kind==='off'?'off':r.kind==='magic'?'magic':'peak'}">${r.label}</span>${(r.alts||[]).map(o=>`<div class="meta">also ${f(o.price)} ${esc(o.label)} · ${esc(o.when)}</div>`).join('')}</td>
       <td class="meta">${r.when||''}</td>
       <td class="meta">${travelStr(r.g)}</td>
@@ -632,7 +649,7 @@ function viewAll(){
     const memStr = m.full_monthly!=null ? ('£'+m.full_monthly+'/mo'+(m.concession_monthly!=null?(' (£'+m.concession_monthly+' conc)'):'')) : '';
     const memPass = [memStr, g.passes].filter(Boolean).map(esc).join('<br>') || '—';
     html+=`<tr>
-      <td><a href="${gymPage(g)}" style="color:inherit;text-decoration:none">${g.name}</a> ${g.verified?'':'<span class="flag">verify</span>'}${noteCell(g.id)}</td>
+      <td>${gymName(g)} ${g.verified?'':'<span class="flag">verify</span>'}${noteCell(g.id)}</td>
       <td class="meta">${g.type.replace('+',' + ')}</td>
       <td class="price">${f(g.payg.adult_peak)}${cp!=null?`<div class="meta">${f(cp)} conc</div>`:''}</td>
       <td class="meta">${dealsCell(g)}</td>
@@ -910,7 +927,7 @@ function renderMapList(){
   let html=`<table><thead><tr><th>Gym</th><th>Dist</th><th>Travel</th><th>Cheapest today</th><th>Best time</th><th>Go</th></tr></thead><tbody>`;
   rows.forEach(r=>{ const d=dirLinks(r.g);
     // Append AC status to the gym meta description rather than using its own column
-    html+=`<tr><td><a href="${gymPage(r.g)}" style="color:inherit;text-decoration:none">${r.g.name}</a><div class="meta">${r.g.area} · zone ${r.g.zone}${acDesc(r.g) ? ' · ' + acDesc(r.g) : ''}</div>${noteCell(r.g.id)}</td>
+    html+=`<tr><td>${gymName(r.g)}<div class="meta">${r.g.area} · zone ${r.g.zone}${acDesc(r.g) ? ' · ' + acDesc(r.g) : ''}</div>${noteCell(r.g.id)}</td>
       <td class="meta">${r.km==null?'-':r.km.toFixed(1)+' km'}</td>
       <td class="meta">${travelStr(r.g)}</td>
       <td><span class="price">${f(r.price)}</span> ${r.best.label?`<span class="pill ${r.best.kind==='off'?'off':r.best.kind==='magic'?'magic':'peak'}">${r.best.label}</span>`:''}</td>
@@ -949,7 +966,7 @@ function initMap(){
     // Include AC information in the popup. If none, omit the AC line.
     const desc = acDesc(g);
     const acLine = desc ? `<br>AC: ${desc}` : '';
-    marker.bindPopup(`<b>${g.name}</b><br>${g.area} · zone ${g.zone}<br>Cheapest today: <b>${f(b?b.price:null)}</b>${b&&b.when?" ("+b.when+")":""}${acLine}<br><a href="${gymPage(g)}">Details</a> · <a href="${d.gmap}" target="_blank" rel="noopener">Directions</a> · <a href="${g.prices_url}" target="_blank" rel="noopener">Official prices</a>`);
+    marker.bindPopup(`<b class="gym-name">${gymLogo(g)}<span>${g.name}</span></b><br>${g.area} · zone ${g.zone}<br>Cheapest today: <b>${f(b?b.price:null)}</b>${b&&b.when?" ("+b.when+")":""}${acLine}<br><a href="${gymPage(g)}">Details</a> · <a href="${d.gmap}" target="_blank" rel="noopener">Directions</a> · <a href="${g.prices_url}" target="_blank" rel="noopener">Official prices</a>`);
     pts.push([g.lat,g.lng]);
   });
   const drawStart=()=>{

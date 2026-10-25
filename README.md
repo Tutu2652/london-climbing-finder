@@ -171,7 +171,11 @@ controls which pages use browser rendering.
 
 ## Adding or updating a gym
 
-Edit `gyms.json` — copy an existing entry, change the fields — then run:
+Edit `gyms.json` — copy an existing entry, change the fields — then run the commands below.
+Save the gym's logo as a PNG (256px or smaller) in `assets/logos/` and set `logo` to that
+path; a test rejects web URLs, so the site and app never depend on a gym's website.
+
+Then run:
 
 ```
 python3 tools/sync_data.py                    # HTML, calendars, gym pages + sitemap

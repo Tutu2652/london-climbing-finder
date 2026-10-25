@@ -249,6 +249,17 @@ class DataValidation(unittest.TestCase):
             self.assertNotIn("ac available", fac,
                              "%s: move AC info to ac/ac_note" % g["id"])
 
+    def test_logos_are_stored_in_the_repo(self):
+        # Logos are copied into assets/logos so the site and app never depend on
+        # a gym's website keeping the file (or allowing hotlinking).
+        for g in DATA["gyms"]:
+            logo = g.get("logo")
+            if not logo:
+                continue
+            self.assertTrue(logo.startswith("assets/logos/"),
+                            "%s: download the logo into assets/logos/ instead of linking %s" % (g["id"], logo))
+            self.assertTrue(os.path.isfile(os.path.join(ROOT, logo)), "%s: %s does not exist" % (g["id"], logo))
+
     def test_limited_promotions_shape(self):
         ids = set()
         for p in DATA.get("limited_promotions", []):

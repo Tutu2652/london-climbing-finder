@@ -19,6 +19,16 @@ def esc(value):
     return html.escape(str(value or ""), quote=True)
 
 
+def logo_tile(gym):
+    """The gym's logo beside the page title, as on the finder; decorative, so alt=""."""
+    logo = gym.get("logo")
+    if not logo:
+        return ""
+    bg = ' style="background:%s"' % esc(gym["logo_background"]) if gym.get("logo_background") else ""
+    # Logos live in assets/logos/, two levels up from gyms/<slug>/.
+    return '<span class="logo"%s><img src="../../%s" alt="" width="56" height="56"></span>' % (bg, esc(logo))
+
+
 def money(value):
     return "Not listed" if value is None else "£%.2f" % value
 
@@ -139,10 +149,12 @@ section{{background:var(--card);border:1px solid var(--line);border-radius:12px;
 dl{{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px;margin:0}}dt{{color:var(--mut)}}dd{{margin:0;font-weight:650}}
 table{{border-collapse:collapse;width:100%}}th,td{{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}}th{{color:var(--mut)}}
 .actions{{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}}.button{{display:inline-block;padding:10px 14px;border-radius:8px;background:var(--accent);color:#06210f;text-decoration:none;font-weight:700}}.button.alt{{background:var(--card);color:var(--ink);border:1px solid var(--line)}}
-@media(max-width:480px){{dl{{grid-template-columns:1fr}}dd{{margin-bottom:7px}}}}
+.title{{display:flex;align-items:center;gap:14px}}.title h1{{min-width:0}}
+.logo{{flex:0 0 56px;width:56px;height:56px;border-radius:12px;background:#fff;border:1px solid var(--line);overflow:hidden;display:grid;place-items:center}}.logo img{{width:100%;height:100%;object-fit:contain;padding:4px}}
+@media(max-width:480px){{dl{{grid-template-columns:1fr}}dd{{margin-bottom:7px}}.title{{gap:10px}}.logo{{flex-basis:44px;width:44px;height:44px;border-radius:10px}}}}
 </style></head><body><a class="skip" href="#main">Skip to gym information</a>
 <header><nav class="crumb" aria-label="Breadcrumb"><a href="../../index.html">London Climbing Finder</a> / {name}</nav>
-<h1>{name}</h1><p class="summary">{type_label} in {area}, zone {zone}. {facilities}</p>
+<div class="title">{logo}<h1>{name}</h1></div><p class="summary">{type_label} in {area}, zone {zone}. {facilities}</p>
 <p class="muted">{verified_label} · data checked {checked}. Prices can change—confirm before travelling.</p></header>
 <main id="main" tabindex="-1"><div class="actions"><a class="button" href="{prices_url}" rel="noopener">Check official prices</a><a class="button alt" href="{directions}" rel="noopener">Public-transport directions</a><a class="button alt" href="../../index.html#all">Compare all gyms</a></div>
 <div class="grid"><section><h2>Day-pass prices</h2><dl><dt>Adult peak</dt><dd>{adult_peak}</dd><dt>Adult off-peak</dt><dd>{adult_offpeak}</dd><dt>Concession peak</dt><dd>{conc_peak}</dd><dt>Concession off-peak</dt><dd>{conc_offpeak}</dd><dt>Registration</dt><dd>{registration}</dd></dl></section>
@@ -152,7 +164,7 @@ table{{border-collapse:collapse;width:100%}}th,td{{padding:7px 10px;border-botto
 <section><h2>Opening hours</h2><table><tbody>{hours}</tbody></table></section>{classes}
 </main><footer><p>Independent comparison data from <a href="../../index.html">London Climbing Finder</a>. <a href="{website}" rel="noopener">Visit {name}'s official website</a>.</p></footer></body></html>
 """.format(
-        name=esc(gym["name"]), description=esc(description), page_url=page_url, site=SITE,
+        name=esc(gym["name"]), logo=logo_tile(gym), description=esc(description), page_url=page_url, site=SITE,
         schema=json.dumps(schema, ensure_ascii=False).replace("</", "<\\/"), type_label=type_label(gym.get("type")),
         area=esc(gym.get("area")), zone=esc(gym.get("zone")), facilities=facilities,
         verified_label=verified_label, checked=esc(checked), prices_url=esc(gym.get("prices_url") or gym.get("website")),
