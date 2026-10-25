@@ -134,6 +134,7 @@ const DATA = {
     "currency": "GBP",
     "last_research_date": "2026-10-25",
     "sources": [
+      "Offer and price re-check across all gym websites 2026-10-25 (Substation day-pass prices from the user)",
       "Gantry Climbing (new gym) from gantryclimbing.com 2026-10-25",
       "official gym websites audited 2026-08-05",
       "web research 2026-07-01",
@@ -151,9 +152,9 @@ const DATA = {
   },
   "student_promotions": [
     {
-      "scope": "Climbing District (Bermondsey, Tottenham Hale, London Fields)",
-      "offer": "Student Saver £5 day pass on Mondays and Fridays",
-      "source": "https://climbingdistrict.uk/pricing/"
+      "scope": "Climbing District (Tottenham Hale, Bermondsey)",
+      "offer": "Student Saver £5 day pass on Mondays and Fridays (student ID or UNiDAYS). Not at London Fields.",
+      "source": "https://climbingdistrict.uk/2025/12/the-best-student-climbing-offer-in-london/"
     },
     {
       "scope": "City Bouldering (Aldgate, White City, Stratford, Climbing Co Fulham)",
@@ -162,8 +163,8 @@ const DATA = {
     },
     {
       "scope": "The Font (Wandsworth, Borough, Hounslow - Hounslow is cheaper)",
-      "offer": "Student Saver £10.50 Mon-Fri off-peak and all day Saturday",
-      "source": "https://www.the-font.co.uk/wandsworth/prices"
+      "offer": "Student Saver £10.50 Mon-Fri before 4pm, Saturday after 4pm and all day Sunday",
+      "source": "https://www.the-font.co.uk/student-deals"
     },
     {
       "scope": "Yonder (Walthamstow)",
@@ -316,10 +317,10 @@ const DATA = {
           "label": "Student Saver (concession)"
         }
       ],
-      "student_note": "Concession £12.50. Student Saver £5 day pass on Mondays & Fridays (student ID).",
+      "student_note": "Concession £12.50. Student Saver £5 day pass on Mondays & Fridays (student ID or UNiDAYS) at Bermondsey and Tottenham Hale per Climbing District's student-deal page; Tottenham Hale's own page now says 'only available at Tottenham Hale', so confirm at Bermondsey.",
       "registration_fee": null,
       "verified": true,
-      "last_checked": "2026-07-01",
+      "last_checked": "2026-10-25",
       "scrape": {
         "url": "https://climbingdistrict.uk/pricing/",
         "method": "regex",
@@ -331,7 +332,7 @@ const DATA = {
         "concession_monthly": 62
       },
       "address": "Building One, Tower Bridge Business Complex, Drummond Road, London SE16 4DG",
-      "passes": "10 punches £125 (£110 conc); Summer Pass 10 £99 (£89 conc, 3-mo)",
+      "passes": "10 punches £125 (£110 conc)",
       "hours": {
         "Mon": [
           "06:30",
@@ -381,24 +382,21 @@ const DATA = {
       "postcode": "N15 4BE",
       "lat": 51.5896,
       "lng": -0.0599,
-      "website": "https://thestrongholduk.com/",
+      "website": "https://climbingdistrict.uk/climbing-gym/tottenham-hale/",
       "logo": "https://climbingdistrict.uk/app/themes/pitch-theme-sage-10/resources/images/apple-icon-180x180.png",
-      "prices_url": "https://climbingdistrict.uk/pricing/",
+      "prices_url": "https://climbingdistrict.uk/climbing-gym/tottenham-hale/",
       "payg": {
-        "adult_peak": 15.0,
-        "adult_offpeak": null,
-        "concession_peak": 12.5,
+        "adult_peak": 13.0,
+        "adult_offpeak": 8.5,
+        "concession_peak": 10.5,
         "concession_offpeak": null
       },
       "offpeak_window": {
         "days": [
           "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
           "Fri"
         ],
-        "start": "06:00",
+        "start": "07:00",
         "end": "16:00",
         "concession_only": false
       },
@@ -415,22 +413,22 @@ const DATA = {
           "label": "Student Saver (concession)"
         }
       ],
-      "student_note": "Concession £12.50. Student Saver £5 day pass on Mondays & Fridays (student ID).",
+      "student_note": "Concession £10.50 (one price, no off-peak rate); under-18 £8.50. Adult off-peak £8.50 on Mondays & Fridays (off-peak hours not stated on the Tottenham Hale page; Climbing District's FAQ says weekday off-peak runs until 4pm). Student Saver £5 day pass on Mondays & Fridays (student ID or UNiDAYS).",
       "registration_fee": null,
       "verified": true,
-      "last_checked": "2026-07-01",
+      "last_checked": "2026-10-25",
       "scrape": {
-        "url": "https://climbingdistrict.uk/pricing/",
+        "url": "https://climbingdistrict.uk/climbing-gym/tottenham-hale/",
         "method": "regex",
         "needs_js": false
       },
       "facilities": "Ropes, bouldering, gym",
       "membership": {
-        "full_monthly": 72,
-        "concession_monthly": 62
+        "full_monthly": 60,
+        "concession_monthly": 50
       },
       "address": "The Archives, Unit 10 High Cross Centre, Fountayne Road, London N15 4BE",
-      "passes": "10 punches £125 (£110 conc); Summer Pass 10 £99 (£89 conc, 3-mo)",
+      "passes": "10 punches £110 (£75 off-peak, £90 conc, £70 under-18); one month £67 (£47 off-peak, £57 conc); 6 months £300 (£200 off-peak, £250 conc); off-peak monthly membership £40. All Tottenham Hale only.",
       "hours": {
         "Mon": [
           "07:00",
@@ -504,21 +502,11 @@ const DATA = {
         "concession_only": false
       },
       "offpeak_assumed": true,
-      "magic_slots": [
-        {
-          "days": [
-            "Fri"
-          ],
-          "start": "00:00",
-          "end": "23:59",
-          "price": 5.0,
-          "label": "Student Saver (concession)"
-        }
-      ],
-      "student_note": "Concession £12.50. Student Saver £5 day pass on Fridays (student ID).",
+      "magic_slots": [],
+      "student_note": "Concession £12.50. The £5 student day pass is not offered at London Fields (Tottenham Hale and Bermondsey only).",
       "registration_fee": null,
       "verified": true,
-      "last_checked": "2026-07-01",
+      "last_checked": "2026-10-25",
       "scrape": {
         "url": "https://climbingdistrict.uk/pricing/",
         "method": "regex",
@@ -530,7 +518,7 @@ const DATA = {
         "concession_monthly": 62
       },
       "address": "Unit 30, Canal Place, Andrews Road, London E8 4FX",
-      "passes": "10 punches £125 (£110 conc); Summer Pass 10 £99 (£89 conc, 3-mo)",
+      "passes": "10 punches £125 (£110 conc)",
       "hours": {
         "Mon": [
           "06:30",
@@ -1104,16 +1092,25 @@ const DATA = {
           "days": [
             "Sat"
           ],
+          "start": "16:00",
+          "end": "23:59",
+          "price": 10.5,
+          "label": "Student Saver (concession)"
+        },
+        {
+          "days": [
+            "Sun"
+          ],
           "start": "00:00",
           "end": "23:59",
           "price": 10.5,
           "label": "Student Saver (concession)"
         }
       ],
-      "student_note": "Concession £15.50. £10.50 off-peak pass before 4pm Mon-Fri & all-day Sat (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
+      "student_note": "Concession £15.50. £10.50 off-peak pass before 4pm Mon-Fri, after 4pm Sat & all-day Sun (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
       "registration_fee": null,
       "verified": true,
-      "last_checked": "2026-07-01",
+      "last_checked": "2026-10-25",
       "scrape": {
         "url": "https://www.the-font.co.uk/wandsworth/prices",
         "method": "regex",
@@ -1203,16 +1200,25 @@ const DATA = {
           "days": [
             "Sat"
           ],
+          "start": "16:00",
+          "end": "23:59",
+          "price": 10.5,
+          "label": "Student Saver (concession)"
+        },
+        {
+          "days": [
+            "Sun"
+          ],
           "start": "00:00",
           "end": "23:59",
           "price": 10.5,
           "label": "Student Saver (concession)"
         }
       ],
-      "student_note": "Concession £15.50. £10.50 off-peak pass before 4pm Mon-Fri & all-day Sat (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
+      "student_note": "Concession £15.50. £10.50 off-peak pass before 4pm Mon-Fri, after 4pm Sat & all-day Sun (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
       "registration_fee": null,
       "verified": true,
-      "last_checked": "2026-07-01",
+      "last_checked": "2026-10-25",
       "scrape": {
         "url": "https://www.the-font.co.uk/borough/prices",
         "method": "regex",
@@ -1303,16 +1309,25 @@ const DATA = {
           "days": [
             "Sat"
           ],
+          "start": "16:00",
+          "end": "23:59",
+          "price": 10.5,
+          "label": "Student Saver (concession)"
+        },
+        {
+          "days": [
+            "Sun"
+          ],
           "start": "00:00",
           "end": "23:59",
           "price": 10.5,
           "label": "Student Saver (concession)"
         }
       ],
-      "student_note": "Concession £14.50. £10.50 off-peak pass before 4pm Mon-Fri & all-day Sat (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
+      "student_note": "Concession £14.50. £10.50 off-peak pass before 4pm Mon-Fri, after 4pm Sat & all-day Sun (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
       "registration_fee": null,
       "verified": true,
-      "last_checked": "2026-07-01",
+      "last_checked": "2026-10-25",
       "scrape": {
         "url": "https://www.the-font.co.uk/hounslow/prices",
         "method": "regex",
@@ -1760,10 +1775,10 @@ const DATA = {
       "logo": "assets/logos/westway.jpg",
       "prices_url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/pricelist/",
       "payg": {
-        "adult_peak": 16.0,
-        "adult_offpeak": 13.0,
-        "concession_peak": 12.5,
-        "concession_offpeak": 9.5
+        "adult_peak": 16.5,
+        "adult_offpeak": 13.5,
+        "concession_peak": 13.0,
+        "concession_offpeak": 10.0
       },
       "offpeak_window": {
         "days": [
@@ -1779,10 +1794,10 @@ const DATA = {
       },
       "offpeak_assumed": false,
       "magic_slots": [],
-      "student_note": "Concession £12.50 peak / £9.50 off-peak.",
+      "student_note": "Concession £13 peak / £10 off-peak.",
       "registration_fee": null,
       "verified": true,
-      "last_checked": "2026-07-01",
+      "last_checked": "2026-10-25",
       "scrape": {
         "url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/pricelist/",
         "method": "regex",
@@ -1947,10 +1962,10 @@ const DATA = {
       "logo": "https://cdn.prod.website-files.com/64ca9b9841739b6ec69b0a5b/64e74c7d46100a99336c795f_substation-webclip.webp",
       "prices_url": "https://brixton.substation.co.uk/climbing/book-a-climb",
       "payg": {
-        "adult_peak": 17.5,
-        "adult_offpeak": 15.5,
-        "concession_peak": 14.5,
-        "concession_offpeak": 12.5
+        "adult_peak": 18.0,
+        "adult_offpeak": 16.0,
+        "concession_peak": 15.0,
+        "concession_offpeak": 13.0
       },
       "offpeak_window": {
         "days": [
@@ -1967,10 +1982,10 @@ const DATA = {
       },
       "offpeak_assumed": false,
       "magic_slots": [],
-      "student_note": "Concession £14.50 peak / £12.50 off-peak (over-60s, NHS/emergency services, JSA, disabled, students; ID needed). Off-peak Mon-Fri 7am-3pm.",
+      "student_note": "Concession £15 peak / £13 off-peak (over-60s, NHS/emergency services, JSA, disabled, students; ID needed). Off-peak Mon-Fri 7am-3pm.",
       "registration_fee": null,
       "verified": true,
-      "last_checked": "2026-07-01",
+      "last_checked": "2026-10-25",
       "scrape": {
         "url": "https://brixton.substation.co.uk/climbing/book-a-climb",
         "method": "regex",
@@ -1982,7 +1997,7 @@ const DATA = {
         "concession_monthly": 66
       },
       "address": "Unit 13, Ellerslie Square Industrial Estate, Brixton Hill, London SW2 5DZ",
-      "passes": "10x day pass £155 (£125 conc)",
+      "passes": "10x climb pass from £130 (10 climbs for the price of 9)",
       "hours": {
         "Mon": [
           "07:00",
@@ -3049,25 +3064,25 @@ const DATA = {
       "id": "cd-summer-10",
       "brand": "Climbing District",
       "title": "Summer Pass (10 entries)",
-      "details": "10-entry pass, use anytime, valid 3 months from purchase",
+      "details": "10-entry pass, use anytime, valid 3 months from purchase No longer listed on the website (checked 2026-10-25).",
       "price": "£99 (£89 concession)",
       "valid": "Summer 2026 seasonal offer",
       "expires": null,
       "source": "https://climbingdistrict.uk/pricing/",
       "first_seen": "2026-07-01",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "cd-summer-5",
       "brand": "Climbing District",
       "title": "Summer Pass (5 entries)",
-      "details": "5-entry pass, valid 2 months from purchase",
+      "details": "5-entry pass, valid 2 months from purchase No longer listed on the website (checked 2026-10-25).",
       "price": "£49 (£40 concession)",
       "valid": "Summer 2026 seasonal offer",
       "expires": null,
       "source": "https://climbingdistrict.uk/pricing/",
       "first_seen": "2026-07-01",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "lcc-first-month",
@@ -3098,13 +3113,13 @@ const DATA = {
       "id": "sub-intro",
       "brand": "Independent",
       "title": "Substation: 2-week intro",
-      "details": "2 weeks unlimited climbing for new customers",
+      "details": "2 weeks unlimited climbing for new customers The offer page now returns 404 and the site no longer mentions it (checked 2026-10-25).",
       "price": "£30",
       "valid": "Ongoing intro offer",
       "expires": null,
       "source": "https://brixton.substation.co.uk/climbing/climbing-intro-offer",
       "first_seen": "2026-07-01",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "gantry-founding-30",
@@ -3118,6 +3133,71 @@ const DATA = {
       "source": "https://gantryclimbing.com/",
       "first_seen": "2026-10-25",
       "status": "active"
+    },
+    {
+      "id": "cd-new-member-10",
+      "brand": "Climbing District",
+      "title": "New members: £10 first visit",
+      "details": "Homepage banner: 'NEW MEMBER ONLY £10 for your first visit!'. The banner does not say which centres or other conditions apply.",
+      "price": "£10",
+      "valid": "New customers, first visit",
+      "expires": null,
+      "expires_source": null,
+      "source": "https://climbingdistrict.uk/",
+      "first_seen": "2026-10-25",
+      "status": "active"
+    },
+    {
+      "id": "sub-oct-50-first-month",
+      "brand": "Independent",
+      "title": "Substation: 50% off first month's membership",
+      "details": "Climbing membership £41 for the first month (normally £82); concession £33 (normally £66); under-18 £27.50 (normally £55). Studio £41 and Combo £52 first month too.",
+      "price": "£41 first month (£33 concession)",
+      "valid": "October 2026",
+      "expires": "2026-10-31",
+      "expires_source": "brixton.substation.co.uk site banner, seen 2026-10-25: \"Get 50% off your first month's membership in October\"",
+      "source": "https://brixton.substation.co.uk/membership",
+      "first_seen": "2026-10-25",
+      "status": "active"
+    },
+    {
+      "id": "font-student-prepaid-oct",
+      "brand": "The Font",
+      "title": "Student prepaid memberships (3 or 9 months)",
+      "details": "Student 3-month and 9-month prepaid memberships 'on sale for a limited time only'. Needs student ID shown at reception (or set up in-centre). Prices are not shown on the page.",
+      "price": "Not listed on the page",
+      "valid": "Limited time",
+      "expires": "2026-10-31",
+      "expires_source": "https://www.the-font.co.uk/student-deals (\"Lock yours in before October 31st!\", seen 2026-10-25)",
+      "source": "https://www.the-font.co.uk/student-deals",
+      "first_seen": "2026-10-25",
+      "status": "active"
+    },
+    {
+      "id": "rise-student-8for7",
+      "brand": "Independent",
+      "title": "Rise: student 8 months for the price of 7",
+      "details": "8-month student membership £385, unlimited climbing for the academic year. Rise's website says the gym is temporarily closed (seen 2026-10-25), so check before buying.",
+      "price": "£385",
+      "valid": "Students, Sep-Nov 2026",
+      "expires": "2026-11-30",
+      "expires_source": "https://www.rise-climbing.com/student-offers (\"Offer valid until end of November 2026\", seen 2026-10-25)",
+      "source": "https://www.rise-climbing.com/student-offers",
+      "first_seen": "2026-10-25",
+      "status": "unverified"
+    },
+    {
+      "id": "rise-student25",
+      "brand": "Independent",
+      "title": "Rise: 25% off first month of student membership",
+      "details": "Code STUDENT25 takes 25% off the first month of the £55.50 student monthly membership. Rise's website says the gym is temporarily closed (seen 2026-10-25), so check before buying.",
+      "price": "£41.63 first month (normally £55.50)",
+      "valid": "Students, code STUDENT25",
+      "expires": "2026-11-30",
+      "expires_source": "https://www.rise-climbing.com/student-offers (\"Offer valid until end of November 2026\", seen 2026-10-25)",
+      "source": "https://www.rise-climbing.com/student-offers",
+      "first_seen": "2026-10-25",
+      "status": "unverified"
     }
   ]
 };

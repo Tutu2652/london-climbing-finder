@@ -483,7 +483,7 @@ def _prices_near(html, keyword, radius=160):
     match 'peak' without also matching the 'peak' inside 'off-peak').
     """
     text = re.sub(r"<[^>]+>", " ", _strip_comments(html))
-    text = re.sub(r"\s+", " ", text)
+    text = _decimal_commas(re.sub(r"\s+", " ", text))
     if isinstance(keyword, str):
         keyword = re.compile(re.escape(keyword), re.I)
     found = []
@@ -559,13 +559,23 @@ def _strip_comments(html):
     return re.sub(r"<!--.*?-->", " ", html, flags=re.S)
 
 
+def _decimal_commas(text):
+    """
+    '£8,5' -> '£8.5'. Climbing District's Tottenham Hale page writes prices
+    the French way. Only one or two digits after the comma, so a thousands
+    separator like '£1,250' is left alone.
+    """
+    return re.sub(r"(£\s?\d{1,3}),(\d{1,2})(?!\d)", r"\1.\2", text)
+
+
 def _page_text(html):
     """
     De-tag a page and decode entities. Sites are inconsistent about writing
     '£' literally vs as '&pound;' / '&#163;', so decode before hunting for
     amounts or a price would be invisible on half the pages.
     """
-    return re.sub(r"\s+", " ", _html.unescape(re.sub(r"<[^>]+>", " ", _strip_comments(html))))
+    text = _html.unescape(re.sub(r"<[^>]+>", " ", _strip_comments(html)))
+    return _decimal_commas(re.sub(r"\s+", " ", text))
 
 
 def _all_amounts(html):
