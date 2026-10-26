@@ -426,7 +426,18 @@ DESCRIPTION:£8.00 https://gantryclimbing.com/
 LOCATION:24-26 Surrey Quays Shopping Centre\, London SE16 7LL
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_vauxwall_west-39@londonclimbingfinder
+UID:cld-all-blocfit-39@londonclimbingfinder
+DTSTAMP:20261025T000000Z
+DTSTART:20240103T060000
+DTEND:20240103T220000
+RRULE:FREQ=WEEKLY;BYDAY=WE
+SUMMARY:£7.00 Student Wednesday — Blocfit Brixton
+DESCRIPTION:£7.00 Students/concession only (ID). https://www.blocfit.co.u
+ k/prices
+LOCATION:Arch 266\, 241 Coldharbour Lane\, Brixton\, London SW9 8RR
+END:VEVENT
+BEGIN:VEVENT
+UID:cld-all-lcc_vauxwall_west-40@londonclimbingfinder
 DTSTAMP:20261025T000000Z
 DTSTART:20240107T080000
 DTEND:20240107T100000
@@ -437,7 +448,7 @@ DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
 LOCATION:Arches 45b-47c\, South Lambeth Road\, Vauxhall\, London SW8 1SR
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_vauxwall_east-40@londonclimbingfinder
+UID:cld-all-lcc_vauxwall_east-41@londonclimbingfinder
 DTSTAMP:20261025T000000Z
 DTSTART:20240101T090000
 DTEND:20240101T160000
@@ -448,7 +459,7 @@ DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
 LOCATION:1 Cabanel Place\, Lollard Street\, London SE11 6BD
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_harrowall-41@londonclimbingfinder
+UID:cld-all-lcc_harrowall-42@londonclimbingfinder
 DTSTAMP:20261025T000000Z
 DTSTART:20240105T200000
 DTEND:20240105T230000
@@ -460,7 +471,7 @@ LOCATION:Unit 2a & 3a\, Neptune Trading Estate\, Neptune Road\, Harrow HA1
   4HX
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_croywall-42@londonclimbingfinder
+UID:cld-all-lcc_croywall-43@londonclimbingfinder
 DTSTAMP:20261025T000000Z
 DTSTART:20240102T060000
 DTEND:20240102T160000
@@ -471,7 +482,7 @@ DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
 LOCATION:Unit 7 New South Quarter\, Whitestone Way\, Croydon CR0 4WN
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_croywall-43@londonclimbingfinder
+UID:cld-all-lcc_croywall-44@londonclimbingfinder
 DTSTAMP:20261025T000000Z
 DTSTART;VALUE=DATE:20240105
 DTEND;VALUE=DATE:20240106
@@ -482,7 +493,7 @@ DESCRIPTION:£9.50 Students/concession only (ID). https://londonclimbingce
 LOCATION:Unit 7 New South Quarter\, Whitestone Way\, Croydon CR0 4WN
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_ravenswall-44@londonclimbingfinder
+UID:cld-all-lcc_ravenswall-45@londonclimbingfinder
 DTSTAMP:20261025T000000Z
 DTSTART:20240105T060000
 DTEND:20240105T160000
@@ -493,7 +504,7 @@ DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
 LOCATION:Arch 105\, Ravenscourt Road\, London W6 0UQ
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_canarywall-45@londonclimbingfinder
+UID:cld-all-lcc_canarywall-46@londonclimbingfinder
 DTSTAMP:20261025T000000Z
 DTSTART:20240107T090000
 DTEND:20240107T110000
@@ -504,7 +515,7 @@ DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
 LOCATION:21-23 Trinidad Street\, Poplar\, London E14 8AA
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_bethwall-46@londonclimbingfinder
+UID:cld-all-lcc_bethwall-47@londonclimbingfinder
 DTSTAMP:20261025T000000Z
 DTSTART:20240106T080000
 DTEND:20240106T100000
@@ -515,7 +526,7 @@ DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
 LOCATION:Arches 243-247\, Hollybush Place\, London E2 9QX
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_eustonwall-47@londonclimbingfinder
+UID:cld-all-lcc_eustonwall-48@londonclimbingfinder
 DTSTAMP:20261025T000000Z
 DTSTART:20240106T170000
 DTEND:20240106T210000

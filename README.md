@@ -188,8 +188,8 @@ site can never show data that differs from `gyms.json`.
 
 ## Data covered
 
-27 gyms, each site as its own entry with its own prices and off-peak times: The Castle,
-Mile End, Yonder, Sen, Westway, The Reach, Rise, Substation Brixton, Gantry (Canada Water); City Bouldering
+29 gyms, each site as its own entry with its own prices and off-peak times: The Castle,
+Mile End, Yonder, Sen, Westway, The Reach, Rise, Substation Brixton, Gantry (Canada Water), Blocfit (Brixton), Muro (Peckham); City Bouldering
 (Aldgate, White City, Stratford) plus Climbing Co Fulham; The Font (Wandsworth, Borough,
 Hounslow — Hounslow is cheaper); Climbing District (Bermondsey/Arch, Tottenham
 Hale/Stronghold, London Fields); and all eight London Climbing Centres sites (VauxWall

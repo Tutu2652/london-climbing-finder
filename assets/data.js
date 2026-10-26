@@ -1999,6 +1999,167 @@ window.CLIMBING_DATA = {
       "hours_assumed": false
     },
     {
+      "id": "blocfit",
+      "name": "Blocfit Brixton",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Brixton / Loughborough Junction",
+      "borough": "Lambeth",
+      "zone": 2,
+      "postcode": "SW9 8RR",
+      "lat": 51.465,
+      "lng": -0.1029,
+      "website": "https://www.blocfit.co.uk/",
+      "logo": "assets/logos/blocfit.png",
+      "logo_background": "#4a4a4a",
+      "prices_url": "https://www.blocfit.co.uk/prices",
+      "payg": {
+        "adult_peak": 14.0,
+        "adult_offpeak": null,
+        "concession_peak": 12.0,
+        "concession_offpeak": null
+      },
+      "offpeak_window": null,
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Wed"
+          ],
+          "start": "06:00",
+          "end": "22:00",
+          "price": 7.0,
+          "label": "Student Wednesday (concession, incl. shoes)"
+        }
+      ],
+      "student_note": "Concession £12 for students (UniDays not accepted), teachers, Blue Light and Fire & Rescue services; proof required. Student Wednesday £7 including shoe hire. Student rolling membership £42/mo.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-10-26",
+      "scrape": {
+        "url": "https://www.blocfit.co.uk/prices",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering, fitness gym, sauna (with rolling membership), shoe & chalk hire £4",
+      "membership": {
+        "full_monthly": 63,
+        "concession_monthly": 57
+      },
+      "address": "Arch 266, 241 Coldharbour Lane, Brixton, London SW9 8RR",
+      "passes": "10 entries £125 (£105 conc); 1 month prepaid £69 (£60 conc, no sauna); student rolling membership £42/mo; gym + sauna £50/mo; gym only £30/mo",
+      "hours": {
+        "Mon": [
+          "06:00",
+          "22:00"
+        ],
+        "Tue": [
+          "06:00",
+          "22:00"
+        ],
+        "Wed": [
+          "06:00",
+          "22:00"
+        ],
+        "Thu": [
+          "06:00",
+          "22:00"
+        ],
+        "Fri": [
+          "06:00",
+          "22:00"
+        ],
+        "Sat": [
+          "10:00",
+          "18:00"
+        ],
+        "Sun": [
+          "10:00",
+          "18:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "blocfit",
+      "events_url": "https://www.blocfit.co.uk/events",
+      "classes_url": "https://www.blocfit.co.uk/courses-and-coaching",
+      "class_info": "[Courses & coaching](https://www.blocfit.co.uk/courses-and-coaching) — see the website for current courses and prices."
+    },
+    {
+      "id": "muro",
+      "name": "Muro Climbing Peckham",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Peckham Rye",
+      "borough": "Southwark",
+      "zone": 2,
+      "postcode": "SE15 2AG",
+      "lat": 51.4695,
+      "lng": -0.0621,
+      "website": "https://www.muroclimbing.com/",
+      "logo": "assets/logos/muro.png",
+      "prices_url": "https://www.muroclimbing.com/",
+      "payg": {
+        "adult_peak": 16.0,
+        "adult_offpeak": null,
+        "concession_peak": 12.0,
+        "concession_offpeak": null
+      },
+      "offpeak_window": null,
+      "offpeak_assumed": false,
+      "magic_slots": [],
+      "student_note": "Concession £12 for students, teachers, Blue Light and low-income support (JSA, UC etc.). Under-16 £8.50, supervised 1:1 by a parent or guardian. First-time visitors: 3 day passes for the price of 2 (£32, £24 conc).",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-10-26",
+      "scrape": {
+        "url": "https://www.muroclimbing.com/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "High-density bouldering wall, competition-height bouldering wall, shoe & chalk hire £4",
+      "membership": {
+        "full_monthly": 65,
+        "concession_monthly": 53
+      },
+      "address": "Railway Arch, 845 & 846 Brayards Road, London SE15 2AG",
+      "passes": "10 entries £135 (£105 conc, 12 months); 1 month prepaid £75 (£65 conc); 6 months prepaid £330; 1 year prepaid £650 (£520 conc); annual flex £55/mo (£43 conc)",
+      "hours": {
+        "Mon": [
+          "11:00",
+          "22:00"
+        ],
+        "Tue": [
+          "11:00",
+          "22:00"
+        ],
+        "Wed": [
+          "11:00",
+          "22:00"
+        ],
+        "Thu": [
+          "11:00",
+          "22:00"
+        ],
+        "Fri": [
+          "11:00",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "18:00"
+        ],
+        "Sun": [
+          "09:00",
+          "18:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "muro_peckham",
+      "classes_url": "https://www.muroclimbing.com/page/classes-and-coaching",
+      "class_info": "[Intro to Bouldering](https://www.muroclimbing.com/page/intro-to-bouldering) coached session for new adult climbers; [Bouldering Fundamentals](https://www.muroclimbing.com/page/bouldering-fundamentals) 3-week technique course; [new climber packages](https://www.muroclimbing.com/page/new-climber-packages) incl. 3 months' unlimited climbing with coaching (£150).",
+      "events_url": "https://www.muroclimbing.com/page/events"
+    },
+    {
       "id": "lcc_vauxwall_west",
       "name": "VauxWall West (LCC)",
       "brand": "London Climbing Centres",
