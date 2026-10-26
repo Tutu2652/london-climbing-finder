@@ -905,7 +905,7 @@ let MAP=null;
 function viewMap(){
   const conc=activeFilters().conc, when=whenFromInputs();
   return `<div class="card">
-    <div class="note">Set <b>Your location</b> at the top of the page to sort by distance and get travel times. Markers = every gym (green = cheapest all-day for your filters). Click a marker for price and directions. "directions" opens Google Maps public-transport routing (with live time).${START?'':' <span style="color:var(--accent2)">No location set yet.</span>'}</div>
+    <div class="note">Set <b>Your location</b> at the top of the page to sort by distance and get travel times. Each gym shows its logo (green frame = cheapest all-day for your filters; blue dot = your start). Click a marker for price and directions. "directions" opens Google Maps public-transport routing (with live time).${START?'':' <span style="color:var(--accent2)">No location set yet.</span>'}</div>
     <div id="map"></div>
     <div id="maplist"></div>
   </div>`;
@@ -962,7 +962,11 @@ function initMap(){
     const b=bestOnDay(g,when,conc);
     const cheap = b && b.price===minp;
     const d=dirLinks(g);
-    const marker=L.circleMarker([g.lat,g.lng],{radius:7,color:cheap?"#5db07a":"#e2a13c",fillColor:cheap?"#5db07a":"#e2a13c",fillOpacity:.85,weight:1}).addTo(MAP);
+    // Logo pins, as on the iOS app's map; today's cheapest gym is framed in green and drawn on top.
+    const icon=L.divIcon({className:"map-pin-wrap",iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-18],
+      html:`<span class="map-pin${cheap?" cheapest":""}">${gymLogo(g)}</span>`});
+    const marker=L.marker([g.lat,g.lng],{icon,title:g.name,alt:g.name,riseOnHover:true,zIndexOffset:cheap?1000:0}).addTo(MAP);
+    marker.bindTooltip(shortName(g),{direction:"top",offset:[0,-18]});
     // Include AC information in the popup. If none, omit the AC line.
     const desc = acDesc(g);
     const acLine = desc ? `<br>AC: ${desc}` : '';
@@ -971,7 +975,8 @@ function initMap(){
   });
   const drawStart=()=>{
     if(START_COORD){
-      L.marker(START_COORD).addTo(MAP).bindPopup("Start: "+START);
+      L.marker(START_COORD,{icon:L.divIcon({className:"map-pin-wrap",iconSize:[18,18],iconAnchor:[9,9],html:'<span class="map-start"></span>'}),
+        title:"Your start location",zIndexOffset:2000}).addTo(MAP).bindPopup("Start: "+esc(START));
       MAP.fitBounds(pts.concat([START_COORD]),{padding:[30,30]});
     } else { MAP.fitBounds(pts,{padding:[30,30]}); }
     renderMapList();
