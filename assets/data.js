@@ -145,6 +145,7 @@ window.CLIMBING_DATA = {
     {
       "id": "arch_bermondsey",
       "name": "Climbing District - Bermondsey",
+      "about": "Climbing District's Building One, billed as London's original bouldering hub: a 15,000 sq ft centre in a former biscuit factory hall a few minutes from Bermondsey tube, and one of the city's largest climbing floors. Steep angles and punchy setting for climbers who like to climb hard, alongside regular resets and workshops for beginners.",
       "brand": "Climbing District",
       "type": "bouldering",
       "area": "Bermondsey",
@@ -244,6 +245,7 @@ window.CLIMBING_DATA = {
     {
       "id": "stronghold",
       "name": "Climbing District - Tottenham Hale",
+      "about": "Climbing District's Tottenham Hale centre, a few minutes from the Victoria line station (or ten minutes' walk from Seven Sisters). A lively, well-equipped hub with a café, shop and full training area, and its own Tottenham Hale-only offers.",
       "brand": "Climbing District",
       "type": "ropes+bouldering",
       "area": "Tottenham Hale",
@@ -342,6 +344,7 @@ window.CLIMBING_DATA = {
     {
       "id": "climbingdistrict_londonfields",
       "name": "Climbing District - London Fields",
+      "about": "A bright, open bouldering gym just off Broadway Market, with creative setting, good training facilities and a café for a post-climb coffee. A few minutes from Cambridge Heath Overground, or ten minutes' walk from Bethnal Green tube.",
       "brand": "Climbing District",
       "type": "bouldering",
       "area": "London Fields",
@@ -928,6 +931,7 @@ window.CLIMBING_DATA = {
     {
       "id": "the_font_wandsworth",
       "name": "The Font Wandsworth",
+      "about": "The Font's newest site, in Southside Shopping Centre on Garratt Lane, and the only one with ropes: hundreds of boulders plus auto-belay and roped walls up to 12 m, all regularly reset. There's a large functional fitness space (free weights, sled, squat and bench stations, calisthenics rig) and a café-bar with a workspace.",
       "brand": "The Font",
       "type": "ropes+bouldering",
       "area": "Wandsworth",
@@ -1036,6 +1040,7 @@ window.CLIMBING_DATA = {
     {
       "id": "the_font_borough",
       "name": "The Font Borough",
+      "about": "A 9,000 sq ft bouldering gym at Bankside, a short walk from London Bridge, Southwark, Blackfriars and Borough, graded progressively from first-timers to competition climbers. Its café and bar serves speciality coffee, pastries and local craft beer, alongside a functional fitness gym, strength and mobility classes, women's socials and physio sessions.",
       "brand": "The Font",
       "type": "bouldering",
       "area": "Borough",
@@ -1145,6 +1150,7 @@ window.CLIMBING_DATA = {
     {
       "id": "the_font_hounslow",
       "name": "The Font Hounslow",
+      "about": "Formerly Hang, now part of The Font: a 5,400 sq ft bouldering gym packed with varied angles, plus the latest training boards and a fitness gym with fingerboards. The workspace and lounge sit on a raised level with views over the centre. Opposite Asda on Smithy Lane, near Hounslow East and Central, and 8 minutes from Heathrow Terminals 2 & 3.",
       "brand": "The Font",
       "type": "bouldering",
       "area": "Hounslow",
@@ -1730,6 +1736,7 @@ window.CLIMBING_DATA = {
     {
       "id": "climbing_co_fulham",
       "name": "Climbing Co Fulham (City Bouldering)",
+      "about": "One of London's original bouldering gyms: it opened in 2011 as Urban Ascent, became The Climbing Hangar's London site in 2016, and is now run by City Bouldering as Climbing Co Fulham, keeping its own identity and prices. It sets every Thursday, so the whole gym is new every five weeks, and it's a minute's walk from Parsons Green tube.",
       "brand": "City Bouldering",
       "type": "bouldering",
       "area": "Parsons Green",
