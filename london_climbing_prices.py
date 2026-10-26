@@ -295,6 +295,8 @@ def cheapest(data, when, concession=False, gym_type=None, zone=None):
             continue
         if zone is not None and gym["zone"] != zone:
             continue
+        if gym.get("temporarily_closed"):
+            continue
         price, label = applicable_price(gym, when, concession)
         if price is None:
             continue
@@ -337,6 +339,15 @@ def best_on_day(gym, date, concession=False, step=15):
     return {"price": minp, "label": label, "when": when}
 
 
+def closed_all_day(gym, date):
+    """True when the gym is temporarily closed, or lists opening hours but none for this
+    weekday (e.g. Mount Palace on Mondays)."""
+    if gym.get("temporarily_closed"):
+        return True
+    hours = gym.get("hours") or {}
+    return bool(hours) and not hours.get(WEEKDAYS[date.weekday()])
+
+
 def cheapest_day(data, date, concession=False, gym_type=None, zone=None):
     """Cheapest achievable price per gym across the whole date, ranked."""
     rows = []
@@ -344,6 +355,8 @@ def cheapest_day(data, date, concession=False, gym_type=None, zone=None):
         if gym_type and gym_type not in gym["type"]:
             continue
         if zone is not None and gym["zone"] != zone:
+            continue
+        if closed_all_day(gym, date):
             continue
         best = best_on_day(gym, date, concession)
         if best:
@@ -361,14 +374,14 @@ def maps_links(gym):
 
 
 def hours_summary(gym):
-    h = gym.get("hours")
+    h = gym.get("temporary_hours") or gym.get("hours")
     if not h:
         return None
     days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     parts, i = [], 0
     while i < 7:
-        cur = h[days[i]]; j = i
-        while j + 1 < 7 and h[days[j + 1]] == cur:
+        cur = h.get(days[i]); j = i
+        while j + 1 < 7 and h.get(days[j + 1]) == cur:
             j += 1
         lbl = days[i] if i == j else "%s-%s" % (days[i], days[j])
         parts.append("%s %s" % (lbl, ("%s-%s" % (cur[0], cur[1])) if cur else "closed"))
@@ -377,7 +390,9 @@ def hours_summary(gym):
 
 
 def open_state(gym, when):
-    h = gym.get("hours")
+    if gym.get("temporarily_closed"):
+        return "temporarily closed"
+    h = gym.get("temporary_hours") or gym.get("hours")
     if not h:
         return None
     t = h.get(WEEKDAYS[when.weekday()])
@@ -909,14 +924,20 @@ def cmd_price(data, args):
         print("  note: this is a UK bank holiday - some off-peak/Magic/Bargain deals don't apply.")
     if gym.get("offpeak_assumed"):
         print("  note: off-peak window is an assumption, not confirmed for this gym.")
+    if gym.get("about"):
+        print("  about: %s" % gym["about"])
     if gym.get("facilities"):
         fac = gym["facilities"]
         if gym.get("ac_note"):
             fac += " | " + gym["ac_note"]
         print("  facilities: %s" % fac)
+    for key in ("temporarily_closed", "notice"):
+        if gym.get(key):
+            print("  NOTICE: %s" % gym[key])
     if hours_summary(gym):
         st = open_state(gym, when)
-        print("  hours: %s%s" % (hours_summary(gym), ("  [%s]" % st) if st else ""))
+        print("  hours%s: %s%s" % (" (temporary)" if gym.get("temporary_hours") else "",
+                                   hours_summary(gym), ("  [%s]" % st) if st else ""))
     mem = gym.get("membership") or {}
     if mem.get("full_monthly") is not None:
         c = mem.get("concession_monthly")

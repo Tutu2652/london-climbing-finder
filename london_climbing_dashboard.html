@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>London Climbing Gym Prices</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Crect width=%2248%22 height=%2248%22 rx=%2211%22 fill=%22%23181b22%22/%3E%3Cg transform=%22translate%2824 24%29 scale%28.8%29 translate%28-24.5 -22.5%29%22%3E%3Cpath d=%22M7 35 18 16l8 12 8-18 8 25%22 fill=%22none%22 stroke=%22%235db07a%22 stroke-width=%224%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Ccircle cx=%2218%22 cy=%2216%22 r=%223.6%22 fill=%22%235db07a%22/%3E%3Ccircle cx=%2234%22 cy=%2210%22 r=%223.6%22 fill=%22%235db07a%22/%3E%3C/g%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <!-- Optional account sync (Firebase). Harmless if not configured. -->
@@ -132,7 +133,7 @@
 const DATA = {
   "_meta": {
     "currency": "GBP",
-    "last_research_date": "2026-10-25",
+    "last_research_date": "2026-10-26",
     "sources": [
       "Offer and price re-check across all gym websites 2026-10-25 (Substation day-pass prices from the user)",
       "Gantry Climbing (new gym) from gantryclimbing.com 2026-10-25",
@@ -181,14 +182,15 @@ const DATA = {
     {
       "id": "castle",
       "name": "The Castle Climbing Centre",
+      "about": "Climbing inside a Grade II* listed Victorian water pumping station built in the 1850s, saved from redevelopment by local campaigners and opened as a climbing centre in 1995. Now one of Europe's leading climbing centres, with an organic garden, outdoor boulders and a strong sustainability focus.",
       "brand": "Independent",
       "type": "ropes+bouldering",
       "area": "Manor House / Finsbury Park",
       "borough": "Hackney",
       "zone": 2,
       "postcode": "N4 2HA",
-      "lat": 51.5712,
-      "lng": -0.0894,
+      "lat": 51.5653,
+      "lng": -0.0926,
       "website": "https://www.castle-climbing.co.uk/",
       "logo": "assets/logos/castle.png",
       "logo_background": "#1f232c",
@@ -281,8 +283,8 @@ const DATA = {
       "borough": "Southwark",
       "zone": 2,
       "postcode": "SE16 4DG",
-      "lat": 51.4925,
-      "lng": -0.0689,
+      "lat": 51.4934,
+      "lng": -0.0609,
       "website": "https://climbingdistrict.uk/",
       "logo": "assets/logos/climbing-district.png",
       "prices_url": "https://climbingdistrict.uk/pricing/",
@@ -380,8 +382,8 @@ const DATA = {
       "borough": "Haringey",
       "zone": 3,
       "postcode": "N15 4BE",
-      "lat": 51.5896,
-      "lng": -0.0599,
+      "lat": 51.5854,
+      "lng": -0.0607,
       "website": "https://climbingdistrict.uk/climbing-gym/tottenham-hale/",
       "logo": "assets/logos/climbing-district.png",
       "prices_url": "https://climbingdistrict.uk/climbing-gym/tottenham-hale/",
@@ -478,8 +480,8 @@ const DATA = {
       "borough": "Hackney",
       "zone": 2,
       "postcode": "E8 4FX",
-      "lat": 51.541,
-      "lng": -0.057,
+      "lat": 51.5345,
+      "lng": -0.0602,
       "website": "https://climbingdistrict.uk/",
       "logo": "assets/logos/climbing-district.png",
       "prices_url": "https://climbingdistrict.uk/pricing/",
@@ -570,8 +572,8 @@ const DATA = {
       "borough": "City of London",
       "zone": 1,
       "postcode": "EC3N 1AH",
-      "lat": 51.5138,
-      "lng": -0.0755,
+      "lat": 51.5144,
+      "lng": -0.0745,
       "website": "https://www.citybouldering.co.uk/locations/city-bouidering-aldgate",
       "logo": "assets/logos/city-bouldering.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
@@ -703,8 +705,8 @@ const DATA = {
       "borough": "Hammersmith & Fulham",
       "zone": 2,
       "postcode": "W12 7HB",
-      "lat": 51.5074,
-      "lng": -0.2242,
+      "lat": 51.5094,
+      "lng": -0.2231,
       "website": "https://www.citybouldering.co.uk/locations/city-bouldering-white-city",
       "logo": "assets/logos/city-bouldering.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
@@ -825,8 +827,8 @@ const DATA = {
       "borough": "Newham",
       "zone": 2,
       "postcode": "E15 2JA",
-      "lat": 51.5416,
-      "lng": -0.0042,
+      "lat": 51.5371,
+      "lng": -0.0038,
       "website": "https://www.citybouldering.co.uk/locations/city-bouldering-stratford",
       "logo": "assets/logos/city-bouldering.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
@@ -953,14 +955,15 @@ const DATA = {
     {
       "id": "mileend",
       "name": "Mile End Climbing Wall",
+      "about": "Run by the charity Develop through Challenge, in an old pipe engineering works in Mile End Park, open since the late 1980s. A big, relaxed and informal wall (about 1,500 m² of climbing) used by charities, schools and clubs as much as regulars, with the Board Room and the famous Monkey House for training. Proud to be one of London's most affordable walls; your entry supports the charity.",
       "brand": "Independent",
       "type": "ropes+bouldering",
       "area": "Mile End",
       "borough": "Tower Hamlets",
       "zone": 2,
       "postcode": "E3 5BN",
-      "lat": 51.5265,
-      "lng": -0.0333,
+      "lat": 51.5277,
+      "lng": -0.0399,
       "website": "https://www.mileendwall.org.uk/",
       "logo": "assets/logos/mileend.png",
       "prices_url": "https://www.mileendwall.org.uk/memberships-and-entries",
@@ -1063,8 +1066,8 @@ const DATA = {
       "borough": "Wandsworth",
       "zone": 2,
       "postcode": "SW18 4TF",
-      "lat": 51.4549,
-      "lng": -0.1931,
+      "lat": 51.4548,
+      "lng": -0.193,
       "website": "https://www.the-font.co.uk/wandsworth",
       "logo": "assets/logos/the-font.png",
       "prices_url": "https://www.the-font.co.uk/wandsworth/prices",
@@ -1170,9 +1173,9 @@ const DATA = {
       "area": "Borough",
       "borough": "Southwark",
       "zone": 1,
-      "postcode": "SE1",
-      "lat": 51.5015,
-      "lng": -0.094,
+      "postcode": "SE1 9BL",
+      "lat": 51.5073,
+      "lng": -0.0971,
       "website": "https://www.the-font.co.uk/borough",
       "logo": "assets/logos/the-font.png",
       "prices_url": "https://www.the-font.co.uk/borough/prices",
@@ -1279,9 +1282,9 @@ const DATA = {
       "area": "Hounslow",
       "borough": "Hounslow",
       "zone": 4,
-      "postcode": "TW3",
-      "lat": 51.467,
-      "lng": -0.361,
+      "postcode": "TW3 1EH",
+      "lat": 51.4705,
+      "lng": -0.3619,
       "website": "https://www.the-font.co.uk/hounslow",
       "logo": "assets/logos/the-font.png",
       "prices_url": "https://www.the-font.co.uk/hounslow/prices",
@@ -1384,14 +1387,15 @@ const DATA = {
     {
       "id": "yonder",
       "name": "Yonder Climbing",
+      "about": "Independent and rooted in Walthamstow, Yonder began in 2016 as a Kickstarter project: London's first climbing, yoga and workspace under one roof (\"between a rock and a workspace\"). It mixes climbing, coworking and wellbeing into one community, tries to learn names and faces, and runs an access-to-climbing scheme to bring in more people.",
       "brand": "Independent",
       "type": "bouldering",
       "area": "Walthamstow / Blackhorse Road",
       "borough": "Waltham Forest",
       "zone": 3,
       "postcode": "E17 6DP",
-      "lat": 51.5868,
-      "lng": -0.0413,
+      "lat": 51.5896,
+      "lng": -0.0408,
       "website": "https://www.thisisyonder.com/",
       "logo": "assets/logos/yonder.png",
       "prices_url": "https://www.thisisyonder.com/yonder-climbing",
@@ -1482,14 +1486,15 @@ const DATA = {
     {
       "id": "the_reach",
       "name": "The Reach",
+      "about": "Billed as the home of South London climbing. Run by a company set up in 2003 to take people, especially disadvantaged young people, on outdoor adventures, it opened this big indoor wall in Woolwich in 2010: bouldering, auto-belays, top-roping and lead, with a welcoming, fully qualified team.",
       "brand": "Independent",
       "type": "ropes+bouldering",
       "area": "Woolwich",
       "borough": "Greenwich",
       "zone": 4,
       "postcode": "SE18 5NR",
-      "lat": 51.49,
-      "lng": 0.069,
+      "lat": 51.4944,
+      "lng": 0.043,
       "website": "https://thereach.org.uk/",
       "logo": "assets/logos/the-reach.png",
       "prices_url": "https://thereach.org.uk/prices",
@@ -1570,14 +1575,16 @@ const DATA = {
     {
       "id": "rise",
       "name": "Rise Climbing",
+      "temporarily_closed": "Temporarily closed until further notice (gym website, 26 Oct 2026), after structural problems were found at its Canning Town building.",
+      "about": "An independent bouldering gym, training centre, café and chill space in Canning Town, aiming to be a home away from home for the community, with free monthly improvers sessions and social clubs.",
       "brand": "Independent",
       "type": "bouldering",
       "area": "Canning Town",
       "borough": "Newham",
       "zone": 3,
       "postcode": "E16 1ZA",
-      "lat": 51.514,
-      "lng": 0.008,
+      "lat": 51.5112,
+      "lng": 0.0128,
       "website": "https://www.rise-climbing.com/",
       "logo": "assets/logos/rise.png",
       "prices_url": "https://www.rise-climbing.com/entry-memberships",
@@ -1689,14 +1696,15 @@ const DATA = {
     {
       "id": "sen",
       "name": "Sen Climbing",
+      "about": "A Japanese-run bouldering gym (sen, 千, means \"a thousand\" and stands for endless possibility) bringing the style, quality and atmosphere of Japanese gyms to London. It focuses on the satisfaction of solving problems and personal growth, a place to connect with Japanese culture, and helping strong climbers build careers.",
       "brand": "Independent",
       "type": "bouldering",
       "area": "Lambeth North",
       "borough": "Lambeth",
       "zone": 1,
       "postcode": "SE1 7DR",
-      "lat": 51.499,
-      "lng": -0.112,
+      "lat": 51.4986,
+      "lng": -0.1139,
       "website": "https://www.climbinggymsen.co.uk/",
       "logo": "assets/logos/sen.png",
       "prices_url": "https://www.climbinggymsen.co.uk/",
@@ -1763,14 +1771,15 @@ const DATA = {
     {
       "id": "westway",
       "name": "Westway Climbing Centre",
+      "about": "London's biggest climbing wall, climbing since 1994 at the Westway Sports & Fitness Centre (run by Everyone Active): 350 routes on 110 rope lines up to 13.5 m, 450 m² of bouldering reset every month, auto-belays and a serious training room. A family-friendly, all-ages centre known for its NICAS and junior coaching.",
       "brand": "Independent",
       "type": "ropes+bouldering",
       "area": "White City / Ladbroke Grove",
       "borough": "Hammersmith & Fulham",
       "zone": 2,
       "postcode": "W10 6RP",
-      "lat": 51.521,
-      "lng": -0.224,
+      "lat": 51.5155,
+      "lng": -0.2206,
       "website": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/climbing-centre/",
       "logo": "assets/logos/westway.jpg",
       "prices_url": "https://www.everyoneactive.com/centre/westway-sports-fitness-centre/pricelist/",
@@ -1859,8 +1868,8 @@ const DATA = {
       "borough": "Hammersmith & Fulham",
       "zone": 2,
       "postcode": "SW6 4HH",
-      "lat": 51.4753,
-      "lng": -0.2008,
+      "lat": 51.4764,
+      "lng": -0.1995,
       "website": "https://www.citybouldering.co.uk/locations/climbing-co-fulham",
       "logo": "assets/logos/city-bouldering.png",
       "prices_url": "https://www.citybouldering.co.uk/pricing",
@@ -1950,14 +1959,15 @@ const DATA = {
     {
       "id": "substation_brixton",
       "name": "Substation Brixton",
+      "about": "A bouldering and fitness centre in Brixton (with a sister site in Macclesfield) that uses its own grading system: start and top tags with levels 1–6 instead of colour grades, so routes mix hold colours and climbers spread across the wall. Alongside the climbing there's a fitness studio, a wild sauna and plunge, and a café, pizzeria and workspace.",
       "brand": "Independent",
       "type": "bouldering",
       "area": "Brixton Hill",
       "borough": "Lambeth",
       "zone": 2,
       "postcode": "SW2 5DZ",
-      "lat": 51.4487,
-      "lng": -0.1219,
+      "lat": 51.4588,
+      "lng": -0.1283,
       "website": "https://brixton.substation.co.uk/",
       "logo": "assets/logos/substation.png",
       "prices_url": "https://brixton.substation.co.uk/climbing/book-a-climb",
@@ -2042,6 +2052,38 @@ const DATA = {
     {
       "id": "gantry",
       "name": "Gantry Climbing",
+      "notice": "Reduced opening hours for now while the new team trains (gym website, 26 Oct 2026): Mon–Fri 2–10pm, Sat–Sun 9am–4pm. Check before you go.",
+      "temporary_hours": {
+        "Mon": [
+          "14:00",
+          "22:00"
+        ],
+        "Tue": [
+          "14:00",
+          "22:00"
+        ],
+        "Wed": [
+          "14:00",
+          "22:00"
+        ],
+        "Thu": [
+          "14:00",
+          "22:00"
+        ],
+        "Fri": [
+          "14:00",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "16:00"
+        ],
+        "Sun": [
+          "09:00",
+          "16:00"
+        ]
+      },
+      "about": "A brand-new, non-profit independent gym at Canada Water, built around community and aiming to make climbing affordable for everyone, with a fairer-access scheme and a dedicated kids' wall.",
       "brand": "Independent",
       "type": "bouldering",
       "area": "Canada Water / Surrey Quays",
@@ -2049,7 +2091,7 @@ const DATA = {
       "zone": 2,
       "postcode": "SE16 7LL",
       "lat": 51.4954,
-      "lng": -0.0469,
+      "lng": -0.0476,
       "website": "https://gantryclimbing.com/",
       "logo": "assets/logos/gantry.png",
       "prices_url": "https://gantryclimbing.com/",
@@ -2132,14 +2174,15 @@ const DATA = {
     {
       "id": "blocfit",
       "name": "Blocfit Brixton",
+      "about": "A bouldering and fitness gym in a Brixton railway arch since 2018. Members get the sauna, a guidebook library, free coffee on weekday mornings (6–8am) and unlimited guest passes for friends trying climbing for the first time.",
       "brand": "Independent",
       "type": "bouldering",
       "area": "Brixton / Loughborough Junction",
       "borough": "Lambeth",
       "zone": 2,
       "postcode": "SW9 8RR",
-      "lat": 51.465,
-      "lng": -0.1029,
+      "lat": 51.4651,
+      "lng": -0.1028,
       "website": "https://www.blocfit.co.uk/",
       "logo": "assets/logos/blocfit.png",
       "logo_background": "#4a4a4a",
@@ -2218,6 +2261,7 @@ const DATA = {
     {
       "id": "muro",
       "name": "Muro Climbing Peckham",
+      "about": "An independent, community-focused bouldering wall in a Peckham railway arch by Copeland Park. Deliberately intimate, it aims to be a home-from-home for Peckham's diverse local community, with an open, playful atmosphere for climbers of every level.",
       "brand": "Independent",
       "type": "bouldering",
       "area": "Peckham Rye",
@@ -2291,6 +2335,344 @@ const DATA = {
       "events_url": "https://www.muroclimbing.com/page/events"
     },
     {
+      "id": "rhino_bromley",
+      "name": "Rhino Boulder Bromley",
+      "about": "Bromley's climbing hub, built for everyone from first-timers to strong climbers, with quick links to central London and Kent. Climbing, coworking desks and a café in one place, a big youth community, and Climb & Connect: free climbing for referred Bromley residents, funded by the council and the NHS.",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Bromley town centre",
+      "borough": "Bromley",
+      "zone": 5,
+      "postcode": "BR1 1TR",
+      "lat": 51.4023,
+      "lng": 0.0173,
+      "website": "https://rhinoboulder.co.uk/",
+      "logo": "assets/logos/rhino.png",
+      "prices_url": "https://rhinoboulder.co.uk/climbing-prices/",
+      "payg": {
+        "adult_peak": 15.5,
+        "adult_offpeak": null,
+        "concession_peak": 12.5,
+        "concession_offpeak": null
+      },
+      "offpeak_window": null,
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "10:00",
+          "end": "22:00",
+          "price": 9.5,
+          "label": "Student Friday (concession, incl. shoes)"
+        }
+      ],
+      "student_note": "Concession £12.50: under-18s, full-time students with in-date ID or enrolment letter (NUS/ISIC not accepted), jobseekers, PIP, over-60s, Blue Light, National Disability or Carers Card. Student Friday £9.50 all day incl. shoe hire (uni, sixth form or college students 16+, no booking). Pay-what-you-can membership for those in greatest need.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-10-26",
+      "scrape": {
+        "url": "https://rhinoboulder.co.uk/climbing-prices/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering only, routes graded by tag colour and reset regularly; dedicated training area; stretch & warm-up area; yoga & Pilates; coworking space with extended hours; café & shop; changing rooms & showers; private lockers; dust extraction; shoe hire £4.50 (free for members), chalk £1. Under-14s climb Mon-Fri until 7pm, weekends until 5pm",
+      "membership": {
+        "full_monthly": 69.5,
+        "concession_monthly": 56
+      },
+      "address": "Units 6 & 7, The Mall, Bromley BR1 1TR",
+      "passes": "10 entries £135 (£109 conc, 6 months); 1-year pass £795 (£640 conc); adult + 1 child £107.50/mo, adult + 2 children £145.50/mo",
+      "hours": {
+        "Mon": [
+          "10:00",
+          "22:00"
+        ],
+        "Tue": [
+          "10:00",
+          "22:00"
+        ],
+        "Wed": [
+          "10:00",
+          "22:00"
+        ],
+        "Thu": [
+          "10:00",
+          "22:00"
+        ],
+        "Fri": [
+          "10:00",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "20:00"
+        ],
+        "Sun": [
+          "09:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "rhinoboulder_bromley",
+      "events_url": "https://rhinoboulder.co.uk/news/",
+      "classes_url": "https://rhinoboulder.co.uk/classes-courses/",
+      "class_info": "[Adult Improvers](https://rhinoboulder.co.uk/classes-courses/) Mondays 7:30-9pm, max 6, £12.50 + entry; [first-time sessions](https://rhinoboulder.co.uk/classes-courses/); [kids climbing](https://rhinoboulder.co.uk/kids-climbing/); [yoga & Pilates](https://rhinoboulder.co.uk/yoga/); [Climb & Connect](https://rhinoboulder.co.uk/climb-connect/)."
+    },
+    {
+      "id": "mount_palace",
+      "name": "Mount Palace",
+      "about": "One of London's oldest, smallest and friendliest climbing centres: a not-for-profit micro gym run by Crystal Palace locals, with roots in a climbing scene going back to 1991 and the Southern Sandstone crags nearby. It keeps prices low on purpose, works with local charities, and every staff member is a qualified roped-climbing instructor. Boulders use Font grades set to match outdoor climbing, so expect them a little stiff.",
+      "brand": "Independent",
+      "type": "ropes+bouldering",
+      "area": "Crystal Palace (National Sports Centre)",
+      "borough": "Bromley",
+      "zone": 3,
+      "postcode": "SE19 2GA",
+      "lat": 51.4211,
+      "lng": -0.0674,
+      "website": "https://www.mountpalace.org/",
+      "logo": "assets/logos/mount-palace.png",
+      "prices_url": "https://www.mountpalace.org/prices",
+      "payg": {
+        "adult_peak": 9.0,
+        "adult_offpeak": null,
+        "concession_peak": 9.0,
+        "concession_offpeak": null
+      },
+      "offpeak_window": null,
+      "offpeak_assumed": false,
+      "magic_slots": [],
+      "student_note": "No student or concession rate: everyone 18+ pays the £9 adult pass; under-18s £7.50. Ages 14-22 can get unlimited climbing for £15/month. All climbers also pay a £5 yearly membership.",
+      "registration_fee": 5.0,
+      "verified": true,
+      "last_checked": "2026-10-26",
+      "scrape": {
+        "url": "https://www.mountpalace.org/prices",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Bouldering F3+ to F7A plus two ungraded traverses; four top-rope bays (free harness & rope hire); textured feature wall mimicking Southern Sandstone; training area with 4 m campus board, Beastmaker, strap trainer and weights; topos by the wall; free shoe & chalk hire; showers, changing rooms and lockers (bring a padlock) in the National Sports Centre; free parking. Open in sessions only, closed Fri 3:30-6pm; last entry 1 hour before close",
+      "membership": {
+        "full_monthly": 35,
+        "concession_monthly": null
+      },
+      "address": "Lower floor, Crystal Palace National Sports Centre, Ledrington Road, London SE19 2GA",
+      "passes": "£5 yearly membership for all climbers; 10 passes £72, 5 passes £40.50; ages 14-22 £15/mo unlimited; bouldering mat hire £7.50/day",
+      "hours": {
+        "Tue": [
+          "18:00",
+          "21:30"
+        ],
+        "Wed": [
+          "18:00",
+          "21:30"
+        ],
+        "Thu": [
+          "18:00",
+          "21:30"
+        ],
+        "Fri": [
+          "10:00",
+          "21:30"
+        ],
+        "Sat": [
+          "11:00",
+          "17:00"
+        ],
+        "Sun": [
+          "11:00",
+          "17:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "_mountpalace_",
+      "classes_url": "https://www.mountpalace.org/climb",
+      "class_info": "[Adult roped climbing workshop](https://www.mountpalace.org/climb) 2 hours, £20, gear included; under-18 term courses £12.50 a lesson ([instructed sessions currently paused](https://www.mountpalace.org/climb))."
+    },
+    {
+      "id": "the_nest",
+      "name": "The Nest",
+      "about": "An independent, community-built gym started by two climbing friends and opened in 2019 after a crowdfunding push, to bring climbing to Hillingdon. More community hub than climbing wall: bouldering, a gym, yoga and a café under one roof, with women's socials, board-game nights, a running club and lots of youth and school work. Around 300 members.",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Hayes (The Old Vinyl Factory)",
+      "borough": "Hillingdon",
+      "zone": 5,
+      "postcode": "UB3 1DP",
+      "lat": 51.5043,
+      "lng": -0.4259,
+      "website": "https://www.thenestclimbing.co.uk/",
+      "logo": "assets/logos/the-nest.png",
+      "prices_url": "https://www.thenestclimbing.co.uk/membership",
+      "payg": {
+        "adult_peak": 15.0,
+        "adult_offpeak": null,
+        "concession_peak": 12.5,
+        "concession_offpeak": null
+      },
+      "offpeak_window": null,
+      "offpeak_assumed": false,
+      "magic_slots": [],
+      "student_note": "Concession £12.50 (who qualifies isn't stated; ask with ID). First week £20: intro session, shoe hire and 7 days' unlimited climbing and gym. No joining fee.",
+      "registration_fee": null,
+      "verified": true,
+      "last_checked": "2026-10-26",
+      "scrape": {
+        "url": "https://www.thenestclimbing.co.uk/membership",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "4 m bouldering wall with about 120 problems VB-V8+ (vertical, slab, overhang, cave, traverse), a quarter reset every week; kids' climbing; 3,000 sq ft Technogym gym and free weights; 50+ fitness and yoga classes a month included with membership; café with viewing area and free Wi-Fi; free on-site parking. Shoe hire £2.50, chalk £2.50",
+      "membership": {
+        "full_monthly": 60,
+        "concession_monthly": 49
+      },
+      "address": "1-7 Material Walk, The Old Vinyl Factory, Hayes UB3 1DP",
+      "passes": "10 entries £125 (£105 conc); 3 visits £40 (18 months; refunded if you join within 3 months); 6 months £330 (£265 conc); annual £600 (£480 conc); membership includes gym and classes",
+      "hours": {
+        "Mon": [
+          "06:30",
+          "20:00"
+        ],
+        "Tue": [
+          "10:00",
+          "20:00"
+        ],
+        "Wed": [
+          "06:30",
+          "20:00"
+        ],
+        "Thu": [
+          "10:00",
+          "20:00"
+        ],
+        "Fri": [
+          "06:30",
+          "20:00"
+        ],
+        "Sat": [
+          "09:00",
+          "20:00"
+        ],
+        "Sun": [
+          "09:00",
+          "20:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "thenestclimbing",
+      "events_url": "https://www.thenestclimbing.co.uk/community",
+      "classes_url": "https://www.thenestclimbing.co.uk/climbing",
+      "class_info": "[First week £20](https://www.thenestclimbing.co.uk/first-visit) incl. intro and 7 days' climbing; [1:1 coaching](https://www.thenestclimbing.co.uk/climbing) £40 (3 for £100); private groups £40 + £20 per extra climber; [kids: NICAS 7-17, holiday clubs, home-school coaching](https://www.thenestclimbing.co.uk/family); [fitness & yoga classes](https://www.thenestclimbing.co.uk/fitness/classes).",
+      "socials": [
+        "[Women's Social](https://www.thenestclimbing.co.uk/community) — typically Thursdays 18:30, all grades, free for all entrants",
+        "[New Sender's Club](https://www.thenestclimbing.co.uk/community) — Thursdays 18:30-19:30, VB-V3 with a coach on hand",
+        "[Board Games Night](https://www.thenestclimbing.co.uk/community) — once a month, everyone welcome"
+      ]
+    },
+    {
+      "id": "yellow_spider",
+      "name": "Yellow Spider Climbing",
+      "about": "One of five Spider Climbing centres and strongly family-focused: kids' sessions, holiday climbing, termly clubs, birthday parties and adult-plus-child memberships, alongside adult socials and coaching.",
+      "brand": "Independent",
+      "type": "bouldering",
+      "area": "Carshalton (Oaks Sports Centre)",
+      "borough": "Sutton",
+      "zone": 6,
+      "postcode": "SM5 4AN",
+      "lat": 51.3407,
+      "lng": -0.1702,
+      "website": "https://spiderclimbing.com/yellow-spider/",
+      "logo": "assets/logos/yellow-spider.png",
+      "prices_url": "https://spiderclimbing.com/yellow-spider/prices-and-memberships/",
+      "payg": {
+        "adult_peak": 14.0,
+        "adult_offpeak": 10.5,
+        "concession_peak": 11.5,
+        "concession_offpeak": 8.5
+      },
+      "offpeak_window": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "10:00",
+        "end": "17:00",
+        "concession_only": false,
+        "except_bank_holidays": true
+      },
+      "offpeak_assumed": false,
+      "magic_slots": [
+        {
+          "days": [
+            "Wed"
+          ],
+          "start": "10:00",
+          "end": "17:00",
+          "price": 8.0,
+          "label": "Student Wednesday (concession)",
+          "except_bank_holidays": true
+        }
+      ],
+      "student_note": "Concession £11.50 peak / £8.50 off-peak: full-time students, over-65s, registered disabled, Fire, Police, Ambulance, Mountain Rescue, Armed Forces, JSA. Student Wednesday £8 off-peak (weekdays 10am-5pm). A June 2026 news post quoted £7.60 for Student Wednesday; the prices page says £8.",
+      "registration_fee": 2.5,
+      "verified": true,
+      "last_checked": "2026-10-26",
+      "scrape": {
+        "url": "https://spiderclimbing.com/yellow-spider/prices-and-memberships/",
+        "method": "regex",
+        "needs_js": false
+      },
+      "facilities": "Two bouldering rooms (Comp Room and Rob's Room) reset every two weeks on alternating Fridays; easier areas for beginners and harder ones for experienced climbers; arêtes, laybacks and plenty of volumes; shoe hire £3.90, chalk bag £2, free helmet",
+      "membership": {
+        "full_monthly": 59,
+        "concession_monthly": 49
+      },
+      "address": "Oaks Sports Centre, Woodmansterne Road, Carshalton SM5 4AN",
+      "passes": "10 visits £126 (£103.50 conc); +£9/mo for all Spider centres; adult + child £83.50/mo, adult + 2 children £108/mo",
+      "hours": {
+        "Mon": [
+          "10:00",
+          "22:00"
+        ],
+        "Tue": [
+          "10:00",
+          "22:00"
+        ],
+        "Wed": [
+          "10:00",
+          "22:00"
+        ],
+        "Thu": [
+          "10:00",
+          "22:00"
+        ],
+        "Fri": [
+          "10:00",
+          "22:00"
+        ],
+        "Sat": [
+          "09:00",
+          "19:00"
+        ],
+        "Sun": [
+          "09:00",
+          "19:00"
+        ]
+      },
+      "hours_assumed": false,
+      "instagram": "yellowspiderclimbing",
+      "events_url": "https://spiderclimbing.com/yellow-spider/",
+      "route_setting_url": "https://spiderclimbing.com/yellow-spider/route-setting/",
+      "classes_url": "https://spiderclimbing.com/yellow-spider/",
+      "class_info": "[Bouldering induction](https://spiderclimbing.com/yellow-spider/); [adult coaching & learn to climb](https://spiderclimbing.com/yellow-spider/); private coaching; kids sessions, holiday climbing and termly clubs; adult socials."
+    },
+    {
       "id": "lcc_vauxwall_west",
       "name": "VauxWall West (LCC)",
       "brand": "London Climbing Centres",
@@ -2300,7 +2682,7 @@ const DATA = {
       "zone": 1,
       "postcode": "SW8 1SR",
       "lat": 51.4851,
-      "lng": -0.1229,
+      "lng": -0.1228,
       "website": "https://londonclimbingcentres.co.uk/centre/vauxwest/",
       "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
@@ -2401,8 +2783,8 @@ const DATA = {
       "borough": "Lambeth",
       "zone": 1,
       "postcode": "SE11 6BD",
-      "lat": 51.4924,
-      "lng": -0.1145,
+      "lat": 51.4923,
+      "lng": -0.1146,
       "website": "https://londonclimbingcentres.co.uk/centre/vauxeast/",
       "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
@@ -2503,7 +2885,7 @@ const DATA = {
       "borough": "Harrow",
       "zone": 5,
       "postcode": "HA1 4HX",
-      "lat": 51.5807,
+      "lat": 51.5808,
       "lng": -0.3444,
       "website": "https://londonclimbingcentres.co.uk/centre/harrowall/",
       "logo": "assets/logos/lcc.png",
@@ -2712,7 +3094,7 @@ const DATA = {
       "borough": "Hammersmith & Fulham",
       "zone": 2,
       "postcode": "W6 0UQ",
-      "lat": 51.4942,
+      "lat": 51.4943,
       "lng": -0.2363,
       "website": "https://londonclimbingcentres.co.uk/centre/ravenswall/",
       "logo": "assets/logos/lcc.png",
@@ -2815,8 +3197,8 @@ const DATA = {
       "borough": "Tower Hamlets",
       "zone": 2,
       "postcode": "E14 8AA",
-      "lat": 51.5098,
-      "lng": -0.0275,
+      "lat": 51.5096,
+      "lng": -0.0271,
       "website": "https://londonclimbingcentres.co.uk/centre/canarywall/",
       "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
@@ -2918,7 +3300,7 @@ const DATA = {
       "zone": 2,
       "postcode": "E2 9QX",
       "lat": 51.5276,
-      "lng": -0.0565,
+      "lng": -0.0563,
       "website": "https://londonclimbingcentres.co.uk/centre/bethwall/",
       "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",
@@ -3021,8 +3403,8 @@ const DATA = {
       "borough": "Camden",
       "zone": 1,
       "postcode": "NW1 3AX",
-      "lat": 51.5255,
-      "lng": -0.14,
+      "lat": 51.5244,
+      "lng": -0.142,
       "website": "https://londonclimbingcentres.co.uk/centre/eustonwall/",
       "logo": "assets/logos/lcc.png",
       "prices_url": "https://londonclimbingcentres.co.uk/prices/",

@@ -32,6 +32,17 @@ struct GymDetailView: View {
                     }
                     .padding(.top, 4)
                 }
+                if let closed = gym.temporarilyClosed {
+                    Label(closed, systemImage: "exclamationmark.triangle.fill")
+                        .font(.callout.weight(.semibold)).foregroundStyle(Color.warn)
+                }
+                if let notice = gym.notice {
+                    Label(notice, systemImage: "clock.badge.exclamationmark")
+                        .font(.callout.weight(.semibold)).foregroundStyle(Color.amber)
+                }
+                if let about = gym.about {
+                    Text(about).font(.callout)
+                }
             }
 
             GymVisitsSection(gym: gym)
@@ -87,9 +98,9 @@ struct GymDetailView: View {
                 if let passes = gym.passes { Text(passes).font(.callout) }
             }
 
-            Section("Opening hours" + (gym.hoursAssumed ? " (approx)" : "")) {
+            Section("Opening hours" + (gym.temporaryHours != nil ? " (temporary)" : gym.hoursAssumed ? " (approx)" : "")) {
                 ForEach(weekdays, id: \.self) { d in
-                    LabeledContent(d, value: gym.hours[d].map { $0[0] + "–" + $0[1] } ?? "closed")
+                    LabeledContent(d, value: (gym.temporaryHours ?? gym.hours)[d].map { $0[0] + "–" + $0[1] } ?? "closed")
                         .fontWeight(d == model.moment.weekday ? .semibold : .regular)
                 }
             }

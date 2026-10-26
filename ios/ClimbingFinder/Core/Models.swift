@@ -66,6 +66,13 @@ struct Gym: Decodable, Identifiable, Hashable {
     let acNote: String?
     let logo: String?
     let logoBackground: String?
+    /// What the place is like, in the gym's own words (set for smaller, less-known gyms).
+    let about: String?
+    /// Set while a gym is shut until further notice; it is left out of rankings.
+    let temporarilyClosed: String?
+    /// A temporary note such as reduced hours, with the hours that apply meanwhile.
+    let notice: String?
+    let temporaryHours: [String: [String]]?
 
     enum CodingKeys: String, CodingKey {
         case id, name, brand, type, area, borough, zone, postcode, lat, lng, website, payg
@@ -74,7 +81,7 @@ struct Gym: Decodable, Identifiable, Hashable {
         case verified, lastChecked = "last_checked", facilities, membership, address, passes, hours
         case hoursAssumed = "hours_assumed", instagram, eventsURL = "events_url", classesURL = "classes_url"
         case classInfo = "class_info", routeSettingURL = "route_setting_url", socials, ac, acNote = "ac_note"
-        case logo, logoBackground = "logo_background"
+        case logo, logoBackground = "logo_background", about, temporarilyClosed = "temporarily_closed", notice, temporaryHours = "temporary_hours"
     }
 
     init(from decoder: Decoder) throws {
@@ -121,6 +128,10 @@ struct Gym: Decodable, Identifiable, Hashable {
         socials = try c.decodeIfPresent([String].self, forKey: .socials) ?? []
         ac = try c.decodeIfPresent(String.self, forKey: .ac)
         acNote = try c.decodeIfPresent(String.self, forKey: .acNote)
+        about = try c.decodeIfPresent(String.self, forKey: .about)
+        temporarilyClosed = try c.decodeIfPresent(String.self, forKey: .temporarilyClosed)
+        notice = try c.decodeIfPresent(String.self, forKey: .notice)
+        temporaryHours = try c.decodeIfPresent([String: [String]].self, forKey: .temporaryHours)
         logo = try c.decodeIfPresent(String.self, forKey: .logo)
         logoBackground = try c.decodeIfPresent(String.self, forKey: .logoBackground)
     }

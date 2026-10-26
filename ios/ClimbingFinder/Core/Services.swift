@@ -12,9 +12,12 @@ enum TravelService {
             func enqueue() {
                 guard let g = pending.popFirst() else { return }
                 group.addTask {
-                    let to = g.postcode ?? "\(g.lat),\(g.lng)"
-                    let path = "https://api.tfl.gov.uk/Journey/JourneyResults/\(enc(from))/to/\(enc(to))" + (depart.isEmpty ? "" : "?" + depart)
-                    return (g.id, await duration(path))
+                    // Postcode first; TfL answers "ambiguous" for some (e.g. SE1 9BL), so fall back to the pin.
+                    let path = { (to: String) in
+                        "https://api.tfl.gov.uk/Journey/JourneyResults/\(enc(from))/to/\(enc(to))" + (depart.isEmpty ? "" : "?" + depart)
+                    }
+                    if let pc = g.postcode, let mins = await duration(path(pc)) { return (g.id, mins) }
+                    return (g.id, await duration(path("\(g.lat),\(g.lng)")))
                 }
             }
             for _ in 0..<4 { enqueue() }          // at most 4 requests in flight

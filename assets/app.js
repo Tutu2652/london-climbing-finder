@@ -158,10 +158,14 @@ function ensureTravel(){
   if(!START || TRAVEL_START===START || TRAVEL_LOADING) return;
   TRAVEL_LOADING=true; TRAVEL={}; const forStart=START;
   runLimited(DATA.gyms,(g,doneOne)=>{
-    const to=g.postcode?encodeURIComponent(g.postcode):(g.lat+","+g.lng);
-    fetch("https://api.tfl.gov.uk/Journey/JourneyResults/"+encodeURIComponent(forStart)+"/to/"+to+"?"+tflDepart())
+    // Postcode first; TfL answers "ambiguous" (HTTP 300) for some new or shared
+    // postcodes (e.g. The Font Borough's SE1 9BL), so fall back to the pin.
+    const journey=to=>fetch("https://api.tfl.gov.uk/Journey/JourneyResults/"+encodeURIComponent(forStart)+"/to/"+to+"?"+tflDepart())
       .then(r=>r.ok?r.json():Promise.reject())
-      .then(j=>{ const d=j.journeys&&j.journeys[0]?j.journeys[0].duration:null; if(d!=null) TRAVEL[g.id]=d; })
+      .then(j=>{ const d=j.journeys&&j.journeys[0]?j.journeys[0].duration:null; if(d==null) throw 0; return d; });
+    const pin=g.lat+","+g.lng;
+    (g.postcode?journey(encodeURIComponent(g.postcode)).catch(()=>journey(pin)):journey(pin))
+      .then(d=>{ TRAVEL[g.id]=d; })
       .catch(()=>{}).finally(doneOne);
   },4,()=>{ TRAVEL_START=forStart; TRAVEL_LOADING=false; render(); });
 }
@@ -501,12 +505,14 @@ function viewCheapest(){
     if(zone && String(g.zone)!==zone) continue;
     if(!acMatch(g,ac)) continue;
     if(mode==="day"){
+      if(closedAllDay(g,when)) continue;   // e.g. Mount Palace on Mondays
       const b=bestOnDay(g,when,conc); if(!b) continue;
       const seen=new Set([b.price.toFixed(2)]); const alts=[];
       for(const o of slotsOnDay(g,when,conc)){ const k=o.price.toFixed(2);
         if(seen.has(k)) continue; seen.add(k); alts.push(o); if(alts.length>=2) break; }
       rows.push({...b,g,alts});
     }else{
+      if(g.temporarily_closed) continue;
       const r=applicable(g,when,conc); if(r.price==null) continue;
       rows.push({...r,when:windowForTime(g,when,conc),g});
     }
@@ -561,7 +567,7 @@ function viewStudents(){
 }
 
 function hoursSummary(g){
-  const h=g.hours; if(!h) return '—';
+  const h=g.temporary_hours||g.hours; if(!h) return '—';
   const days=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   let parts=[], i=0;
   while(i<7){
@@ -571,10 +577,11 @@ function hoursSummary(g){
     parts.push(lbl+" "+(cur?cur[0]+"-"+cur[1]:"closed"));
     i=j+1;
   }
-  return parts.join("; ")+(g.hours_assumed?" (approx)":"");
+  return parts.join("; ")+(g.temporary_hours?" (temporary)":g.hours_assumed?" (approx)":"");
 }
 function openState(g, when){
-  const h=g.hours; if(!h) return {open:null,txt:''};
+  if(g.temporarily_closed) return {open:false,txt:'temporarily closed'};
+  const h=g.temporary_hours||g.hours; if(!h) return {open:null,txt:''};
   const day=WD[(when.getDay()+6)%7], t=h[day];
   const mins=when.getHours()*60+when.getMinutes();
   if(!t) return {open:false,txt:'closed today'};
@@ -583,6 +590,9 @@ function openState(g, when){
   if(mins>=c) return {open:false,txt:'closed'};
   return {open:true,txt:'open till '+t[1]};
 }
+// A gym that lists opening hours but none for this weekday is shut all day.
+// Temporarily closed gyms (e.g. Rise) are left out of the rankings too.
+function closedAllDay(g, when){ return !!g.temporarily_closed || (!!g.hours && Object.keys(g.hours).length>0 && !g.hours[WD[(when.getDay()+6)%7]]); }
 function openBadge(g, when){
   const s=openState(g,when);
   if(s.open===null) return '';
@@ -649,7 +659,7 @@ function viewAll(){
     const memStr = m.full_monthly!=null ? ('£'+m.full_monthly+'/mo'+(m.concession_monthly!=null?(' (£'+m.concession_monthly+' conc)'):'')) : '';
     const memPass = [memStr, g.passes].filter(Boolean).map(esc).join('<br>') || '—';
     html+=`<tr>
-      <td>${gymName(g)} ${g.verified?'':'<span class="flag">verify</span>'}${noteCell(g.id)}</td>
+      <td>${gymName(g)} ${g.verified?'':'<span class="flag">verify</span>'}${g.temporarily_closed?' <span class="pill peak">temporarily closed</span>':g.notice?' <span class="pill magic">reduced hours</span>':''}${noteCell(g.id)}</td>
       <td class="meta">${g.type.replace('+',' + ')}</td>
       <td class="price">${f(g.payg.adult_peak)}${cp!=null?`<div class="meta">${f(cp)} conc</div>`:''}</td>
       <td class="meta">${dealsCell(g)}</td>
@@ -950,7 +960,7 @@ function initMap(){
     if(type && !g.type.includes(type)) return false;
     if(zone && String(g.zone)!==zone) return false;
     if(!acMatch(g,ac)) return false;
-    return true;
+    return !closedAllDay(g,when);
   }).map(g=>({g,b:bestOnDay(g,when,conc)})).filter(x=>x.b);
   const minp = priced.length ? Math.min(...priced.map(x=>x.b.price)) : Infinity;
   const pts=[];
@@ -960,7 +970,7 @@ function initMap(){
     if(zone && String(g.zone)!==zone) return;
     if(!acMatch(g,ac)) return;
     const b=bestOnDay(g,when,conc);
-    const cheap = b && b.price===minp;
+    const cheap = b && b.price===minp && !closedAllDay(g,when);
     const d=dirLinks(g);
     // Logo pins, as on the iOS app's map; today's cheapest gym is framed in green and drawn on top.
     const icon=L.divIcon({className:"map-pin-wrap",iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-18],
@@ -970,7 +980,7 @@ function initMap(){
     // Include AC information in the popup. If none, omit the AC line.
     const desc = acDesc(g);
     const acLine = desc ? `<br>AC: ${desc}` : '';
-    marker.bindPopup(`<b class="gym-name">${gymLogo(g)}<span>${g.name}</span></b><br>${g.area} · zone ${g.zone}<br>Cheapest today: <b>${f(b?b.price:null)}</b>${b&&b.when?" ("+b.when+")":""}${acLine}<br><a href="${gymPage(g)}">Details</a> · <a href="${d.gmap}" target="_blank" rel="noopener">Directions</a> · <a href="${g.prices_url}" target="_blank" rel="noopener">Official prices</a>`);
+    marker.bindPopup(`<b class="gym-name">${gymLogo(g)}<span>${g.name}</span></b><br>${g.area} · zone ${g.zone}${(g.temporarily_closed||g.notice)?`<div class="popup-notice">${esc(g.temporarily_closed||g.notice)}</div>`:""}${g.about?`<div class="popup-about">${esc(g.about)}</div>`:"<br>"}Cheapest today: <b>${f(b?b.price:null)}</b>${b&&b.when?" ("+b.when+")":""}${acLine}<br><a href="${gymPage(g)}">Details</a> · <a href="${d.gmap}" target="_blank" rel="noopener">Directions</a> · <a href="${g.prices_url}" target="_blank" rel="noopener">Official prices</a>`);
     pts.push([g.lat,g.lng]);
   });
   const drawStart=()=>{

@@ -48,10 +48,10 @@ def markdown_links(value):
 
 
 def hours_rows(gym):
-    hours = gym.get("hours") or {}
+    hours = gym.get("temporary_hours") or gym.get("hours") or {}
     return "".join(
         "<tr><th scope=\"row\">%s</th><td>%s</td></tr>"
-        % (day, "%s–%s" % tuple(hours[day]) if hours.get(day) else "Not listed")
+        % (day, "%s–%s" % tuple(hours[day]) if hours.get(day) else ("Closed" if hours else "Not listed"))
         for day in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
     )
 
@@ -125,12 +125,20 @@ def gym_page(data, gym):
                % esc(gym["student_note"])) if gym.get("student_note") else ""
     classes = ("<section><h2>Classes</h2><p>%s</p></section>"
                % markdown_links(gym["class_info"])) if gym.get("class_info") else ""
+    about = ('<p class="about">%s</p>' % esc(gym["about"])) if gym.get("about") else ""
+    if gym.get("notice"):
+        about = '<p class="notice"><strong>%s</strong></p>' % esc(gym["notice"]) + about
+    if gym.get("temporarily_closed"):
+        about = '<p class="closed-notice"><strong>%s</strong></p>' % esc(gym["temporarily_closed"]) + about
+    hours_title = "Opening hours (temporary)" if gym.get("temporary_hours") else "Opening hours"
     passes = esc(gym.get("passes") or "Not publicly listed")
     verified_label = "Official price source checked" if gym.get("verified") else "Needs verification"
     return """<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{name} prices, deals and opening hours</title>
+<link rel="icon" href="../../assets/icon.svg" type="image/svg+xml"><link rel="icon" href="../../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
 <meta name="description" content="{description}"><link rel="canonical" href="{page_url}">
 <meta property="og:type" content="website"><meta property="og:title" content="{name} prices and deals">
 <meta property="og:description" content="{description}"><meta property="og:url" content="{page_url}">
@@ -144,6 +152,9 @@ a{{color:var(--accent)}} a:focus-visible{{outline:3px solid var(--accent2);outli
 header,main,footer{{max-width:800px;margin:auto;padding:20px}} header{{border-bottom:1px solid var(--line)}}
 h1{{font-size:clamp(1.8rem,5vw,2.7rem);line-height:1.12;margin:.5rem 0}} h2{{font-size:1.25rem;margin-top:0}}
 .crumb,.muted{{color:var(--mut);font-size:.9rem}} .summary{{font-size:1.08rem;color:var(--mut)}}
+.notice{{background:#3a2c12;border:1px solid #e2a13c;color:#ffe7bf;border-radius:10px;padding:10px 12px;margin:12px 0}}
+.closed-notice{{background:#3a1d1a;border:1px solid #c96a5a;color:#ffd9d2;border-radius:10px;padding:10px 12px;margin:12px 0}}
+.about{{font-size:1.05rem;line-height:1.55;border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin:12px 0}}
 .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}}
 section{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}}
 dl{{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px;margin:0}}dt{{color:var(--mut)}}dd{{margin:0;font-weight:650}}
@@ -154,26 +165,26 @@ table{{border-collapse:collapse;width:100%}}th,td{{padding:7px 10px;border-botto
 @media(max-width:480px){{dl{{grid-template-columns:1fr}}dd{{margin-bottom:7px}}.title{{gap:10px}}.logo{{flex-basis:44px;width:44px;height:44px;border-radius:10px}}}}
 </style></head><body><a class="skip" href="#main">Skip to gym information</a>
 <header><nav class="crumb" aria-label="Breadcrumb"><a href="../../index.html">London Climbing Finder</a> / {name}</nav>
-<div class="title">{logo}<h1>{name}</h1></div><p class="summary">{type_label} in {area}, zone {zone}. {facilities}</p>
+<div class="title">{logo}<h1>{name}</h1></div>{about}<p class="summary">{type_label} in {area}, zone {zone}. {facilities}</p>
 <p class="muted">{verified_label} · data checked {checked}. Prices can change—confirm before travelling.</p></header>
 <main id="main" tabindex="-1"><div class="actions"><a class="button" href="{prices_url}" rel="noopener">Check official prices</a><a class="button alt" href="{directions}" rel="noopener">Public-transport directions</a><a class="button alt" href="../../index.html#all">Compare all gyms</a></div>
 <div class="grid"><section><h2>Day-pass prices</h2><dl><dt>Adult peak</dt><dd>{adult_peak}</dd><dt>Adult off-peak</dt><dd>{adult_offpeak}</dd><dt>Concession peak</dt><dd>{conc_peak}</dd><dt>Concession off-peak</dt><dd>{conc_offpeak}</dd><dt>Registration</dt><dd>{registration}</dd></dl></section>
 <section><h2>Membership and passes</h2><dl><dt>Adult monthly</dt><dd>{monthly}</dd><dt>Concession monthly</dt><dd>{conc_monthly}</dd><dt>Multi-visit</dt><dd>{passes}</dd></dl></section></div>
 <section><h2>Off-peak and recurring deals</h2><ul>{deals}</ul></section>{student}{promos}
 <section><h2>Address and facilities</h2><p><strong>{address}</strong></p><p>{facilities}</p></section>
-<section><h2>Opening hours</h2><table><tbody>{hours}</tbody></table></section>{classes}
+<section><h2>{hours_title}</h2><table><tbody>{hours}</tbody></table></section>{classes}
 </main><footer><p>Independent comparison data from <a href="../../index.html">London Climbing Finder</a>. <a href="{website}" rel="noopener">Visit {name}'s official website</a>.</p></footer></body></html>
 """.format(
         name=esc(gym["name"]), logo=logo_tile(gym), description=esc(description), page_url=page_url, site=SITE,
         schema=json.dumps(schema, ensure_ascii=False).replace("</", "<\\/"), type_label=type_label(gym.get("type")),
-        area=esc(gym.get("area")), zone=esc(gym.get("zone")), facilities=facilities,
+        area=esc(gym.get("area")), zone=esc(gym.get("zone")), facilities=facilities, about=about,
         verified_label=verified_label, checked=esc(checked), prices_url=esc(gym.get("prices_url") or gym.get("website")),
         directions=esc(directions), adult_peak=money(payg.get("adult_peak")), adult_offpeak=money(payg.get("adult_offpeak")),
         conc_peak=money(payg.get("concession_peak")), conc_offpeak=money(payg.get("concession_offpeak")),
         registration=money(gym.get("registration_fee")), monthly=money(membership.get("full_monthly")),
         conc_monthly=money(membership.get("concession_monthly")), passes=passes, deals=deal_items(gym),
         student=student, promos=promo_items(data, gym), address=esc(gym.get("address") or gym.get("postcode")),
-        hours=hours_rows(gym), classes=classes, website=esc(gym.get("website")),
+        hours=hours_rows(gym), hours_title=hours_title, classes=classes, website=esc(gym.get("website")),
     )
 
 

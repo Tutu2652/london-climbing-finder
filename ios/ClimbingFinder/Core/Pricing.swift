@@ -221,6 +221,8 @@ extension Gym {
     var brandRank: Int { brand == "London Climbing Centres" ? 0 : (brand == "Independent" ? 2 : 1) }
 
     func openState(_ when: Moment) -> OpenState? {
+        if temporarilyClosed != nil { return OpenState(open: false, text: "temporarily closed") }
+        let hours = temporaryHours ?? self.hours
         if hours.isEmpty { return nil }
         guard let t = hours[when.weekday] else { return OpenState(open: false, text: "closed today") }
         let o = toMin(t[0]), c = toMin(t[1])

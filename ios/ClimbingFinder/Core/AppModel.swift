@@ -166,9 +166,10 @@ final class AppModel {
 
     func cheapest() -> [Ranked] {
         var rows: [Ranked] = []
-        for g in data.gyms where matchesFilters(g) {
+        for g in data.gyms where matchesFilters(g) && g.temporarilyClosed == nil {
             switch mode {
             case .day:
+                if !g.hours.isEmpty && g.hours[dayMoment.weekday] == nil { continue }   // shut all day, e.g. Mount Palace on Mondays
                 guard let b = pricer.bestOnDay(g, dayMoment, conc: concession) else { continue }
                 var seen: Set<String> = [String(format: "%.2f", b.price)], alts: [DealOption] = []
                 for o in pricer.slotsOnDay(g, dayMoment, conc: concession) {

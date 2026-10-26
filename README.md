@@ -172,6 +172,10 @@ controls which pages use browser rendering.
 ## Adding or updating a gym
 
 Edit `gyms.json` — copy an existing entry, change the fields — then run the commands below.
+Take `lat`/`lng` from the gym's own Google Maps place pin (the `!3d…!4d…` numbers in the
+place page's URL), not a postcode: postcode centres can be hundreds of metres out.
+Also set `_meta.last_research_date` to today: the iOS app ignores a website copy of the data
+that isn't newer than its own, so without this the app keeps showing the old gym list.
 Save the gym's logo as a PNG (256px or smaller) in `assets/logos/` and set `logo` to that
 path; a test rejects web URLs, so the site and app never depend on a gym's website.
 
@@ -188,8 +192,8 @@ site can never show data that differs from `gyms.json`.
 
 ## Data covered
 
-29 gyms, each site as its own entry with its own prices and off-peak times: The Castle,
-Mile End, Yonder, Sen, Westway, The Reach, Rise, Substation Brixton, Gantry (Canada Water), Blocfit (Brixton), Muro (Peckham); City Bouldering
+33 gyms, each site as its own entry with its own prices and off-peak times: The Castle,
+Mile End, Yonder, Sen, Westway, The Reach, Rise, Substation Brixton, Gantry (Canada Water), Blocfit (Brixton), Muro (Peckham), Rhino Boulder (Bromley), Mount Palace (Crystal Palace), The Nest (Hayes), Yellow Spider (Carshalton); City Bouldering
 (Aldgate, White City, Stratford) plus Climbing Co Fulham; The Font (Wandsworth, Borough,
 Hounslow — Hounslow is cheaper); Climbing District (Bermondsey/Arch, Tottenham
 Hale/Stronghold, London Fields); and all eight London Climbing Centres sites (VauxWall
