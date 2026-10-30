@@ -1,5 +1,7 @@
 # London Climbing Finder
 
+English | [简体中文](README.zh-CN.md)
+
 Day-pass prices, off-peak deals, student rates, memberships and travel times for 33
 London climbing gyms. Pick a date and time and it shows the cheapest gym and when to go.
 
@@ -14,6 +16,10 @@ London climbing gyms. Pick a date and time and it shows the cheapest gym and whe
 | **Offline dashboard** | A browser | Download and double-click `london_climbing_dashboard.html`. |
 | **Command line** | Python 3 (no packages) | `python3 london_climbing_prices.py` (see below). |
 | **Deal calendars** | A calendar app | Subscribe from the website, or add `london-climbing-deals-all.ics` (or `-no-student.ics`). |
+
+No Mac (for example on Windows) but want it on an iPhone? Open the website in Safari on
+the iPhone and tap Share → **Add to Home Screen**. It gets an icon and opens full-screen,
+like an app.
 
 ### Website and dashboard
 
