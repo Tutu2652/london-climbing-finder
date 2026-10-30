@@ -147,3 +147,7 @@ out of git.
   `ios/ClimbingFinder/Core/Pricing.swift`) and the tests check they agree. Change all three
   together.
 - See README.md → "Updating the data" for the rules on adding gyms and offer end dates.
+- `README.md` has a Simplified Chinese copy, `README.zh-CN.md`, with the same sections in
+  the same order. When you change one, make the same change in the other in the same
+  commit. Keep gym names, file and field names, and commands in English in both.
+  `README.md` is authoritative if the two disagree.
