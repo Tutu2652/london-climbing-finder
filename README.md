@@ -21,6 +21,9 @@ No Mac (for example on Windows) but want it on an iPhone? Open the website in Sa
 the iPhone and tap Share → **Add to Home Screen**. It gets an icon and opens full-screen,
 like an app.
 
+Would you rather install it from TestFlight or the App Store, with no Mac and no reinstalling
+every 7 days? See [Support the app](#support-the-app).
+
 ### Website and dashboard
 
 - **Cheapest** ranks every gym for a date. By default it uses the cheapest price you can
@@ -42,7 +45,7 @@ python3 london_climbing_prices.py cheapest --date 2026-07-04        # cheapest a
 python3 london_climbing_prices.py cheapest --date 2026-07-04 --time 19:00 --concession
 python3 london_climbing_prices.py price castle --time 14:00         # one gym, with directions and your note
 python3 london_climbing_prices.py directions "the arch"             # transit + Citymapper links
-python3 london_climbing_prices.py travel --from "WC2N 5DU"           # TfL journey time to every gym
+python3 london_climbing_prices.py travel --from "WC2N 5DU"          # TfL journey time to every gym
 python3 london_climbing_prices.py offpeak                           # all off-peak / cheap slots
 python3 london_climbing_prices.py students                          # student and concession rates
 python3 london_climbing_prices.py promos                            # live limited-time offers (--all: include expired)
@@ -53,7 +56,8 @@ python3 london_climbing_prices.py note castle great cafe, busy pm   # save a not
 python3 london_climbing_prices.py rate castle 4                     # rate 1-5 (omit value to clear)
 ```
 
-`travel` and `--from` default to WC2N 5DU.
+To skip `--from`, set a default start in your shell, e.g. `export CLIMB_FROM="WC2N 5DU"`
+in `~/.zshrc`. `price` shows a travel time only when a start is given.
 
 ## How prices work
 
@@ -183,6 +187,12 @@ Each `limited_promotions` entry has an `expires` date (`YYYY-MM-DD`) or `null`.
 To host your own version of the website with its own weekly checker, follow
 [SETUP.md](SETUP.md) (GitHub plus Cloudflare Pages, about ten minutes). Google sign-in
 for synced notes and reviews is optional: see [FIREBASE-SETUP.md](FIREBASE-SETUP.md).
+
+## Support the app
+
+The iPhone app is free, but putting it on TestFlight or the App Store needs Apple's
+Developer Program, which costs £79 (US$99) a year. If the app is useful to you and you'd
+like to chip in, any amount helps: **[paypal.me/Quanyao](https://paypal.me/Quanyao)**.
 
 ## License
 

@@ -134,6 +134,11 @@ def _tfl_depart():
     return "date=%s&time=1000&timeIs=Departing" % d.strftime("%Y%m%d")
 
 
+# Default start for travel times. Set CLIMB_FROM in your shell (e.g. your postcode)
+# rather than putting a personal address in the code.
+DEFAULT_FROM = os.environ.get("CLIMB_FROM") or None
+
+
 def travel_minutes(origin, gym):
     """Public-transport journey time (minutes) via TfL at ~10am weekday, or None."""
     import urllib.parse, urllib.request
@@ -950,8 +955,8 @@ def cmd_price(data, args):
         print("  your rating: %s" % rating_for(gym))
     if note_for(gym):
         print("  your note: %s" % note_for(gym))
-    origin = getattr(args, "from_", None) or "WC2N 5DU"
-    mins = travel_minutes(origin, gym)
+    origin = getattr(args, "from_", None)
+    mins = travel_minutes(origin, gym) if origin else None
     if mins is not None:
         print("  travel: ~%d min by public transport from %s" % (mins, origin))
     print_directions(gym)
@@ -1036,8 +1041,8 @@ def main(argv=None):
     common.add_argument("--time", help="HH:MM 24h (default now)")
     common.add_argument("--concession", action="store_true", help="use student/concession rate")
     common.add_argument("--scrape", action="store_true", help="try live price refresh first")
-    common.add_argument("--from", dest="from_", default="WC2N 5DU",
-                        help="start location for travel time (default WC2N 5DU)")
+    common.add_argument("--from", dest="from_", default=DEFAULT_FROM,
+                        help="start location for travel time (default: $CLIMB_FROM)")
 
     sp = sub.add_parser("cheapest", parents=[common],
                         help="cheapest per gym across the whole date; add --time to price a specific moment")
@@ -1059,7 +1064,7 @@ def main(argv=None):
     rp.add_argument("value", nargs="?", type=int, help="1-5, or omit to clear")
 
     tp = sub.add_parser("travel", help="public-transport time from a start to every gym")
-    tp.add_argument("--from", dest="from_", default="WC2N 5DU", help="start location (default WC2N 5DU)")
+    tp.add_argument("--from", dest="from_", default=DEFAULT_FROM, help="start location (default: $CLIMB_FROM)")
 
     sub.add_parser("offpeak")
     sub.add_parser("students")
@@ -1120,6 +1125,9 @@ def main(argv=None):
             print("%s rating %s." % (gym["name"], "saved" if args.value else "cleared"))
     elif args.cmd == "travel":
         origin = args.from_
+        if not origin:
+            print('Give a start location: travel --from "WC2N 5DU", or set CLIMB_FROM.')
+            return
         print("\nPublic-transport time from %s to each gym (via TfL)\n%s" % (origin, "-" * 54))
         rows = []
         for gym in data["gyms"]:

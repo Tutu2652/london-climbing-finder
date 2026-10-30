@@ -20,6 +20,8 @@
 没有 Mac（比如用 Windows）也想在 iPhone 上用：在 iPhone 的 Safari 里打开上面的网站，
 点 分享 → **添加到主屏幕**，就会像 App 一样有图标并全屏打开。
 
+希望通过 TestFlight 或 App Store 安装，不用 Mac、也不用每 7 天重装一次？见[支持这个 App](#支持这个-app)。
+
 ### 网站和离线面板
 
 - **最便宜（Cheapest）**：按日期给所有岩馆排序。默认按"当天任意时段能拿到的最低价"排，
@@ -38,7 +40,7 @@ python3 london_climbing_prices.py cheapest --date 2026-07-04        # 全天最�
 python3 london_climbing_prices.py cheapest --date 2026-07-04 --time 19:00 --concession
 python3 london_climbing_prices.py price castle --time 14:00         # 单个岩馆，含路线和你的笔记
 python3 london_climbing_prices.py directions "the arch"             # 公共交通 + Citymapper 链接
-python3 london_climbing_prices.py travel --from "WC2N 5DU"           # 到每家岩馆的 TfL 交通时间
+python3 london_climbing_prices.py travel --from "WC2N 5DU"          # 到每家岩馆的 TfL 交通时间
 python3 london_climbing_prices.py offpeak                           # 所有非高峰 / 便宜时段
 python3 london_climbing_prices.py students                          # 学生价和优惠价
 python3 london_climbing_prices.py promos                            # 当前限时优惠（--all：包括已过期的）
@@ -49,7 +51,8 @@ python3 london_climbing_prices.py note castle great cafe, busy pm   # 保存笔�
 python3 london_climbing_prices.py rate castle 4                     # 评分 1-5（不写分数即清除）
 ```
 
-`travel` 和 `--from` 的默认出发地是 WC2N 5DU。
+不想每次都写 `--from`，可以在 shell 里设置默认出发地，例如在 `~/.zshrc` 里加
+`export CLIMB_FROM="WC2N 5DU"`。只有给了出发地，`price` 才会显示交通时间。
 
 ## 价格规则
 
@@ -166,6 +169,12 @@ python3 tools/weekly_offer_check.py                 # 检查，然后用 --draft
 
 想托管自己的网站版本并带上每周检查，请按 [SETUP.md](SETUP.md)（英文）操作（GitHub + Cloudflare
 Pages，约十分钟）。用 Google 登录同步笔记和评价是可选的，见 [FIREBASE-SETUP.md](FIREBASE-SETUP.md)（英文）。
+
+## 支持这个 App
+
+iPhone App 是免费的，但要上架 TestFlight 或 App Store，需要加入 Apple 开发者计划，
+每年 £79（US$99）。如果这个 App 对你有用、愿意支持一下，金额随意，多少都是帮助：
+**[paypal.me/Quanyao](https://paypal.me/Quanyao)**。
 
 ## 许可证
 
