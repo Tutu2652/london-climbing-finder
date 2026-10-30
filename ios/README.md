@@ -17,18 +17,35 @@ app); notes stay on the device.
 
 ## Run it on your iPhone (free, personal use)
 
+You need a Mac. Any Apple ID works; no paid developer account is needed.
+
 1. Install **Xcode** from the Mac App Store, open it once, and let it install the iOS
    platform it offers.
-2. Open `ios/ClimbingFinder.xcodeproj`.
-3. Xcode → Settings → Accounts → **+** → sign in with your Apple ID.
-4. Select the **ClimbingFinder** target → **Signing & Capabilities** → Team: your
-   "(Personal Team)". If Xcode says the bundle ID is taken, change it to anything unique,
-   e.g. `com.yourname.climbfinder`.
-5. Plug in the iPhone and tap **Trust**. On the phone, turn on
-   Settings → Privacy & Security → **Developer Mode** (it restarts).
-6. Pick the iPhone as the run destination at the top of Xcode and press **Run** (⌘R).
-7. The first time, the phone blocks the app: Settings → General → VPN & Device
+2. Get the code: `git clone https://github.com/Tutu2652/london-climbing-finder.git`
+   (or GitHub → Code → Download ZIP).
+3. Xcode → Settings → Accounts → **+** → sign in with your Apple ID. Select it →
+   **Manage Certificates…** → **+** → **Apple Development**.
+4. Find your team ID (10 characters):
+   ```sh
+   security find-certificate -c "Apple Development" -p | openssl x509 -noout -subject
+   ```
+   It is the `OU=` value.
+5. Create `ios/Signing.local.xcconfig` with your team ID and a prefix that is yours
+   (it only has to be unique, e.g. based on your name):
+   ```
+   DEVELOPMENT_TEAM = ABCDE12345
+   BUNDLE_ID_PREFIX = com.yourname
+   ```
+   The file is git-ignored, so pulling updates later never conflicts with it. Don't set
+   the team in Xcode's Signing & Capabilities tab instead: that edits the shared project.
+6. Open `ios/ClimbingFinder.xcodeproj`. Plug in the iPhone and tap **Trust**. On the
+   phone, turn on Settings → Privacy & Security → **Developer Mode** (it restarts).
+7. Pick the iPhone as the run destination at the top of Xcode and press **Run** (⌘R).
+8. The first time, the phone blocks the app: Settings → General → VPN & Device
    Management → your Apple ID → **Trust**.
+
+To get new gyms and prices later: `git pull`, then Run again. (The app also refreshes
+prices from the website by itself.)
 
 With a free Apple ID the install lasts **7 days**. A paid Apple Developer Program
 membership ($99/yr) makes installs last a year and allows TestFlight.

@@ -18,7 +18,8 @@ DEVICE=${1:?usage: auto-reinstall.sh <device-udid> [--force]}
 FORCE=${2:-}
 RENEW_DAYS=3
 IOS_DIR=${0:A:h:h}
-BUNDLE_ID=$(grep -m1 'PRODUCT_BUNDLE_IDENTIFIER' "$IOS_DIR/ClimbingFinder.xcodeproj/project.pbxproj" | sed -E 's/.*= (.*);/\1/')
+BUNDLE_ID=$(xcodebuild -project "$IOS_DIR/ClimbingFinder.xcodeproj" -target ClimbingFinder -showBuildSettings 2>/dev/null | awk -F" = " '$1 ~ /^ *PRODUCT_BUNDLE_IDENTIFIER$/ {print $2; exit}')
+[[ -n $BUNDLE_ID ]] || { print -u2 "Could not read the bundle ID; is ios/Signing.local.xcconfig set up?"; exit 1 }
 PROFILES="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
 STATE="$HOME/Library/Application Support/ClimbFinderReinstall"
 mkdir -p "$STATE"

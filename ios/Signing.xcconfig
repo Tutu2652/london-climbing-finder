@@ -1,0 +1,14 @@
+// Code signing for the app and its Live Activity extension.
+//
+// Don't edit this file. Create ios/Signing.local.xcconfig (git-ignored) with your own values:
+//
+//   DEVELOPMENT_TEAM = ABCDE12345
+//   BUNDLE_ID_PREFIX = com.yourname
+//
+// The prefix must be unique to you: Apple refuses a bundle ID someone else has registered.
+// See ios/README.md for how to find your team ID.
+
+DEVELOPMENT_TEAM =
+BUNDLE_ID_PREFIX = com.example
+
+#include? "Signing.local.xcconfig"

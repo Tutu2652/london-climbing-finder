@@ -62,7 +62,7 @@ private final class SessionActivityCoordinator {
                                          content: ActivityContent(state: snapshot.state, staleDate: nil), pushType: nil)
                 requested.insert(snapshot.id)
             } catch {
-                Logger(subsystem: "com.linquanyao.londonclimbingfinder", category: "LiveActivity")
+                Logger(subsystem: Bundle.main.bundleIdentifier ?? "ClimbingFinder", category: "LiveActivity")
                     .error("Couldn't start session Live Activity: \(error.localizedDescription)")
             }
         }

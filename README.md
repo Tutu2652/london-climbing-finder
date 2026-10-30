@@ -3,6 +3,10 @@
 Find day-pass prices for London climbing gyms on any date/time, see the cheapest
 gym, find off-peak deals, list student/concession discounts, and browse by tube zone.
 
+**Want the iPhone app?** You need a Mac with Xcode and any Apple ID; follow
+[ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use). It takes about
+ten minutes the first time.
+
 ## Files
 
 - **gyms.json** — THE single source of truth for all data. Edit only this, then run
@@ -202,3 +206,9 @@ West/East, HarroWall, CroyWall, RavensWall, CanaryWall, BethWall, EustonWall).
 Prices merged from web research (2026-07-01) and the user's Google Sheet. Where the two
 disagreed the sheet was preferred, except The Castle, where the live website showed
 £18 / £12.50 versus the sheet's £16.50 / £11.50 — flagged in that gym's note to verify.
+
+## License
+
+The code is MIT-licensed (see `LICENSE`). Gym names and logos belong to the gyms and
+are not covered by it; prices are gathered from their public websites and may be out of
+date, so check the gym's own site before you go.
