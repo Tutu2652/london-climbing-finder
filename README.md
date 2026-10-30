@@ -1,214 +1,185 @@
-# London Climbing Gym Prices
+# London Climbing Finder
 
-Find day-pass prices for London climbing gyms on any date/time, see the cheapest
-gym, find off-peak deals, list student/concession discounts, and browse by tube zone.
+Day-pass prices, off-peak deals, student rates, memberships and travel times for 33
+London climbing gyms. Pick a date and time and it shows the cheapest gym and when to go.
 
-**Want the iPhone app?** You need a Mac with Xcode and any Apple ID; follow
-[ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use). It takes about
-ten minutes the first time.
+**Website:** https://london-climbing-finder.pages.dev/
 
-## Files
+## Ways to use it
 
-- **gyms.json** — THE single source of truth for all data. Edit only this, then run
-  `python3 tools/sync_data.py` to push the change into every derived file below.
-- **index.html** — the deployed site (Cloudflare Pages: https://london-climbing-finder.pages.dev/).
-  It is a small HTML shell: styling lives in `assets/styles.css`, interaction and pricing
-  logic in `assets/app.js`, and the generated data copy in `assets/data.js`. On phones,
-  the All Gyms comparison uses compact expandable cards.
-- **gyms/*/index.html** — one crawlable, no-JavaScript detail page per gym, including
-  prices, deals, hours, structured data and links to official sources. Generated from
-  `gyms.json`; do not edit these pages by hand.
-- **london_climbing_dashboard.html** — offline version; open in any browser, no install.
-  Also embeds `gyms.json` via the sync script.
-- **london_climbing_prices.py** — command-line / interactive version (Python 3, no packages).
-- **ios/** — native iPhone app (SwiftUI) that bundles `gyms.json` directly. See
-  `ios/README.md` for running it on your phone.
-- **london-climbing-deals-\*.ics** — subscribable deal calendars, generated from `gyms.json`
-  by `tools/sync_data.py` (one with student-only deals, one without).
-- **tools/sync_data.py** — generates `assets/data.js`, updates the offline dashboard, and
-  regenerates the calendars, gym pages and sitemap. `--check` (used by CI) fails if a
-  derived file is stale.
-- **tests/** — golden pricing tests plus a JS↔Python parity test that proves the site's
-  pricing logic matches the CLI's for every gym, and a Swift↔Python one for the iOS app
-  (skipped without `swiftc`). Run: `python3 -m unittest discover -s tests`
-- **tools/accessibility_check.py** — opens the live interface and all generated pages in
-  Chromium, runs axe WCAG rules, checks accessible names and keyboard tabs, and verifies
-  that the phone layout has become labelled cards.
-- **.github/workflows/** — `ci.yml` (tests + drift check on every push) and
-  `price-check.yml` (weekly live price re-check, opens an Issue on changes).
+| | What you need | How |
+|---|---|---|
+| **Website** | A browser | Open the link above. Works on phones. |
+| **iPhone app** | A Mac with Xcode and any Apple ID | Follow [ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use), about ten minutes the first time. |
+| **Offline dashboard** | A browser | Download and double-click `london_climbing_dashboard.html`. |
+| **Command line** | Python 3 (no packages) | `python3 london_climbing_prices.py` (see below). |
+| **Deal calendars** | A calendar app | Subscribe from the website, or add `london-climbing-deals-all.ics` (or `-no-student.ics`). |
 
-## Quick start
+### Website and dashboard
 
-Dashboard: double-click `london_climbing_dashboard.html`.
+- **Cheapest** ranks every gym for a date. By default it uses the cheapest price you can
+  get at any time that day and tells you the window to go. Switch "Cheapest mode" to
+  price one specific time.
+- **Map** plots every gym, sorts by distance from a start location, and links to Google
+  Maps transit directions. The **Travel** column shows live public-transport times from
+  TfL's Journey Planner.
+- **Notes and star ratings** for each gym are saved in your browser. Signing in with
+  Google (optional) syncs them across devices and lets you post a public review.
+- Each gym also has its own plain page under `gyms/` with prices, deals, opening hours and
+  links to the gym's official pages.
 
-Deployed-site layout locally: run `python3 -m http.server 8000` and open
-`http://localhost:8000/`. Directly opening `index.html` also works, including one-click
-gym links, but browser APIs behave more like production through a local server.
+### Command line
 
-Command line:
 ```
-python3 london_climbing_prices.py                       # interactive menu
-python3 london_climbing_prices.py cheapest --date 2026-07-04        # cheapest ACHIEVABLE all day + when to go
-python3 london_climbing_prices.py cheapest --date 2026-07-04 --time 19:00 --concession  # specific time
-python3 london_climbing_prices.py price castle --time 14:00         # one gym (incl. directions + your note)
+python3 london_climbing_prices.py                                   # interactive menu
+python3 london_climbing_prices.py cheapest --date 2026-07-04        # cheapest all day + when to go
+python3 london_climbing_prices.py cheapest --date 2026-07-04 --time 19:00 --concession
+python3 london_climbing_prices.py price castle --time 14:00         # one gym, with directions and your note
 python3 london_climbing_prices.py directions "the arch"             # transit + Citymapper links
-python3 london_climbing_prices.py travel --from "WC2N 5DU"           # TfL transit time to every gym, sorted
-python3 london_climbing_prices.py note castle great cafe, busy pm   # save a personal note (omit text to clear)
-python3 london_climbing_prices.py rate castle 4                     # rate 1-5 (omit value to clear)
+python3 london_climbing_prices.py travel --from "WC2N 5DU"           # TfL journey time to every gym
 python3 london_climbing_prices.py offpeak                           # all off-peak / cheap slots
-python3 london_climbing_prices.py students                          # student & concession rates
-python3 london_climbing_prices.py zones                             # gyms grouped by tube zone
+python3 london_climbing_prices.py students                          # student and concession rates
+python3 london_climbing_prices.py promos                            # live limited-time offers (--all: include expired)
+python3 london_climbing_prices.py memberships                       # monthly memberships
+python3 london_climbing_prices.py zones                             # gyms by tube zone
 python3 london_climbing_prices.py all                               # every gym: prices + facilities
-python3 london_climbing_prices.py memberships                       # monthly membership (full + concession)
-python3 london_climbing_prices.py check                             # fast static-page check
-python3 london_climbing_prices.py check --browser                   # also render JS-heavy booking pages (needs Playwright)
-python3 london_climbing_prices.py cheapest --scrape                 # try a live price refresh first
+python3 london_climbing_prices.py note castle great cafe, busy pm   # save a note (omit text to clear)
+python3 london_climbing_prices.py rate castle 4                     # rate 1-5 (omit value to clear)
 ```
 
-## Keeping prices fresh
-
-`check` fetches each gym's server-rendered price page (once per page — several gyms share
-one) and reports two different things, never editing data itself:
-
-- **TO REVIEW** — a stored headline price (adult peak, concession peak) no longer appears
-  on the page, so it probably *changed*.
-- **NEW OFFERS** — promo wording ("10% off", "sale", "summer offer", "promo", "BOGOF")
-  sits next to GBP amounts that are *not* recorded anywhere in `gyms.json`, so an offer
-  was probably *added*.
-
-The second check exists because the first cannot see a discount: a new offer leaves the
-old prices on the page untouched, so an existence check alone reports "all matched". That
-is exactly how City Bouldering's 10%-off summer sale went unnoticed.
-
-Once you record a flagged offer in `limited_promotions`, its prices count as known and it
-stops being reported. That "record it to silence it" loop is what keeps the report short.
-
-## Limited-time offers and expiry
-
-Each `limited_promotions` entry carries an **`expires`** date (`YYYY-MM-DD`), or `null`.
-`null` is the common case and means *no end date known* — not "runs forever". Most gyms
-never state one on their website: of the offers tracked here, only Westway's does, and
-that one turned out to have ended on 2024-01-31 while still being advertised.
-
-Whenever `expires` is set, **`expires_source`** must say where the date came from — a URL,
-or something like `"in-gym poster, seen 2026-08-05"`. A date with no stated origin is the
-dangerous case, because later nobody can tell a real end date from a guess. A test enforces
-this. Off-website sources are fine and often the only ones there are: City Bouldering's
-summer sale ends 2026-08-31 according to a poster in the gym, and nothing on their site
-says so. What is *not* fine is inferring a date from an offer's name — "Summer 2026 sale"
-is not evidence that it stops on 31 August.
-
-Watch out for the two different things a page can mean by a date. Climbing District's
-Summer Pass says *"valid for 3 months from the date of purchase"* — that is how long your
-pass lasts once bought, not when the offer stops being sold. Only the latter is `expires`.
-
-Once past its `expires` date an offer is treated as expired everywhere: hidden on the site
-and in `promos` (use `promos --all` to see it), and — deliberately — its prices stop
-counting as "known", so if a gym is still advertising it past the stated end date the
-weekly check surfaces it again rather than staying quiet.
-
-```
-python3 london_climbing_prices.py promos          # live offers only
-python3 london_climbing_prices.py promos --all    # include expired
-```
-Membership prices are not existence-checked: `prices_url` is the day-pass page and several
-brands don't publish membership rates there at all, so absence would mean "not listed" far
-more often than "changed". Membership deals still surface via the promo scan.
-
-By default, pages that need JavaScript are listed under **MANUAL CHECK NEEDED**. Add
-`--browser` to render them with Playwright. The **`price-check.yml` GitHub Action** installs
-Chromium and runs browser mode automatically every Monday ~9am; its summary names every
-unreadable gym, and it opens a GitHub Issue for detected price changes or new offers. You
-can also trigger it from the repo's Actions tab. Opening hours are stored per gym; the tool
-shows an open / closed / "opens HH:MM" indicator for the date and time you pick.
-
-## Cheapest by date vs by time
-
-`cheapest` with only `--date` (or no args) ranks each gym by the **cheapest price you can get
-any time that day**, and tells you the time window to go. Add `--time` to instead price a
-specific moment. The dashboard has the same toggle ("Cheapest mode").
-
-## Bank holidays
-
-Deals that gyms exclude on bank holidays (Castle off-peak, LCC Magic Time, Mile End super
-off-peak, City Bouldering Monday Bargain, etc.) are automatically dropped on those dates.
-The bank-holiday dates are fetched live from `https://www.gov.uk/bank-holidays.json`
-(England & Wales) and cached to `bank_holidays.json`; nothing is hard-coded.
-
-## Map, directions and notes
-
-The dashboard's **Map** tab plots every gym, lets you set a start location (default WC2N 5DU),
-sorts gyms by distance, and links to Google Maps transit directions. A **Travel** column shows
-the live public-transport journey time from your start location, via the free TfL Journey
-Planner API. Per-gym **notes** and 1-5 **star ratings** are saved in the browser (and via the
-CLI `note` / `rate` commands) and shown in the results.
-
-**Super off-peak** is the discount category covering all special cheap slots: Bargain, Magic
-Time, Student Saver, super-off-peak windows and BOGOF. Regular weekday-daytime pricing is
-still shown as plain "off-peak".
+`travel` and `--from` default to WC2N 5DU.
 
 ## How prices work
 
-Prices are researched pay-as-you-go single day-pass entries (GBP), current as of the
-`last_research_date` in `gyms.json`. Each gym has adult and concession rates, split into
-**peak** (evenings + weekends) and **off-peak** (weekday daytime). Some gyms have special
-cheap windows ("magic" slots) that override both.
+- **Day passes only.** Prices are single pay-as-you-go entries in GBP, as researched on
+  the `last_research_date` in `gyms.json`. Always check the gym's own site before you go.
+- **Peak and off-peak.** Each gym has adult and concession rates. Peak is evenings and
+  weekends; off-peak is weekday daytime. Where a gym doesn't publish its off-peak hours,
+  off-peak is assumed to run on weekdays until 16:00, and the price is marked `~approx`.
+- **Super off-peak** covers the special cheap slots that beat both: Bargain, Magic Time,
+  Student Saver, super-off-peak windows and buy-one-get-one-free deals.
+- **Bank holidays.** Deals that gyms exclude on bank holidays (Castle off-peak, LCC Magic
+  Time, Mile End super off-peak, City Bouldering Monday Bargain and others) are dropped on
+  those dates. The dates come live from gov.uk (England and Wales), with
+  `bank_holidays.json` as the offline copy.
+- **Flags.** `verify` means the gym didn't publish the price when it was researched, so
+  click through and confirm it.
 
-Where a gym does not publish exact off-peak times, the tool assumes off-peak = weekday
-until 16:00; those entries are flagged `~approx` / `offpeak_assumed`. Gyms whose prices
-were not publicly listed at research time are flagged `verify` — click through to the
-gym's price page to confirm.
+## Gyms covered
 
-## Live scraping
+Each site is its own entry with its own prices and off-peak times:
 
-`--scrape` (CLI) tries to refresh prices from each gym's website using only the Python
-standard library. It is best-effort: many gyms load prices through JavaScript booking
-widgets (RockGymPro, Momence, etc.) that a simple fetch cannot read, and some sites block
-automated requests. Anything it cannot read keeps its curated value. It only overwrites a
-price when it can tie a GBP amount to an "off-peak"/"peak" keyword and the value is sane
-(GBP 3–40), so it will not clobber good data with noise.
+- **Independents:** The Castle, Mile End, Yonder, Sen, Westway, The Reach, Rise, Substation
+  Brixton, Gantry (Canada Water), Blocfit (Brixton), Muro (Peckham), Rhino Boulder
+  (Bromley), Mount Palace (Crystal Palace), The Nest (Hayes), Yellow Spider (Carshalton)
+- **City Bouldering:** Aldgate, White City, Stratford, plus Climbing Co Fulham
+- **The Font:** Wandsworth, Borough, Hounslow
+- **Climbing District:** Bermondsey (The Arch), Tottenham Hale (Stronghold), London Fields
+- **London Climbing Centres:** VauxWall West and East, HarroWall, CroyWall, RavensWall,
+  CanaryWall, BethWall, EustonWall
 
-The browser checker is intentionally separate from `--scrape`: it is read-only and reports
-possible changes for review. Install it locally with `pip install playwright` followed by
-`playwright install chromium`. The `scrape` block in each gym record (`needs_js` flag, URL)
-controls which pages use browser rendering.
+## Updating the data
 
-## Adding or updating a gym
+`gyms.json` is the single source of truth. Every other copy (the website's
+`assets/data.js`, the offline dashboard, the gym pages, the calendars and the sitemap) is
+generated from it. Never edit those by hand.
 
-Edit `gyms.json` — copy an existing entry, change the fields — then run the commands below.
-Take `lat`/`lng` from the gym's own Google Maps place pin (the `!3d…!4d…` numbers in the
-place page's URL), not a postcode: postcode centres can be hundreds of metres out.
-Also set `_meta.last_research_date` to today: the iOS app ignores a website copy of the data
-that isn't newer than its own, so without this the app keeps showing the old gym list.
-Save the gym's logo as a PNG (256px or smaller) in `assets/logos/` and set `logo` to that
-path; a test rejects web URLs, so the site and app never depend on a gym's website.
-
-Then run:
+After any change to `gyms.json`:
 
 ```
-python3 tools/sync_data.py                    # HTML, calendars, gym pages + sitemap
-python3 -m unittest discover -s tests         # make sure pricing still agrees
-npm ci && python3 tools/accessibility_check.py # requires Playwright + Chromium
+python3 tools/sync_data.py                       # regenerate every derived file
+python3 -m unittest discover -s tests            # pricing tests (website, CLI and iOS must agree)
+npm ci && python3 tools/accessibility_check.py   # optional; needs Playwright + Chromium
 ```
 
-Commit everything the sync script touched. CI fails the build if you forget, so the
-site can never show data that differs from `gyms.json`.
+Commit everything the sync script touched. CI runs `sync_data.py --check` on every push
+and fails if a generated file is out of date, so the site can never drift from the data.
+Pushing to `main` redeploys the website automatically.
 
-## Data covered
+### Adding a gym
 
-33 gyms, each site as its own entry with its own prices and off-peak times: The Castle,
-Mile End, Yonder, Sen, Westway, The Reach, Rise, Substation Brixton, Gantry (Canada Water), Blocfit (Brixton), Muro (Peckham), Rhino Boulder (Bromley), Mount Palace (Crystal Palace), The Nest (Hayes), Yellow Spider (Carshalton); City Bouldering
-(Aldgate, White City, Stratford) plus Climbing Co Fulham; The Font (Wandsworth, Borough,
-Hounslow — Hounslow is cheaper); Climbing District (Bermondsey/Arch, Tottenham
-Hale/Stronghold, London Fields); and all eight London Climbing Centres sites (VauxWall
-West/East, HarroWall, CroyWall, RavensWall, CanaryWall, BethWall, EustonWall).
+1. Copy an existing entry in `gyms.json` and change the fields.
+2. Take `lat`/`lng` from the gym's Google Maps place pin (the `!3d…!4d…` numbers in the
+   place page URL), not from a postcode, which can be hundreds of metres out.
+3. Save the gym's logo as a PNG (256 px or smaller) in `assets/logos/` and set `logo` to
+   that path. A test rejects web URLs, so the site and app never depend on a gym's website.
+4. Set `_meta.last_research_date` to today. The iPhone app ignores a website copy of the
+   data that isn't newer than its own, so without this it keeps the old gym list.
+5. Run the three commands above.
 
-Prices merged from web research (2026-07-01) and the user's Google Sheet. Where the two
-disagreed the sheet was preferred, except The Castle, where the live website showed
-£18 / £12.50 versus the sheet's £16.50 / £11.50 — flagged in that gym's note to verify.
+### Keeping prices fresh
+
+**Every Monday** the `price-check.yml` GitHub Action re-reads each gym's price page (in a
+real browser, so JavaScript booking widgets work too) and opens an Issue if anything looks
+different. You can also run it from the repo's Actions tab. It never edits data itself.
+It reports two things:
+
+- **TO REVIEW:** a stored headline price (adult or concession peak) no longer appears on
+  the page, so it has probably changed.
+- **NEW OFFERS:** promo wording ("10% off", "sale", "promo", "BOGOF") appears next to GBP
+  amounts that aren't anywhere in `gyms.json`, so an offer has probably been added. A
+  price check alone can't see this, because an offer leaves the old prices on the page.
+  That's how City Bouldering's 10%-off summer sale was missed at first.
+
+Recording a flagged offer in `limited_promotions` makes its prices "known", so it stops
+being reported. Membership prices aren't checked this way (most price pages don't list
+them), but membership deals still show up in the promo scan.
+
+**To run the check yourself:**
+
+```
+python3 london_climbing_prices.py check             # quick: text-only pages
+python3 london_climbing_prices.py check --browser   # also renders JavaScript pages (pip install playwright; playwright install chromium)
+python3 tools/weekly_offer_check.py                 # check, then --draft / --apply to turn findings into gyms.json entries
+```
+
+`weekly_offer_check.py --draft` writes `offers-draft.json` skeletons for you to finish;
+`--apply` merges them into `gyms.json`, syncs and tests, but never commits. A gym's
+`scrape` block (`needs_js`, URL) controls whether its page needs browser rendering.
+
+`cheapest --scrape` is a separate, best-effort live refresh. It only replaces a stored
+price when it can tie a GBP amount (£3–40) to a "peak"/"off-peak" keyword, and keeps the
+stored value for anything it can't read.
+
+### Limited-time offers and end dates
+
+Each `limited_promotions` entry has an `expires` date (`YYYY-MM-DD`) or `null`.
+
+- **`null` means "no end date known",** not "runs forever". Most gyms never state one.
+- **A date needs a source.** Whenever `expires` is set, `expires_source` must say where it
+  came from: a URL, or something like `"in-gym poster, seen 2026-08-05"`. A test enforces
+  this. Off-website sources are fine; guessing from an offer's name ("Summer 2026 sale")
+  is not.
+- **Don't confuse the two kinds of date.** "Valid for 3 months from purchase" is how long a
+  pass lasts once bought, not when the offer stops being sold. Only the second is
+  `expires`.
+- **After `expires`, an offer is hidden everywhere** (`promos --all` still shows it), and
+  its prices stop counting as known. If a gym is still advertising it after the end date,
+  the weekly check flags it again.
+
+## Repository layout
+
+| Path | What it is |
+|---|---|
+| `gyms.json` | All the data. Edit only this. |
+| `index.html`, `assets/` | The website: `styles.css`, `app.js` (logic), `data.js` (generated), logos and icons. |
+| `gyms/*/index.html` | One generated page per gym. |
+| `london_climbing_dashboard.html` | Offline single-file version (generated data). |
+| `london_climbing_prices.py` | Command-line tool and the price checker. |
+| `london-climbing-deals-*.ics` | Generated deal calendars, with and without student-only deals. |
+| `ios/` | Native SwiftUI iPhone app; bundles `gyms.json`. See [ios/README.md](ios/README.md). |
+| `tools/` | `sync_data.py` (generates everything), `weekly_offer_check.py`, `generate_gym_pages.py`, `accessibility_check.py`. |
+| `tests/` | Pricing tests, plus parity tests proving the website (JS), CLI (Python) and app (Swift) price identically. The Swift one is skipped without `swiftc`. |
+| `.github/workflows/` | `ci.yml` (tests and drift check on every push), `price-check.yml` (Monday price check). |
+
+## Running your own copy
+
+To host your own version of the website with its own weekly checker, follow
+[SETUP.md](SETUP.md) (GitHub plus Cloudflare Pages, about ten minutes). Google sign-in
+for synced notes and reviews is optional: see [FIREBASE-SETUP.md](FIREBASE-SETUP.md).
 
 ## License
 
-The code is MIT-licensed (see `LICENSE`). Gym names and logos belong to the gyms and
-are not covered by it; prices are gathered from their public websites and may be out of
-date, so check the gym's own site before you go.
+The code is MIT-licensed (see [LICENSE](LICENSE)). Gym names and logos belong to the gyms
+and are not covered by it. Prices come from the gyms' public websites and may be out of
+date.
