@@ -10,7 +10,7 @@ London climbing gyms. Pick a date and time and it shows the cheapest gym and whe
 | | What you need | How |
 |---|---|---|
 | **Website** | A browser | Open the link above. Works on phones. |
-| **iPhone app** | A Mac with Xcode and any Apple ID | Follow [ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use), about ten minutes the first time. |
+| **iPhone app** | A Mac with Xcode and any Apple ID | Follow [ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use), about ten minutes the first time, or ask an AI coding agent to do it ([AGENTS.md](AGENTS.md)). |
 | **Offline dashboard** | A browser | Download and double-click `london_climbing_dashboard.html`. |
 | **Command line** | Python 3 (no packages) | `python3 london_climbing_prices.py` (see below). |
 | **Deal calendars** | A calendar app | Subscribe from the website, or add `london-climbing-deals-all.ics` (or `-no-student.ics`). |

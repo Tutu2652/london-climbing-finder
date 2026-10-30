@@ -19,6 +19,10 @@ app); notes stay on the device.
 
 You need a Mac. Any Apple ID works; no paid developer account is needed.
 
+**Using an AI coding agent** (Claude Code, Codex, Cursor…)? Open it in this repo and ask it
+to "install the iPhone app on my phone". [AGENTS.md](../AGENTS.md) walks it through every
+step below, and it tells you when you need to tap something in Xcode or on the phone.
+
 1. Install **Xcode** from the Mac App Store, open it once, and let it install the iOS
    platform it offers.
 2. Get the code: `git clone https://github.com/Tutu2652/london-climbing-finder.git`

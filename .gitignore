@@ -11,3 +11,4 @@ ios/build/
 DerivedData/
 .venv/
 ios/Signing.local.xcconfig
+/build/
