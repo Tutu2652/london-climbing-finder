@@ -172,6 +172,9 @@ struct StartSessionSheet: View {
     let onStart: (ClimbSession) -> Void
 
     @State private var chosen = ""
+    /// Set once you choose a gym yourself, so a late location fix never overrides it.
+    @State private var pickedByHand = false
+    @State private var nearby = false
     @State private var when = Date.now
     @State private var hours = 2.0
     @State private var onPass = false
@@ -186,7 +189,9 @@ struct StartSessionSheet: View {
             Form {
                 Section {
                     NavigationLink {
-                        SessionGymPicker(selection: $chosen)
+                        SessionGymPicker(selection: Binding(get: { chosen }, set: {
+                            chosen = $0; pickedByHand = true; nearby = false
+                        }))
                     } label: {
                         LabeledContent("Gym", value: model.gym(chosen)?.name ?? "Choose a gym")
                     }
@@ -194,6 +199,8 @@ struct StartSessionSheet: View {
                         DatePicker("Started", selection: $when, in: ...Date.now)
                         Stepper("Length: \(formatDuration(hours * 3600))", value: $hours, in: 0.5...8, step: 0.25)
                     }
+                } footer: {
+                    if nearby { Label("Nearest gym to you", systemImage: "location.fill") }
                 }
                 Section {
                     Toggle("Membership or pass", isOn: $onPass)
@@ -229,7 +236,20 @@ struct StartSessionSheet: View {
             }
             .onChange(of: chosen) { updatePrice() }
             .onChange(of: when) { updatePrice() }
+            .task { await pickNearestGym() }
         }
+    }
+
+    /// For a live session, start at the gym you're standing in, if any.
+    private func pickNearestGym() async {
+        guard !past, gymID == nil,
+              let here = try? await LocationService.shared.currentLocation(),
+              here.horizontalAccuracy >= 0, here.horizontalAccuracy <= 500, !pickedByHand else { return }
+        let at = (here.coordinate.latitude, here.coordinate.longitude)
+        guard let (gym, km) = model.data.gyms.map({ ($0, haversineKm(at, ($0.lat, $0.lng))) }).min(by: { $0.1 < $1.1 }),
+              km <= 0.5 else { return }
+        chosen = gym.id
+        nearby = true
     }
 
     private func updatePrice() {

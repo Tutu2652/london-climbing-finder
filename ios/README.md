@@ -77,8 +77,8 @@ offline fallback); travel times come from TfL's Journey Planner.
 
 ## Logbook and visits
 
-The **Log** tab stores sessions and climbs locally with SwiftData. Start a session,
-choose Flash / Send / Attempt, then tap grades. Turn on **Comp routes** to tag climbs
+The **Log** tab stores sessions and climbs locally with SwiftData. Start a session
+(with location access, it suggests the gym you are at, within 500 m), choose Flash / Send / Attempt, then tap grades. Turn on **Comp routes** to tag climbs
 as competition problems: tap the grade it felt, or **No grade**. Tap a climb later to
 add or change its grade. Ungraded comp climbs count as sends but stay out of grade
 stats. Finished sessions open a visit detail
