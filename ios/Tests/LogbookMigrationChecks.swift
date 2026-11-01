@@ -24,6 +24,7 @@ struct LogbookMigrationChecks {
         assert(session.gymID == "migration-gym" && session.notes == "Keep my existing visit")
         assert(session.climbs.count == 1 && session.climbs[0].grade == 3)
         let climb = session.climbs[0]
+        assert(!climb.isComp && climb.isGraded)
         if CommandLine.arguments.count > 2 {
             assert(climb.videoAssetID == "persisted-video" && climb.routePhotoAssetID == "persisted-photo")
             climb.videoAssetID = nil

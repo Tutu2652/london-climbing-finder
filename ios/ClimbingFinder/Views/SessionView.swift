@@ -13,6 +13,7 @@ struct SessionView: View {
     @AppStorage("logDiscipline") private var discipline: Discipline = .boulder
     @AppStorage("logMode") private var mode: ClimbResult = .send
     @State private var allGrades = false
+    @State private var comp = false
     @State private var confirmDelete = false
 
     var body: some View {
@@ -46,12 +47,13 @@ struct SessionView: View {
                     ForEach(ClimbResult.allCases) { Label($0.title, systemImage: $0.icon).tag($0) }
                 }
                 .pickerStyle(.segmented)
+                SwitchRow(isOn: $comp) { Label("Comp routes", systemImage: "trophy") }
                 gradeGrid
                 HStack {
                     Button(allGrades ? "Fewer grades" : "More grades") { allGrades.toggle() }
                     Spacer()
                     if let last = session.climbs.max(by: { $0.loggedAt < $1.loggedAt }) {
-                        Button("Undo \(last.result.title.lowercased()) \(last.gradeLabel)", role: .destructive) {
+                        Button("Undo \(last.result.title.lowercased()) \(last.label)", role: .destructive) {
                             withAnimation { context.delete(last) }
                         }
                     }
@@ -59,7 +61,8 @@ struct SessionView: View {
                 .font(.callout)
                 .buttonStyle(.borderless)
             } header: {
-                Text("Tap a grade to log \(mode == .attempt ? "an" : "a") \(mode.title.lowercased())")
+                Text(comp ? "Tap the grade it felt, or No grade, to log a comp \(mode.title.lowercased())"
+                          : "Tap a grade to log \(mode == .attempt ? "an" : "a") \(mode.title.lowercased())")
             }
 
             if !session.climbs.isEmpty {
@@ -139,6 +142,8 @@ struct SessionView: View {
             if gym?.type.contains("ropes") != true && !session.climbs.contains(where: { $0.discipline == .rope }) {
                 discipline = .boulder
             }
+            // Carry on in comp mode if that's what you were last logging.
+            comp = session.climbs.max(by: { $0.loggedAt < $1.loggedAt })?.isComp ?? false
         }
         .sensoryFeedback(.success, trigger: session.climbs.count)
     }
@@ -147,28 +152,35 @@ struct SessionView: View {
         let grades = discipline.grades
         let shown = allGrades ? grades.count : min(discipline.commonCount, grades.count)
         return LazyVGrid(columns: [GridItem(.adaptive(minimum: 58), spacing: 8)], spacing: 8) {
+            if comp {
+                gradeTile(Climb.ungraded, title: "No grade", accessibility: "Log comp \(mode.title.lowercased()) with no grade")
+            }
             ForEach(0..<shown, id: \.self) { i in
-                let count = session.climbs.filter { $0.discipline == discipline && $0.grade == i && $0.result.isSend }.count
-                // A plain tap gesture, not a Button: Buttons inside a List row drop
-                // quick repeat taps, and logging three V2s in a row should just work.
-                VStack(spacing: 2) {
-                    Text(grades[i]).font(.headline)
-                    Text(count > 0 ? "\(count)" : " ").font(.caption2.weight(.semibold)).foregroundStyle(Color.brand)
-                }
-                .frame(maxWidth: .infinity, minHeight: 50)
-                .background(Color.brand.opacity(count > 0 ? 0.16 : 0.07), in: RoundedRectangle(cornerRadius: 10))
-                .contentShape(Rectangle())
-                .onTapGesture { log(grade: i) }
-                .accessibilityAddTraits(.isButton)
-                .accessibilityLabel("Log \(mode.title.lowercased()) at \(grades[i])")
+                gradeTile(i, title: grades[i], accessibility: "Log \(comp ? "comp " : "")\(mode.title.lowercased()) at \(grades[i])")
             }
         }
         .padding(.vertical, 4)
     }
 
+    private func gradeTile(_ grade: Int, title: String, accessibility: String) -> some View {
+        let count = session.climbs.filter { $0.discipline == discipline && $0.grade == grade && $0.isComp == comp && $0.result.isSend }.count
+        // A plain tap gesture, not a Button: Buttons inside a List row drop
+        // quick repeat taps, and logging three V2s in a row should just work.
+        return VStack(spacing: 2) {
+            Text(title).font(.headline).lineLimit(1).minimumScaleFactor(0.7)
+            Text(count > 0 ? "\(count)" : " ").font(.caption2.weight(.semibold)).foregroundStyle(Color.brand)
+        }
+        .frame(maxWidth: .infinity, minHeight: 50)
+        .background(Color.brand.opacity(count > 0 ? 0.16 : 0.07), in: RoundedRectangle(cornerRadius: 10))
+        .contentShape(Rectangle())
+        .onTapGesture { log(grade: grade) }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel(accessibility)
+    }
+
     private func log(grade: Int) {
         let at = session.isActive ? Date.now : min(session.end ?? session.start, Date.now)
-        let climb = Climb(discipline: discipline, grade: grade, result: mode, at: at)
+        let climb = Climb(discipline: discipline, grade: grade, result: mode, at: at, comp: comp)
         climb.session = session
         context.insert(climb)
     }
@@ -184,12 +196,15 @@ struct SessionTally: View {
         let sends = climbs.filter(\.result.isSend)
         let flashes = climbs.filter { $0.result == .flash }.count
         let attempts = climbs.count - sends.count
+        let comps = climbs.filter(\.isComp).count
         VStack(alignment: .leading, spacing: 6) {
-            Text("\(sends.count) sends" + (flashes > 0 ? " (\(flashes) flashed)" : "") + (attempts > 0 ? " · \(attempts) attempt\(attempts == 1 ? "" : "s")" : ""))
+            Text("\(sends.count) sends" + (flashes > 0 ? " (\(flashes) flashed)" : "") + (attempts > 0 ? " · \(attempts) attempt\(attempts == 1 ? "" : "s")" : "")
+                 + (comps > 0 ? " · \(comps) comp" : ""))
                 .font(.subheadline.weight(.semibold))
-            ForEach(rows, id: \.label) { row in
+            ForEach(rows, id: \.id) { row in
                 HStack(spacing: 10) {
                     Text(row.label).font(.callout.weight(.semibold).monospacedDigit()).frame(width: 44, alignment: .leading)
+                    if row.comp { Image(systemName: "trophy").foregroundStyle(.secondary).accessibilityLabel("Comp") }
                     if row.flash > 0 { Label("\(row.flash)", systemImage: "bolt.fill").foregroundStyle(Color.amber) }
                     if row.send > 0 { Label("\(row.send)", systemImage: "checkmark").foregroundStyle(Color.brand) }
                     if row.attempt > 0 { Label("\(row.attempt)", systemImage: "xmark").foregroundStyle(.secondary) }
@@ -200,18 +215,19 @@ struct SessionTally: View {
         }
     }
 
-    private struct Row { let label: String; let flash: Int; let send: Int; let attempt: Int }
+    private struct Row { let id: String; let label: String; let comp: Bool; let flash: Int; let send: Int; let attempt: Int }
 
+    /// Regular climbs first, then comp problems; hardest first within each, ungraded last.
     private var rows: [Row] {
-        let groups = Dictionary(grouping: session.climbs) { "\($0.disciplineRaw)#\($0.grade)" }
-        return groups.values.compactMap { cs -> (Discipline, Int, Row)? in
+        let groups = Dictionary(grouping: session.climbs) { "\($0.disciplineRaw)#\($0.grade)#\($0.isComp)" }
+        return groups.compactMap { key, cs -> (Discipline, Int, Row)? in
             guard let c = cs.first else { return nil }
-            return (c.discipline, c.grade, Row(label: c.gradeLabel,
+            return (c.discipline, c.grade, Row(id: key, label: c.gradeLabel, comp: c.isComp,
                                                flash: cs.filter { $0.result == .flash }.count,
                                                send: cs.filter { $0.result == .send }.count,
                                                attempt: cs.filter { $0.result == .attempt }.count))
         }
-        .sorted { ($0.0 == .rope ? 1 : 0, -$0.1) < ($1.0 == .rope ? 1 : 0, -$1.1) }
+        .sorted { ($0.0 == .rope ? 1 : 0, $0.2.comp ? 1 : 0, -$0.1) < ($1.0 == .rope ? 1 : 0, $1.2.comp ? 1 : 0, -$1.1) }
         .map(\.2)
     }
 }

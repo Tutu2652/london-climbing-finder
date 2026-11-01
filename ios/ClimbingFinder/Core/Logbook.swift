@@ -68,9 +68,9 @@ final class ClimbSession {
     var duration: TimeInterval { max(0, (end ?? .now).timeIntervalSince(start)) }
     var sends: [Climb] { climbs.filter { $0.result.isSend } }
 
-    /// Hardest send in the session, as (discipline, grade index).
+    /// Hardest graded send in the session, as (discipline, grade index).
     func hardest(_ d: Discipline) -> Int? {
-        sends.filter { $0.discipline == d && d.grades.indices.contains($0.grade) }.map(\.grade).max()
+        sends.filter { $0.discipline == d && $0.isGraded }.map(\.grade).max()
     }
 }
 
@@ -85,17 +85,26 @@ final class Climb {
     /// References only: originals remain in the user's Photos library.
     var videoAssetID: String?
     var routePhotoAssetID: String?
+    /// A competition problem. Its grade is how it felt, and may be left out.
+    var isComp: Bool = false
 
-    init(discipline: Discipline, grade: Int, result: ClimbResult, at: Date = .now) {
+    /// Grade value for a comp problem logged without a grade.
+    static let ungraded = -1
+
+    init(discipline: Discipline, grade: Int, result: ClimbResult, at: Date = .now, comp: Bool = false) {
         disciplineRaw = discipline.rawValue
         self.grade = grade
         resultRaw = result.rawValue
         loggedAt = at
+        isComp = comp
     }
 
     var discipline: Discipline { Discipline(rawValue: disciplineRaw) ?? .boulder }
     var result: ClimbResult { ClimbResult(rawValue: resultRaw) ?? .send }
-    var gradeLabel: String { discipline.grades.indices.contains(grade) ? discipline.grades[grade] : "?" }
+    var isGraded: Bool { discipline.grades.indices.contains(grade) }
+    var gradeLabel: String { isGraded ? discipline.grades[grade] : grade == Self.ungraded ? "–" : "?" }
+    /// "V4", "Comp V4" or "Comp".
+    var label: String { isComp ? (isGraded ? "Comp " + gradeLabel : "Comp") : gradeLabel }
 }
 
 func formatDuration(_ t: TimeInterval) -> String {
@@ -114,8 +123,10 @@ struct LogbookBackup: Codable {
         var id: UUID, discipline: String, grade: Int, result: String, loggedAt: Date
         var videoAssetID: String?
         var routePhotoAssetID: String?
+        /// Missing in version 1 and 2 backups.
+        var isComp: Bool?
     }
-    var version = 2
+    var version = 3
     var exported = Date.now
     var sessions: [Session]
 
@@ -124,7 +135,7 @@ struct LogbookBackup: Codable {
             Session(id: s.id, gymID: s.gymID, start: s.start, end: s.end, notes: s.notes, price: s.price, feeling: s.feeling,
                     climbs: s.climbs.sorted { $0.loggedAt < $1.loggedAt }.map {
                         ClimbRecord(id: $0.id, discipline: $0.disciplineRaw, grade: $0.grade, result: $0.resultRaw, loggedAt: $0.loggedAt,
-                                    videoAssetID: $0.videoAssetID, routePhotoAssetID: $0.routePhotoAssetID)
+                                    videoAssetID: $0.videoAssetID, routePhotoAssetID: $0.routePhotoAssetID, isComp: $0.isComp)
                     })
         }
     }
@@ -146,14 +157,14 @@ struct LogbookBackup: Codable {
 
     /// Validate the whole file before changing the store.
     func validate() throws {
-        guard (1...2).contains(version) else { throw RestoreError.unsupportedVersion }
+        guard (1...3).contains(version) else { throw RestoreError.unsupportedVersion }
         for s in sessions {
             guard !s.gymID.isEmpty, (0...5).contains(s.feeling),
                   s.end.map({ $0 >= s.start }) ?? true,
                   s.price.map({ $0.isFinite && $0 >= 0 }) ?? true else { throw RestoreError.invalidRecord }
             for c in s.climbs {
                 guard let discipline = Discipline(rawValue: c.discipline),
-                      discipline.grades.indices.contains(c.grade),
+                      discipline.grades.indices.contains(c.grade) || (c.isComp == true && c.grade == Climb.ungraded),
                       ClimbResult(rawValue: c.result) != nil else { throw RestoreError.invalidRecord }
             }
         }
@@ -172,7 +183,7 @@ struct LogbookBackup: Codable {
             var climbIDs = Set<UUID>()
             for c in s.climbs where climbIDs.insert(c.id).inserted {
                 let climb = Climb(discipline: Discipline(rawValue: c.discipline) ?? .boulder, grade: c.grade,
-                                  result: ClimbResult(rawValue: c.result) ?? .send, at: c.loggedAt)
+                                  result: ClimbResult(rawValue: c.result) ?? .send, at: c.loggedAt, comp: c.isComp ?? false)
                 climb.id = c.id
                 climb.videoAssetID = c.videoAssetID
                 climb.routePhotoAssetID = c.routePhotoAssetID

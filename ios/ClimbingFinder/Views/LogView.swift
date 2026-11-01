@@ -134,7 +134,7 @@ private struct MonthSummary: View {
         let monthAgo = Calendar.london.date(byAdding: .day, value: -30, to: .now)!
         let recent = sessions.filter { $0.start >= monthAgo }
         let sends = recent.flatMap(\.sends)
-        let top = sends.filter { $0.discipline == .boulder }.map(\.grade).max()
+        let top = sends.filter { $0.discipline == .boulder && $0.isGraded }.map(\.grade).max()
         VStack(alignment: .leading, spacing: 8) {
             Text("Last 30 days").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             HStack(spacing: 0) {

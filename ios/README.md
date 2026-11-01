@@ -78,7 +78,10 @@ offline fallback); travel times come from TfL's Journey Planner.
 ## Logbook and visits
 
 The **Log** tab stores sessions and climbs locally with SwiftData. Start a session,
-choose Flash / Send / Attempt, then tap grades. Finished sessions open a visit detail
+choose Flash / Send / Attempt, then tap grades. Turn on **Comp routes** to tag climbs
+as competition problems: tap the grade it felt, or **No grade**. Tap a climb later to
+add or change its grade. Ungraded comp climbs count as sends but stay out of grade
+stats. Finished sessions open a visit detail
 screen with entry price, duration, feeling, notes and climbs; **Edit** changes the visit.
 **Visits by gym** lists visit counts and opens each gym's monthly visit history and
 totals. The same history is available from a gym page and Stats.
@@ -112,8 +115,8 @@ may download iCloud originals; the app does not export or retain duplicate media
 A missing original or revoked permission shows recovery controls instead of removing
 the link. These local identifiers may need relinking on a different phone/library.
 
-Version 2 JSON backups include the references, not media files, and version 1 backups
-remain supported. Run `zsh ios/Tests/check-logbook.sh` for backup, on-disk migration,
+JSON backups include the references, not media files. Version 3 adds the comp tag;
+version 1 and 2 backups remain supported. Run `zsh ios/Tests/check-logbook.sh` for backup, on-disk migration,
 and reference persistence checks. The migration fixture freezes the pre-media schema.
 
 Manual device checks (requires Photos access and sample media):

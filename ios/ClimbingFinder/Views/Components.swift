@@ -19,6 +19,27 @@ extension PriceKind {
 
 /// Coloured capsule: green off-peak, amber super off-peak / deal, purple peak.
 @MainActor
+/// A switch whose whole row is the tap target. A plain Toggle in a List ignores
+/// quick taps (press and release arrive together), so the row handles them.
+struct SwitchRow<Label: View>: View {
+    @Binding var isOn: Bool
+    @ViewBuilder var label: Label
+
+    var body: some View {
+        Button { isOn.toggle() } label: {
+            HStack {
+                label
+                Spacer()
+                Toggle("", isOn: $isOn).labelsHidden().allowsHitTesting(false).accessibilityHidden(true)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityAddTraits(.isToggle)
+    }
+}
+
 struct Pill: View {
     let text: String
     let color: Color

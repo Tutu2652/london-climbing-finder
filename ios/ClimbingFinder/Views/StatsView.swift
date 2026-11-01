@@ -29,6 +29,8 @@ struct StatsView: View {
         let s = sessions
         let climbs = s.flatMap(\.climbs).filter { $0.discipline == discipline }
         let sends = climbs.filter(\.result.isSend)
+        // Comp problems logged without a grade count as sends but not in grade stats.
+        let graded = sends.filter(\.isGraded)
         List {
             Section {
                 Picker("Period", selection: $period) { ForEach(Period.allCases) { Text($0.title).tag($0) } }
@@ -47,7 +49,7 @@ struct StatsView: View {
                         Tile(value: "\(sends.count)", label: "sends")
                     }
                     GridRow {
-                        Tile(value: sends.map(\.grade).max().map { discipline.grades[$0] } ?? "–", label: "hardest")
+                        Tile(value: graded.map(\.grade).max().map { discipline.grades[$0] } ?? "–", label: "hardest")
                         Tile(value: sends.isEmpty ? "–" : "\(Int((Double(sends.filter { $0.result == .flash }.count) / Double(sends.count) * 100).rounded()))%",
                              label: "flashed")
                         Tile(value: s.isEmpty ? "–" : String(format: "%.1f", Double(sends.count) / Double(s.count)), label: "sends / session")
@@ -56,9 +58,9 @@ struct StatsView: View {
                 .padding(.vertical, 6)
             }
 
-            if !sends.isEmpty {
+            if !graded.isEmpty {
                 Section {
-                    pyramid(sends)
+                    pyramid(graded)
                 } header: {
                     Text("Grade pyramid")
                 } footer: {

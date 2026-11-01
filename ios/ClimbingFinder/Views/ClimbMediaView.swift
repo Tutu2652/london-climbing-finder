@@ -14,6 +14,7 @@ struct ClimbMediaRow: View {
                 .frame(width: 22)
             Text(climb.gradeLabel).font(.body.weight(.semibold).monospacedDigit())
             Text(climb.result.title).foregroundStyle(.secondary)
+            if climb.isComp { Pill(text: "Comp", color: .amber) }
             Spacer()
             if climb.routePhotoAssetID != nil {
                 Image(systemName: "photo").accessibilityLabel("Route photo linked")
@@ -41,6 +42,16 @@ struct ClimbMediaView: View {
             Section {
                 LabeledContent("Outcome", value: climb.result.title)
                 LabeledContent("Logged", value: climb.loggedAt.formatted(date: .abbreviated, time: .shortened))
+                SwitchRow(isOn: $climb.isComp) { Text("Comp route") }
+                    .disabled(climb.isComp && !climb.isGraded)
+                Picker(climb.isComp ? "Felt grade" : "Grade", selection: $climb.grade) {
+                    if climb.isComp { Text("No grade").tag(Climb.ungraded) }
+                    ForEach(climb.discipline.grades.indices, id: \.self) { Text(climb.discipline.grades[$0]).tag($0) }
+                }
+            } footer: {
+                if climb.isComp && !climb.isGraded {
+                    Text("Add a grade to count this climb in grade stats, or to untag it as comp.")
+                }
             }
             LinkedMediaSection(assetID: $climb.routePhotoAssetID, kind: .photo, media: photoMedia, link: photoLink) {
                 fullScreen = .photo
@@ -53,7 +64,7 @@ struct ClimbMediaView: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }
-        .navigationTitle(climb.gradeLabel + " · " + climb.result.title)
+        .navigationTitle(climb.label + " · " + climb.result.title)
         .inlineTitle()
         .background(MediaPickerHost(link: photoLink, kind: .photo))
         .background(MediaPickerHost(link: videoLink, kind: .video))

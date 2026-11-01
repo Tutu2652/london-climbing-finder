@@ -74,7 +74,7 @@ struct GymVisitsSection: View {
                 let sends = here.flatMap(\.sends)
                 LabeledContent("Visits", value: "\(here.count)")
                 LabeledContent("Last visit", value: here[0].start.formatted(.dateTime.day().month().year()))
-                if let top = sends.filter({ $0.discipline == .boulder }).map(\.grade).max() {
+                if let top = sends.filter({ $0.discipline == .boulder && $0.isGraded }).map(\.grade).max() {
                     LabeledContent("Hardest boulder here", value: "V\(top)")
                 }
                 ForEach(here.prefix(3)) { s in

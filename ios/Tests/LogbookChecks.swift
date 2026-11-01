@@ -23,7 +23,7 @@ struct LogbookChecks {
         assert(session.hardest(.boulder) == 3)
         assert(formatDuration(session.duration) == "1h 00m")
         var backup = try LogbookBackup.decoder.decode(LogbookBackup.self, from: LogbookBackup.encoder.encode(LogbookBackup([session])))
-        assert(backup.version == 2)
+        assert(backup.version == 3)
         let linked = backup.sessions[0].climbs.first { $0.grade == 3 }!
         assert(linked.videoAssetID == "test-video-reference")
         assert(linked.routePhotoAssetID == "test-route-reference")
@@ -78,6 +78,42 @@ struct LogbookChecks {
         try restoredContext.save()
         let remainingClimbs = try restoredContext.fetchCount(FetchDescriptor<Climb>())
         assert(remainingClimbs == 3)
-        print("Logbook checks passed: sends, duration, backup round trip, deduplication, validation, active-session recovery, cascade deletion, media references, legacy backups")
+        try compChecks()
+        print("Logbook checks passed: sends, duration, backup round trip, deduplication, validation, active-session recovery, cascade deletion, media references, legacy backups, comp routes")
+    }
+
+    @MainActor static func compChecks() throws {
+        let container = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                          configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let session = ClimbSession(gymID: "comp-gym", start: start, end: start.addingTimeInterval(3600), price: nil)
+        context.insert(session)
+        for (grade, comp) in [(2, false), (6, true), (Climb.ungraded, true)] {
+            let climb = Climb(discipline: .boulder, grade: grade, result: .send, at: start, comp: comp)
+            context.insert(climb)
+            climb.session = session
+        }
+        try context.save()
+        let ungraded = session.climbs.first { !$0.isGraded }!
+        assert(ungraded.isComp && ungraded.label == "Comp" && ungraded.gradeLabel == "–")
+        assert(session.climbs.first { $0.grade == 6 }!.label == "Comp V6")
+        assert(session.sends.count == 3, "Ungraded comp sends still count as sends")
+        assert(session.hardest(.boulder) == 6, "Felt grades count; ungraded climbs don't")
+        let backup = try LogbookBackup.decoder.decode(LogbookBackup.self, from: LogbookBackup.encoder.encode(LogbookBackup([session])))
+        try backup.validate()
+        let restoredContainer = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                                  configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        _ = try backup.restore(into: restoredContainer.mainContext, existing: [])
+        let restored = try restoredContainer.mainContext.fetch(FetchDescriptor<Climb>())
+        assert(restored.filter(\.isComp).count == 2 && restored.contains { $0.isComp && $0.grade == Climb.ungraded })
+        // Only comp climbs may be ungraded.
+        var invalid = backup
+        let i = invalid.sessions[0].climbs.firstIndex { $0.grade == Climb.ungraded }!
+        invalid.sessions[0].climbs[i].isComp = false
+        do {
+            try invalid.validate()
+            assertionFailure("Ungraded non-comp climbs must be rejected")
+        } catch LogbookBackup.RestoreError.invalidRecord { }
     }
 }
