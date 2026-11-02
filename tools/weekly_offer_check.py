@@ -15,6 +15,9 @@ nothing reaches git without you reading it first:
 Steps 4 and 5 are deliberately separate: --apply edits your working tree and
 stops. It never runs git.
 
+--apply also sets _meta.last_research_date to today. After fixing TO REVIEW
+prices by hand, run --mark-researched to do the same (plus sync and test).
+
 Why a draft file rather than writing gyms.json directly: the checker can tell
 you an offer exists and what the amounts are, but not which amount is the adult
 rate, what the offer is called, or what its conditions are. That needs a human
@@ -141,6 +144,41 @@ Next:
     return 0
 
 
+def mark_researched(data):
+    """Stamp today as the research date the site and app display. The app only
+    swaps in website data whose date is >= its own, so this must never go back."""
+    today = dt.date.today().isoformat()
+    meta = data.setdefault("_meta", {})
+    meta["last_research_date"] = max(today, meta.get("last_research_date") or "")
+    return meta["last_research_date"]
+
+
+def write_gyms(data):
+    with open(GYMS, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=2, ensure_ascii=False)
+
+
+def sync_and_test():
+    for step in (["python3", "tools/sync_data.py"],
+                 ["python3", "-m", "unittest", "discover", "-s", "tests"]):
+        print("\n$ %s" % " ".join(step))
+        sys.stdout.flush()  # keep our output in order with the subprocess's
+        if subprocess.call(step, cwd=ROOT) != 0:
+            print("\nFAILED. gyms.json is edited but not verified - review "
+                  "before committing, or 'git checkout gyms.json' to undo.")
+            return False
+    return True
+
+
+def cmd_mark_researched(cli, data):
+    print("Research date set to %s." % mark_researched(data))
+    write_gyms(data)
+    if not sync_and_test():
+        return 1
+    print("\nVerified. Nothing has been committed - review with git diff.")
+    return 0
+
+
 def cmd_apply(cli, data):
     if not os.path.exists(DRAFT):
         print("No %s - run --draft first." % os.path.relpath(DRAFT, os.getcwd()))
@@ -190,18 +228,13 @@ def cmd_apply(cli, data):
 
     clean = [{k: v for k, v in e.items() if not k.startswith("_")} for e in draft]
     data.setdefault("limited_promotions", [])[:0] = clean
-    with open(GYMS, "w", encoding="utf-8") as fh:
-        json.dump(data, fh, indent=2, ensure_ascii=False)
-    print("Added %d offer(s) to gyms.json." % len(clean))
+    today = mark_researched(data)
+    write_gyms(data)
+    print("Added %d offer(s) to gyms.json. Research date set to %s."
+          % (len(clean), today))
 
-    for step in (["python3", "tools/sync_data.py"],
-                 ["python3", "-m", "unittest", "discover", "-s", "tests"]):
-        print("\n$ %s" % " ".join(step))
-        sys.stdout.flush()  # keep our output in order with the subprocess's
-        if subprocess.call(step, cwd=ROOT) != 0:
-            print("\nFAILED. gyms.json is edited but not verified - review "
-                  "before committing, or 'git checkout gyms.json' to undo.")
-            return 1
+    if not sync_and_test():
+        return 1
 
     os.remove(DRAFT)
     print("""
@@ -225,6 +258,8 @@ def main():
                    help="write skeleton entries for each new offer to offers-draft.json")
     g.add_argument("--apply", action="store_true",
                    help="merge the edited draft into gyms.json, then sync and test")
+    g.add_argument("--mark-researched", action="store_true",
+                   help="set the research date to today (after hand-fixing prices), then sync and test")
     ap.add_argument("--browser", action="store_true",
                     help="render JavaScript-heavy pages with Playwright")
     args = ap.parse_args()
@@ -234,6 +269,8 @@ def main():
 
     if args.apply:
         return cmd_apply(cli, data)
+    if args.mark_researched:
+        return cmd_mark_researched(cli, data)
     if args.draft:
         return cmd_draft(cli, data, browser=args.browser)
 

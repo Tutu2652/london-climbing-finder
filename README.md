@@ -144,7 +144,9 @@ python3 tools/weekly_offer_check.py                 # check, then --draft / --ap
 ```
 
 `weekly_offer_check.py --draft` writes `offers-draft.json` skeletons for you to finish;
-`--apply` merges them into `gyms.json`, syncs and tests, but never commits. A gym's
+`--apply` merges them into `gyms.json`, sets the research date to today, syncs and tests,
+but never commits. After fixing prices by hand, `--mark-researched` sets the date, syncs
+and tests. A gym's
 `scrape` block (`needs_js`, URL) controls whether its page needs browser rendering.
 
 `cheapest --scrape` is a separate, best-effort live refresh. It only replaces a stored

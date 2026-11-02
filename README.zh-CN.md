@@ -131,7 +131,8 @@ python3 tools/weekly_offer_check.py                 # 检查，然后用 --draft
 ```
 
 `weekly_offer_check.py --draft` 会生成 `offers-draft.json` 草稿供你补全；`--apply` 把它合并进
-`gyms.json`，并运行同步和测试，但从不提交。每家岩馆的 `scrape` 字段（`needs_js`、URL）
+`gyms.json`，把调研日期设为今天，并运行同步和测试，但从不提交。手动修正价格后，用
+`--mark-researched` 设置日期并运行同步和测试。每家岩馆的 `scrape` 字段（`needs_js`、URL）
 决定它的页面是否需要浏览器渲染。
 
 `cheapest --scrape` 是另一个独立的、尽力而为的实时刷新。只有当它能把某个英镑金额（£3–40）
