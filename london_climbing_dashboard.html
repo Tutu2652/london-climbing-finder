@@ -1076,25 +1076,56 @@ const DATA = {
       "logo": "assets/logos/the-font.png",
       "prices_url": "https://www.the-font.co.uk/wandsworth/prices",
       "payg": {
-        "adult_peak": 18.0,
-        "adult_offpeak": null,
-        "concession_peak": 15.5,
-        "concession_offpeak": 10.5
+        "adult_peak": 20.0,
+        "adult_offpeak": 17.0,
+        "concession_peak": 18.0,
+        "concession_offpeak": 16.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": true
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "16:00",
+          "end": "18:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "price": 10.5,
+          "label": "Student Saver (concession)"
+        },
         {
           "days": [
             "Sat"
@@ -1114,10 +1145,10 @@ const DATA = {
           "label": "Student Saver (concession)"
         }
       ],
-      "student_note": "Concession £15.50. £10.50 off-peak pass before 4pm Mon-Fri, after 4pm Sat & all-day Sun (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
-      "registration_fee": null,
+      "student_note": "Concession £18 peak, £16 off-peak (bouldering only); ropes & bouldering £20 / £17. Student Saver £10.50 before 4pm Mon-Fri, after 4pm Sat & all-day Sun (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
+      "registration_fee": 3.5,
       "verified": true,
-      "last_checked": "2026-10-25",
+      "last_checked": "2026-11-02",
       "scrape": {
         "url": "https://www.the-font.co.uk/wandsworth/prices",
         "method": "regex",
@@ -1129,7 +1160,7 @@ const DATA = {
         "concession_monthly": 65
       },
       "address": "52-58 Garratt Lane, London SW18 4TF",
-      "passes": "5 passes £85 (£72.50 conc); 10 passes £155 (£130 conc)",
+      "passes": "Ropes & bouldering single entry £23 peak / £20 off-peak (£20 / £17 conc). Bouldering: 5 passes £90 (£78 conc); 10 passes £168 (£150 conc). Ropes & bouldering: 5 passes £100 (£90 conc); 10 passes £193 (£170 conc)",
       "hours": {
         "Mon": [
           "06:15",
@@ -1185,25 +1216,56 @@ const DATA = {
       "logo": "assets/logos/the-font.png",
       "prices_url": "https://www.the-font.co.uk/borough/prices",
       "payg": {
-        "adult_peak": 18.0,
-        "adult_offpeak": null,
-        "concession_peak": 15.5,
-        "concession_offpeak": 10.5
+        "adult_peak": 20.0,
+        "adult_offpeak": 17.0,
+        "concession_peak": 18.0,
+        "concession_offpeak": 16.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": true
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "16:00",
+          "end": "18:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "price": 10.5,
+          "label": "Student Saver (concession)"
+        },
         {
           "days": [
             "Sat"
@@ -1223,10 +1285,10 @@ const DATA = {
           "label": "Student Saver (concession)"
         }
       ],
-      "student_note": "Concession £15.50. £10.50 off-peak pass before 4pm Mon-Fri, after 4pm Sat & all-day Sun (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
-      "registration_fee": null,
+      "student_note": "Concession £18 peak, £16 off-peak. Student Saver £10.50 before 4pm Mon-Fri, after 4pm Sat & all-day Sun (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
+      "registration_fee": 3.5,
       "verified": true,
-      "last_checked": "2026-10-25",
+      "last_checked": "2026-11-02",
       "scrape": {
         "url": "https://www.the-font.co.uk/borough/prices",
         "method": "regex",
@@ -1238,7 +1300,7 @@ const DATA = {
         "concession_monthly": 65
       },
       "address": "Unit 1B, Triptych Place, 185 Park Street, Bankside, London SE1 9BL",
-      "passes": "5 passes £85 (£72.50 conc); 10 passes £155 (£130 conc)",
+      "passes": "5 passes £90 (£78 conc); 10 passes £168 (£150 conc)",
       "hours": {
         "Mon": [
           "07:00",
@@ -1295,25 +1357,56 @@ const DATA = {
       "logo": "assets/logos/the-font.png",
       "prices_url": "https://www.the-font.co.uk/hounslow/prices",
       "payg": {
-        "adult_peak": 17.0,
-        "adult_offpeak": null,
-        "concession_peak": 14.5,
-        "concession_offpeak": 10.5
+        "adult_peak": 19.0,
+        "adult_offpeak": 17.0,
+        "concession_peak": 17.0,
+        "concession_offpeak": 14.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": true
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "16:00",
+          "end": "18:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "price": 10.5,
+          "label": "Student Saver (concession)"
+        },
         {
           "days": [
             "Sat"
@@ -1333,10 +1426,10 @@ const DATA = {
           "label": "Student Saver (concession)"
         }
       ],
-      "student_note": "Concession £14.50. £10.50 off-peak pass before 4pm Mon-Fri, after 4pm Sat & all-day Sun (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
-      "registration_fee": null,
+      "student_note": "Concession £17 peak, £14 off-peak. Student Saver £10.50 before 4pm Mon-Fri, after 4pm Sat & all-day Sun (student ID needed). Student term-time membership from £42/mo (12-month Bronze; 3/6/9-month options; Silver +fitness classes, Gold unlimited fitness).",
+      "registration_fee": 3.5,
       "verified": true,
-      "last_checked": "2026-10-25",
+      "last_checked": "2026-11-02",
       "scrape": {
         "url": "https://www.the-font.co.uk/hounslow/prices",
         "method": "regex",
@@ -1348,7 +1441,7 @@ const DATA = {
         "concession_monthly": 60
       },
       "address": "High Street Quarter, 9 Smithy Lane, Hounslow TW3 1EH",
-      "passes": "5 passes £80 (£67.50 conc); 10 passes £150 (£125 conc)",
+      "passes": "5 passes £84 (£75 conc); 10 passes £155 (£130 conc)",
       "hours": {
         "Mon": [
           "10:00",
@@ -3663,13 +3756,13 @@ const DATA = {
       "id": "sub-intro",
       "brand": "Independent",
       "title": "Substation: 2-week intro",
-      "details": "2 weeks unlimited climbing for new customers The offer page now returns 404 and the site no longer mentions it (checked 2026-10-25).",
+      "details": "2 weeks of unlimited climbing and gym for £30, for customers new to Substation. No contract; starts on the day of payment; membership perks not included. The page was a 404 on 2026-10-25 and was back on 2026-11-02.",
       "price": "£30",
       "valid": "Ongoing intro offer",
       "expires": null,
       "source": "https://brixton.substation.co.uk/climbing/climbing-intro-offer",
       "first_seen": "2026-07-01",
-      "status": "expired"
+      "status": "active"
     },
     {
       "id": "gantry-founding-30",
@@ -3701,27 +3794,27 @@ const DATA = {
       "id": "sub-oct-50-first-month",
       "brand": "Independent",
       "title": "Substation: 50% off first month's membership",
-      "details": "Climbing membership £41 for the first month (normally £82); concession £33 (normally £66); under-18 £27.50 (normally £55). Studio £41 and Combo £52 first month too.",
+      "details": "Climbing membership £41 for the first month (normally £82); concession £33 (normally £66); under-18 £27.50 (normally £55). Studio £41 and Combo £52 first month too. Gone by 2026-11-02: the membership page shows the full £82 (£55 U18) first month.",
       "price": "£41 first month (£33 concession)",
       "valid": "October 2026",
       "expires": "2026-10-31",
       "expires_source": "brixton.substation.co.uk site banner, seen 2026-10-25: \"Get 50% off your first month's membership in October\"",
       "source": "https://brixton.substation.co.uk/membership",
       "first_seen": "2026-10-25",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "font-student-prepaid-oct",
       "brand": "The Font",
       "title": "Student prepaid memberships (3 or 9 months)",
-      "details": "Student 3-month and 9-month prepaid memberships 'on sale for a limited time only'. Needs student ID shown at reception (or set up in-centre). Prices are not shown on the page.",
-      "price": "Not listed on the page",
+      "details": "Student prepaid memberships with multi-site access: 3 months £175 off-peak or £199 anytime; 9 months £395 off-peak or £450 anytime. Needs student ID shown at reception (or set up in-centre). The page still showed the 'before October 31st' banner on 2026-11-02.",
+      "price": "£175 (3 months off-peak) to £450 (9 months anytime)",
       "valid": "Limited time",
       "expires": "2026-10-31",
       "expires_source": "https://www.the-font.co.uk/student-deals (\"Lock yours in before October 31st!\", seen 2026-10-25)",
       "source": "https://www.the-font.co.uk/student-deals",
       "first_seen": "2026-10-25",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "rise-student-8for7",
