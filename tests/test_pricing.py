@@ -3,10 +3,11 @@
 Pricing tests.
 
 1. Golden tests: known gyms/dates must produce known prices (Python CLI logic).
-2. Parity test: the JS pricing logic in assets/app.js must agree with the
-   Python logic for every gym across a spread of dates (weekday / weekend /
-   bank holiday), both adult and concession. This is what stops the two
-   implementations drifting apart. Requires node; skipped if unavailable.
+2. Parity tests: the JS (assets/app.js), Swift (iOS app) and Kotlin (Android
+   app) pricing must agree with the Python logic for every gym across a spread
+   of dates (weekday / weekend / bank holiday), both adult and concession.
+   This is what stops the copies drifting apart. Each is skipped if its
+   toolchain (node, swiftc, a JDK) is missing.
 
 Run:  python3 -m unittest discover -s tests -v
 """
@@ -211,24 +212,70 @@ class SwiftPythonParity(unittest.TestCase):
                 [exe, os.path.join(ROOT, "gyms.json"),
                  json.dumps(sorted(BANK_HOLIDAYS)), json.dumps(TEST_DATES)],
                 capture_output=True, text=True, timeout=120, check=True)
-        mismatches = []
-        for iso, conc, gym_id, sw_best, sw_10, sw_19 in json.loads(res.stdout):
-            date = dt.date.fromisoformat(iso)
-            g = GYM[gym_id]
-            b = LCP.best_on_day(g, date, conc)
-            py_best = [b["price"], b["label"], b["when"]] if b else None
-            py_10 = list(LCP.applicable_price(
-                g, dt.datetime.combine(date, dt.time(10, 0)), conc))
-            py_19 = list(LCP.applicable_price(
-                g, dt.datetime.combine(date, dt.time(19, 0)), conc))
-            for name, sw_v, py_v in (("bestOnDay", sw_best, py_best),
-                                     ("10:00", sw_10, py_10),
-                                     ("19:00", sw_19, py_19)):
-                if sw_v != py_v:
-                    mismatches.append("%s %s conc=%s %s: swift=%r py=%r"
-                                      % (iso, gym_id, conc, name, sw_v, py_v))
-        self.assertEqual(mismatches, [],
-                         "Swift/Python pricing diverged:\n" + "\n".join(mismatches[:40]))
+        self.assertEqual(python_mismatches(json.loads(res.stdout), "swift"), [],
+                         "Swift/Python pricing diverged")
+
+
+def python_mismatches(rows, name):
+    """Rows of [iso, conc, gym id, best, at 10:00, at 19:00] from another
+    implementation, compared with the Python CLI. Returns the differences."""
+    mismatches = []
+    for iso, conc, gym_id, other_best, other_10, other_19 in rows:
+        date = dt.date.fromisoformat(iso)
+        g = GYM[gym_id]
+        b = LCP.best_on_day(g, date, conc)
+        py_best = [b["price"], b["label"], b["when"]] if b else None
+        py_10 = list(LCP.applicable_price(
+            g, dt.datetime.combine(date, dt.time(10, 0)), conc))
+        py_19 = list(LCP.applicable_price(
+            g, dt.datetime.combine(date, dt.time(19, 0)), conc))
+        for what, other_v, py_v in (("bestOnDay", other_best, py_best),
+                                    ("10:00", other_10, py_10),
+                                    ("19:00", other_19, py_19)):
+            if other_v != py_v:
+                mismatches.append("%s %s conc=%s %s: %s=%r py=%r"
+                                  % (iso, gym_id, conc, what, name, other_v, py_v))
+    return mismatches[:40]
+
+
+def has_jdk():
+    """A working JDK (macOS ships a /usr/bin/java stub that fails without one)."""
+    home = os.environ.get("JAVA_HOME")
+    java = os.path.join(home, "bin", "java") if home else shutil.which("java")
+    if not java:
+        return False
+    try:
+        return subprocess.run([java, "-version"], capture_output=True, timeout=60).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+@unittest.skipUnless(has_jdk(), "no JDK installed")
+class KotlinPythonParity(unittest.TestCase):
+    """The Android app's Kotlin pricing (android/core) must match the Python CLI.
+    Runs through Gradle, which downloads its dependencies the first time."""
+
+    def test_parity(self):
+        import tempfile
+        android = os.path.join(ROOT, "android")
+        gradlew = os.path.join(android, "gradlew.bat" if os.name == "nt" else "gradlew")
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = os.path.join(tmp, "in.json")
+            out = os.path.join(tmp, "out.json")
+            with open(spec, "w", encoding="utf-8") as fh:
+                json.dump({"gyms": os.path.join(ROOT, "gyms.json"),
+                           "bank_holidays": sorted(BANK_HOLIDAYS),
+                           "dates": TEST_DATES, "out": out}, fh)
+            res = subprocess.run(
+                [gradlew, "-q", "-p", android, ":core:parityDump", "--args=" + spec],
+                capture_output=True, text=True, timeout=1800)
+            if res.returncode != 0:
+                self.fail("kotlin harness failed:\n" + (res.stdout + res.stderr)[-3000:])
+            with open(out, encoding="utf-8") as fh:
+                rows = json.load(fh)
+        self.assertEqual(len(rows), len(TEST_DATES) * 2 * len(DATA["gyms"]))
+        self.assertEqual(python_mismatches(rows, "kotlin"), [],
+                         "Kotlin/Python pricing diverged")
 
 
 class DataValidation(unittest.TestCase):
