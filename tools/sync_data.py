@@ -140,9 +140,14 @@ def slot_events(gym, slot, variant, counter, dtstamp):
     description = " ".join(desc_bits)
     title = summary(gym, slot)
     location = gym.get("address") or gym.get("postcode") or ""
-    all_day = slot.get("start") == "00:00" and slot.get("end") in ("23:59", "24:00")
+    hours = gym.get("hours") or {}
 
     for day in slot["days"]:
+        # All-day when the slot is open-ended or covers the whole opening day.
+        open_close = hours.get(day)
+        all_day = ((slot.get("start") == "00:00" and slot.get("end") in ("23:59", "24:00"))
+                   or (open_close and slot["start"] <= open_close[0]
+                       and slot["end"] >= open_close[1]))
         counter[0] += 1
         start_date = first_weekday_on_or_after(ANCHOR, day)
         lines = ["BEGIN:VEVENT",
