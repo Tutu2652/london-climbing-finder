@@ -255,245 +255,98 @@ DESCRIPTION:Student Saver (concession): £7.00. Students/concession only (
 LOCATION:Haverfield Road\, London E3 5BN
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-the_font_wandsworth-23@londonclimbingfinder
+UID:cld-all-font-23@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240101T060000
 DTEND:20240101T160000
 RRULE:FREQ=WEEKLY;BYDAY=MO
-SUMMARY:Font Wandsworth £10.50 Student
+SUMMARY:Font £10.50 Student
 DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/wandsworth/prices
-LOCATION:52-58 Garratt Lane\, London SW18 4TF
+ (ID).\nFont Wandsworth: https://www.the-font.co.uk/wandsworth/prices\nFon
+ t Borough: https://www.the-font.co.uk/borough/prices\nFont Hounslow: http
+ s://www.the-font.co.uk/hounslow/prices
+LOCATION:Font Wandsworth\, Font Borough\, Font Hounslow
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-the_font_wandsworth-24@londonclimbingfinder
+UID:cld-all-font-24@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240102T060000
 DTEND:20240102T160000
 RRULE:FREQ=WEEKLY;BYDAY=TU
-SUMMARY:Font Wandsworth £10.50 Student
+SUMMARY:Font £10.50 Student
 DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/wandsworth/prices
-LOCATION:52-58 Garratt Lane\, London SW18 4TF
+ (ID).\nFont Wandsworth: https://www.the-font.co.uk/wandsworth/prices\nFon
+ t Borough: https://www.the-font.co.uk/borough/prices\nFont Hounslow: http
+ s://www.the-font.co.uk/hounslow/prices
+LOCATION:Font Wandsworth\, Font Borough\, Font Hounslow
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-the_font_wandsworth-25@londonclimbingfinder
+UID:cld-all-font-25@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240103T060000
 DTEND:20240103T160000
 RRULE:FREQ=WEEKLY;BYDAY=WE
-SUMMARY:Font Wandsworth £10.50 Student
+SUMMARY:Font £10.50 Student
 DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/wandsworth/prices
-LOCATION:52-58 Garratt Lane\, London SW18 4TF
+ (ID).\nFont Wandsworth: https://www.the-font.co.uk/wandsworth/prices\nFon
+ t Borough: https://www.the-font.co.uk/borough/prices\nFont Hounslow: http
+ s://www.the-font.co.uk/hounslow/prices
+LOCATION:Font Wandsworth\, Font Borough\, Font Hounslow
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-the_font_wandsworth-26@londonclimbingfinder
+UID:cld-all-font-26@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240104T060000
 DTEND:20240104T160000
 RRULE:FREQ=WEEKLY;BYDAY=TH
-SUMMARY:Font Wandsworth £10.50 Student
+SUMMARY:Font £10.50 Student
 DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/wandsworth/prices
-LOCATION:52-58 Garratt Lane\, London SW18 4TF
+ (ID).\nFont Wandsworth: https://www.the-font.co.uk/wandsworth/prices\nFon
+ t Borough: https://www.the-font.co.uk/borough/prices\nFont Hounslow: http
+ s://www.the-font.co.uk/hounslow/prices
+LOCATION:Font Wandsworth\, Font Borough\, Font Hounslow
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-the_font_wandsworth-27@londonclimbingfinder
+UID:cld-all-font-27@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240105T060000
 DTEND:20240105T160000
 RRULE:FREQ=WEEKLY;BYDAY=FR
-SUMMARY:Font Wandsworth £10.50 Student
+SUMMARY:Font £10.50 Student
 DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/wandsworth/prices
-LOCATION:52-58 Garratt Lane\, London SW18 4TF
+ (ID).\nFont Wandsworth: https://www.the-font.co.uk/wandsworth/prices\nFon
+ t Borough: https://www.the-font.co.uk/borough/prices\nFont Hounslow: http
+ s://www.the-font.co.uk/hounslow/prices
+LOCATION:Font Wandsworth\, Font Borough\, Font Hounslow
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-the_font_wandsworth-28@londonclimbingfinder
+UID:cld-all-font-28@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240106T160000
 DTEND:20240106T235900
 RRULE:FREQ=WEEKLY;BYDAY=SA
-SUMMARY:Font Wandsworth £10.50 Student
+SUMMARY:Font £10.50 Student
 DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/wandsworth/prices
-LOCATION:52-58 Garratt Lane\, London SW18 4TF
+ (ID).\nFont Wandsworth: https://www.the-font.co.uk/wandsworth/prices\nFon
+ t Borough: https://www.the-font.co.uk/borough/prices\nFont Hounslow: http
+ s://www.the-font.co.uk/hounslow/prices
+LOCATION:Font Wandsworth\, Font Borough\, Font Hounslow
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-the_font_wandsworth-29@londonclimbingfinder
+UID:cld-all-font-29@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240107
 DTEND;VALUE=DATE:20240108
 RRULE:FREQ=WEEKLY;BYDAY=SU
-SUMMARY:Font Wandsworth £10.50 Student
+SUMMARY:Font £10.50 Student
 DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/wandsworth/prices
-LOCATION:52-58 Garratt Lane\, London SW18 4TF
+ (ID).\nFont Wandsworth: https://www.the-font.co.uk/wandsworth/prices\nFon
+ t Borough: https://www.the-font.co.uk/borough/prices\nFont Hounslow: http
+ s://www.the-font.co.uk/hounslow/prices
+LOCATION:Font Wandsworth\, Font Borough\, Font Hounslow
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-the_font_borough-30@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240101T060000
-DTEND:20240101T160000
-RRULE:FREQ=WEEKLY;BYDAY=MO
-SUMMARY:Font Borough £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/borough/prices
-LOCATION:Unit 1B\, Triptych Place\, 185 Park Street\, Bankside\, London SE
- 1 9BL
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_borough-31@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240102T060000
-DTEND:20240102T160000
-RRULE:FREQ=WEEKLY;BYDAY=TU
-SUMMARY:Font Borough £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/borough/prices
-LOCATION:Unit 1B\, Triptych Place\, 185 Park Street\, Bankside\, London SE
- 1 9BL
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_borough-32@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240103T060000
-DTEND:20240103T160000
-RRULE:FREQ=WEEKLY;BYDAY=WE
-SUMMARY:Font Borough £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/borough/prices
-LOCATION:Unit 1B\, Triptych Place\, 185 Park Street\, Bankside\, London SE
- 1 9BL
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_borough-33@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240104T060000
-DTEND:20240104T160000
-RRULE:FREQ=WEEKLY;BYDAY=TH
-SUMMARY:Font Borough £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/borough/prices
-LOCATION:Unit 1B\, Triptych Place\, 185 Park Street\, Bankside\, London SE
- 1 9BL
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_borough-34@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240105T060000
-DTEND:20240105T160000
-RRULE:FREQ=WEEKLY;BYDAY=FR
-SUMMARY:Font Borough £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/borough/prices
-LOCATION:Unit 1B\, Triptych Place\, 185 Park Street\, Bankside\, London SE
- 1 9BL
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_borough-35@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240106T160000
-DTEND:20240106T235900
-RRULE:FREQ=WEEKLY;BYDAY=SA
-SUMMARY:Font Borough £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/borough/prices
-LOCATION:Unit 1B\, Triptych Place\, 185 Park Street\, Bankside\, London SE
- 1 9BL
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_borough-36@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART;VALUE=DATE:20240107
-DTEND;VALUE=DATE:20240108
-RRULE:FREQ=WEEKLY;BYDAY=SU
-SUMMARY:Font Borough £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/borough/prices
-LOCATION:Unit 1B\, Triptych Place\, 185 Park Street\, Bankside\, London SE
- 1 9BL
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_hounslow-37@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240101T060000
-DTEND:20240101T160000
-RRULE:FREQ=WEEKLY;BYDAY=MO
-SUMMARY:Font Hounslow £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/hounslow/prices
-LOCATION:High Street Quarter\, 9 Smithy Lane\, Hounslow TW3 1EH
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_hounslow-38@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240102T060000
-DTEND:20240102T160000
-RRULE:FREQ=WEEKLY;BYDAY=TU
-SUMMARY:Font Hounslow £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/hounslow/prices
-LOCATION:High Street Quarter\, 9 Smithy Lane\, Hounslow TW3 1EH
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_hounslow-39@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240103T060000
-DTEND:20240103T160000
-RRULE:FREQ=WEEKLY;BYDAY=WE
-SUMMARY:Font Hounslow £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/hounslow/prices
-LOCATION:High Street Quarter\, 9 Smithy Lane\, Hounslow TW3 1EH
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_hounslow-40@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240104T060000
-DTEND:20240104T160000
-RRULE:FREQ=WEEKLY;BYDAY=TH
-SUMMARY:Font Hounslow £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/hounslow/prices
-LOCATION:High Street Quarter\, 9 Smithy Lane\, Hounslow TW3 1EH
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_hounslow-41@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240105T060000
-DTEND:20240105T160000
-RRULE:FREQ=WEEKLY;BYDAY=FR
-SUMMARY:Font Hounslow £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/hounslow/prices
-LOCATION:High Street Quarter\, 9 Smithy Lane\, Hounslow TW3 1EH
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_hounslow-42@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART:20240106T160000
-DTEND:20240106T235900
-RRULE:FREQ=WEEKLY;BYDAY=SA
-SUMMARY:Font Hounslow £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/hounslow/prices
-LOCATION:High Street Quarter\, 9 Smithy Lane\, Hounslow TW3 1EH
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-the_font_hounslow-43@londonclimbingfinder
-DTSTAMP:20261102T000000Z
-DTSTART;VALUE=DATE:20240107
-DTEND;VALUE=DATE:20240108
-RRULE:FREQ=WEEKLY;BYDAY=SU
-SUMMARY:Font Hounslow £10.50 Student
-DESCRIPTION:Student Saver (concession): £10.50. Students/concession only 
- (ID). https://www.the-font.co.uk/hounslow/prices
-LOCATION:High Street Quarter\, 9 Smithy Lane\, Hounslow TW3 1EH
-END:VEVENT
-BEGIN:VEVENT
-UID:cld-all-yonder-44@londonclimbingfinder
+UID:cld-all-yonder-30@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240102
 DTEND;VALUE=DATE:20240103
@@ -504,7 +357,7 @@ DESCRIPTION:Student Saver (concession): £8.00. Students/concession only (
 LOCATION:4-6 Hookers Road\, Walthamstow\, London E17 6DP
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-yonder-45@londonclimbingfinder
+UID:cld-all-yonder-31@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240105
 DTEND;VALUE=DATE:20240106
@@ -515,7 +368,7 @@ DESCRIPTION:Student Saver (concession): £8.00. Students/concession only (
 LOCATION:4-6 Hookers Road\, Walthamstow\, London E17 6DP
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-rise-46@londonclimbingfinder
+UID:cld-all-rise-32@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240102T060000
 DTEND:20240102T100000
@@ -527,7 +380,7 @@ LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
  A
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-rise-47@londonclimbingfinder
+UID:cld-all-rise-33@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240104T060000
 DTEND:20240104T100000
@@ -539,7 +392,7 @@ LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
  A
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-rise-48@londonclimbingfinder
+UID:cld-all-rise-34@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240105
 DTEND;VALUE=DATE:20240106
@@ -551,7 +404,7 @@ LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
  A
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-rise-49@londonclimbingfinder
+UID:cld-all-rise-35@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240105
 DTEND;VALUE=DATE:20240106
@@ -563,7 +416,7 @@ LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
  A
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-climbing_co_fulham-50@londonclimbingfinder
+UID:cld-all-climbing_co_fulham-36@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240101T100000
 DTEND:20240101T160000
@@ -574,7 +427,7 @@ DESCRIPTION:Bargain: £7.50. Pre-book. https://www.citybouldering.co.uk/pr
 LOCATION:5 Parsons Green Depot\, 33-35 Parsons Green Lane\, London SW6 4HH
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-climbing_co_fulham-51@londonclimbingfinder
+UID:cld-all-climbing_co_fulham-37@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240102
 DTEND;VALUE=DATE:20240103
@@ -585,7 +438,7 @@ DESCRIPTION:Student Saver (concession): £9.50. Students/concession only (
 LOCATION:5 Parsons Green Depot\, 33-35 Parsons Green Lane\, London SW6 4HH
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-gantry-52@londonclimbingfinder
+UID:cld-all-gantry-38@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240103T170000
 DTEND:20240103T220000
@@ -596,7 +449,7 @@ DESCRIPTION:Student Night (concession): £6.00. Students/concession only (
 LOCATION:24-26 Surrey Quays Shopping Centre\, London SE16 7LL
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-gantry-53@londonclimbingfinder
+UID:cld-all-gantry-39@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240107T150000
 DTEND:20240107T190000
@@ -606,7 +459,7 @@ DESCRIPTION:Sunday Slayer: £8.00. https://gantryclimbing.com/
 LOCATION:24-26 Surrey Quays Shopping Centre\, London SE16 7LL
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-blocfit-54@londonclimbingfinder
+UID:cld-all-blocfit-40@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240103
 DTEND;VALUE=DATE:20240104
@@ -617,7 +470,7 @@ DESCRIPTION:Student Wednesday (concession\, incl. shoes): £7.00. Students
 LOCATION:Arch 266\, 241 Coldharbour Lane\, Brixton\, London SW9 8RR
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-rhino_bromley-55@londonclimbingfinder
+UID:cld-all-rhino_bromley-41@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240105
 DTEND;VALUE=DATE:20240106
@@ -628,7 +481,7 @@ DESCRIPTION:Student Friday (concession\, incl. shoes): £9.50. Students/co
 LOCATION:Units 6 & 7\, The Mall\, Bromley BR1 1TR
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-yellow_spider-56@londonclimbingfinder
+UID:cld-all-yellow_spider-42@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240103T100000
 DTEND:20240103T170000
@@ -640,7 +493,7 @@ DESCRIPTION:Student Wednesday (concession): £8.00. Students/concession on
 LOCATION:Oaks Sports Centre\, Woodmansterne Road\, Carshalton SM5 4AN
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_vauxwall_west-57@londonclimbingfinder
+UID:cld-all-lcc_vauxwall_west-43@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240107T080000
 DTEND:20240107T100000
@@ -651,7 +504,7 @@ DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
 LOCATION:Arches 45b-47c\, South Lambeth Road\, Vauxhall\, London SW8 1SR
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_vauxwall_east-58@londonclimbingfinder
+UID:cld-all-lcc_vauxwall_east-44@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240101T090000
 DTEND:20240101T160000
@@ -662,7 +515,7 @@ DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
 LOCATION:1 Cabanel Place\, Lollard Street\, London SE11 6BD
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_harrowall-59@londonclimbingfinder
+UID:cld-all-lcc_harrowall-45@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240105T200000
 DTEND:20240105T230000
@@ -674,7 +527,7 @@ LOCATION:Unit 2a & 3a\, Neptune Trading Estate\, Neptune Road\, Harrow HA1
   4HX
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_croywall-60@londonclimbingfinder
+UID:cld-all-lcc_croywall-46@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240102T060000
 DTEND:20240102T160000
@@ -685,7 +538,7 @@ DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
 LOCATION:Unit 7 New South Quarter\, Whitestone Way\, Croydon CR0 4WN
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_croywall-61@londonclimbingfinder
+UID:cld-all-lcc_croywall-47@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240105
 DTEND;VALUE=DATE:20240106
@@ -696,7 +549,7 @@ DESCRIPTION:Student Friday (concession): £9.50. Students/concession only
 LOCATION:Unit 7 New South Quarter\, Whitestone Way\, Croydon CR0 4WN
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_ravenswall-62@londonclimbingfinder
+UID:cld-all-lcc_ravenswall-48@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240105T060000
 DTEND:20240105T160000
@@ -707,7 +560,7 @@ DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
 LOCATION:Arch 105\, Ravenscourt Road\, London W6 0UQ
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_canarywall-63@londonclimbingfinder
+UID:cld-all-lcc_canarywall-49@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240107T090000
 DTEND:20240107T110000
@@ -718,7 +571,7 @@ DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
 LOCATION:21-23 Trinidad Street\, Poplar\, London E14 8AA
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_bethwall-64@londonclimbingfinder
+UID:cld-all-lcc_bethwall-50@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240106T080000
 DTEND:20240106T100000
@@ -729,7 +582,7 @@ DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
 LOCATION:Arches 243-247\, Hollybush Place\, London E2 9QX
 END:VEVENT
 BEGIN:VEVENT
-UID:cld-all-lcc_eustonwall-65@londonclimbingfinder
+UID:cld-all-lcc_eustonwall-51@londonclimbingfinder
 DTSTAMP:20261102T000000Z
 DTSTART:20240106T170000
 DTEND:20240106T210000

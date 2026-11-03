@@ -10,6 +10,7 @@ Pricing tests.
 
 Run:  python3 -m unittest discover -s tests -v
 """
+import copy
 import datetime as dt
 import importlib.util
 import json
@@ -17,6 +18,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -413,6 +415,34 @@ class PromoDetection(unittest.TestCase):
         hits = self.cli.promo_candidates(PROMO_FIXTURE,
                                          self.cli.known_amounts(self.gyms))
         self.assertEqual(len(hits), 1, "same block reported %d times" % len(hits))
+
+
+class DealCalendar(unittest.TestCase):
+    """Gyms in one calendar_group share an event only while their deal matches."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        import sync_data
+        cls.sync = sync_data
+        with open(os.path.join(ROOT, "gyms.json"), encoding="utf-8") as fh:
+            cls.raw = json.load(fh)
+
+    def titles(self, data):
+        return re.findall(r"^SUMMARY:(.*)\r$", self.sync.build_ics(data, "all"), re.M)
+
+    def test_matching_font_deals_share_one_event_per_day(self):
+        titles = self.titles(self.raw)
+        self.assertEqual(titles.count("Font £10.50 Student"), 7)
+        self.assertFalse([t for t in titles if t.startswith("Font Wandsworth")])
+
+    def test_changed_deal_splits_off(self):
+        data = copy.deepcopy(self.raw)
+        font = [g for g in data["gyms"] if g.get("calendar_group") == "Font"]
+        font[0]["magic_slots"][0]["price"] = 11.0
+        titles = self.titles(data)
+        self.assertEqual(titles.count("%s £11 Student" % font[0]["calendar_name"]), 5)
+        self.assertEqual(titles.count("Font £10.50 Student"), 7)
 
 
 if __name__ == "__main__":

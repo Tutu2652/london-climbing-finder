@@ -77,18 +77,22 @@ def money(price):
     return "£%d" % price if price == int(price) else "£%.2f" % price
 
 
-def summary(gym, slot):
+def summary(name, slot):
     """Short event title: gym, price, then "Student" and any calendar_tag.
 
     Calendar apps cut titles at 10-15 characters, so the gym comes first and
     the deal's own name goes in the description instead.
     """
-    bits = [gym.get("calendar_name") or gym["name"], money(slot["price"])]
+    bits = [name, money(slot["price"])]
     if is_student_only(slot):
         bits.append("Student")
     if slot.get("calendar_tag"):
         bits.append(slot["calendar_tag"])
     return " ".join(bits)
+
+
+def calendar_name(gym):
+    return gym.get("calendar_name") or gym["name"]
 
 
 def ics_escape(text):
@@ -122,12 +126,15 @@ def first_weekday_on_or_after(anchor, day_name):
     return anchor + dt.timedelta(days=delta)
 
 
-def slot_events(gym, slot, variant, counter, dtstamp):
-    """One VEVENT per recurrence day of a magic slot."""
+def slot_events(gyms, slot, variant, counter, dtstamp):
+    """One VEVENT per recurrence day of a magic slot.
+
+    gyms is every gym in a calendar_group that runs this exact slot; they
+    share one event, named after the group.
+    """
     events = []
     price = slot["price"]
     label = slot.get("label") or "Deal"
-    url = gym.get("prices_url") or gym.get("website") or ""
     desc_bits = ["%s: £%.2f." % (label, price)]
     if is_student_only(slot):
         desc_bits.append("Students/concession only (ID).")
@@ -135,23 +142,36 @@ def slot_events(gym, slot, variant, counter, dtstamp):
         desc_bits.append("Not valid on bank holidays.")
     if slot.get("prebook"):
         desc_bits.append("Pre-book.")
-    if url:
-        desc_bits.append(url)
-    description = " ".join(desc_bits)
-    title = summary(gym, slot)
-    location = gym.get("address") or gym.get("postcode") or ""
-    hours = gym.get("hours") or {}
+    urls = [g.get("prices_url") or g.get("website") or "" for g in gyms]
+    if len(gyms) == 1:
+        gym = gyms[0]
+        if urls[0]:
+            desc_bits.append(urls[0])
+        description = " ".join(desc_bits)
+        title = summary(calendar_name(gym), slot)
+        location = gym.get("address") or gym.get("postcode") or ""
+        uid_id = gym["id"]
+    else:
+        group = gyms[0]["calendar_group"]
+        description = "\n".join([" ".join(desc_bits)] +
+                                 ["%s: %s" % (calendar_name(g), u) if u else calendar_name(g)
+                                  for g, u in zip(gyms, urls)])
+        title = summary(group, slot)
+        location = ", ".join(calendar_name(g) for g in gyms)
+        uid_id = re.sub(r"[^a-z0-9]+", "_", group.lower())
 
     for day in slot["days"]:
-        # All-day when the slot is open-ended or covers the whole opening day.
-        open_close = hours.get(day)
-        all_day = ((slot.get("start") == "00:00" and slot.get("end") in ("23:59", "24:00"))
-                   or (open_close and slot["start"] <= open_close[0]
-                       and slot["end"] >= open_close[1]))
+        # All-day when the slot is open-ended or covers the whole opening day
+        # at every gym it's for.
+        open_ended = slot.get("start") == "00:00" and slot.get("end") in ("23:59", "24:00")
+        all_day = open_ended or all(
+            (g.get("hours") or {}).get(day)
+            and slot["start"] <= g["hours"][day][0] and slot["end"] >= g["hours"][day][1]
+            for g in gyms)
         counter[0] += 1
         start_date = first_weekday_on_or_after(ANCHOR, day)
         lines = ["BEGIN:VEVENT",
-                 "UID:cld-%s-%s-%d@londonclimbingfinder" % (variant, gym["id"], counter[0]),
+                 "UID:cld-%s-%s-%d@londonclimbingfinder" % (variant, uid_id, counter[0]),
                  "DTSTAMP:%s" % dtstamp]
         if all_day:
             lines.append("DTSTART;VALUE=DATE:%s" % start_date.strftime("%Y%m%d"))
@@ -186,12 +206,19 @@ def build_ics(data, variant):
              "X-WR-CALDESC:Recurring special cheap climbing slots across London gyms.",
              "X-WR-TIMEZONE:Europe/London"]
     counter = [0]
+    # Gyms in the same calendar_group with an identical slot share one event.
+    # Once one gym's deal changes, its slot no longer matches and splits off.
+    shared = {}  # (group or gym id, slot) -> (slot, [gyms])
     for gym in data["gyms"]:
         for slot in gym.get("magic_slots", []):
             if variant == "ns" and is_student_only(slot):
                 continue
-            for ev in slot_events(gym, slot, variant, counter, dtstamp):
-                lines.extend(ev)
+            key = (gym.get("calendar_group") or gym["id"],
+                   json.dumps(slot, sort_keys=True))
+            shared.setdefault(key, (slot, []))[1].append(gym)
+    for slot, gyms in shared.values():
+        for ev in slot_events(gyms, slot, variant, counter, dtstamp):
+            lines.extend(ev)
     lines.append("END:VCALENDAR")
     folded = []
     for line in lines:
