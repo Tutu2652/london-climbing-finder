@@ -128,3 +128,22 @@ Manual device checks (requires Photos access and sample media):
 - Replace and unlink each media type; verify originals remain in Photos.
 - Remove Photos access or delete a test original; verify the unavailable message and
   replace/remove controls. Try an iCloud item offline, then Reload when online.
+
+## Screenshots
+
+`ios/screenshots/` holds the App Store / advert images (1290×2796, the 6.7" size): a cover
+plus seven framed screens with headlines. To remake them after the app or prices change
+(needs a Mac and `pip install pillow`):
+
+1. Build and run the app in a simulator, then run
+   `python3 ios/tools/ad_screenshots.py demo`. This backs up the simulator's app data,
+   sets the start to Trafalgar Square, fills the logbook with made-up sessions and sets a
+   clean 9:41 status bar.
+2. Capture each screen with `xcrun simctl io booted screenshot build/screenshots/<name>.png`,
+   where `<name>` is `cheapest`, `map`, `deals` (More → Deals → Weekly), `gym`,
+   `gyms`, `logbook` or `stats`.
+3. `python3 ios/tools/ad_screenshots.py compose` writes the framed images.
+4. `python3 ios/tools/ad_screenshots.py restore` puts the simulator's own data back.
+
+Headlines and the demo logbook are at the top of `ios/tools/ad_screenshots.py`. Never
+use a real home address as the start location in these images.

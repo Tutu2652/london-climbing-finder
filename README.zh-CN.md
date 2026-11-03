@@ -7,6 +7,13 @@
 
 **网站：** https://london-climbing-finder.pages.dev/
 
+<p align="center">
+  <img src="ios/screenshots/01-cheapest.png" width="200" alt="今天最便宜的岩馆">
+  <img src="ios/screenshots/02-map.png" width="200" alt="所有岩馆的地图">
+  <img src="ios/screenshots/03-deals.png" width="200" alt="每天的便宜时段">
+  <img src="ios/screenshots/07-stats.png" width="200" alt="攀岩统计">
+</p>
+
 ## 使用方式
 
 | | 需要什么 | 怎么用 |
@@ -161,7 +168,7 @@ python3 tools/weekly_offer_check.py                 # 检查，然后用 --draft
 | `london_climbing_dashboard.html` | 离线单文件版本（数据是生成的）。 |
 | `london_climbing_prices.py` | 命令行工具和价格检查器。 |
 | `london-climbing-deals-*.ics` | 生成的优惠日历，分含/不含学生专属优惠两版。 |
-| `ios/` | 原生 SwiftUI iPhone App，内置 `gyms.json`。见 [ios/README.md](ios/README.md)（英文）。 |
+| `ios/` | 原生 SwiftUI iPhone App，内置 `gyms.json`。App Store 截图在 `ios/screenshots/`。见 [ios/README.md](ios/README.md)（英文）。 |
 | `tools/` | `sync_data.py`（生成所有文件）、`weekly_offer_check.py`、`generate_gym_pages.py`、`accessibility_check.py`。 |
 | `tests/` | 价格测试，以及证明网站（JS）、命令行（Python）和 App（Swift）计价完全一致的对照测试。没有 `swiftc` 时跳过 Swift 部分。 |
 | `.github/workflows/` | `ci.yml`（每次 push 运行测试和一致性检查）、`price-check.yml`（周一价格检查）。 |
