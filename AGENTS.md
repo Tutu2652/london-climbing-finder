@@ -1,7 +1,8 @@
 # Instructions for AI coding agents
 
 This file is for coding agents (Claude Code, Codex, Cursor and similar) working in this
-repo. Humans: see [README.md](README.md) and [ios/README.md](ios/README.md).
+repo. Humans: see [README.md](README.md), [ios/README.md](ios/README.md) and
+[android/README.md](android/README.md).
 
 ## Installing the iPhone app for the user
 
@@ -137,15 +138,76 @@ Then run the launch command again; it should open the app.
 Don't commit anything during setup. `ios/Signing.local.xcconfig` and `build/` must stay
 out of git.
 
+## Installing on Android
+
+If the user asks you to build or install the Android app, follow these steps. Steps on
+the phone are marked **USER**: stop, say exactly what to tap, and wait for them.
+
+### 0. Check the machine
+
+Any OS works. You need JDK 17 or newer and the Android SDK.
+
+```sh
+java -version
+echo $ANDROID_HOME     # else look in ~/Library/Android/sdk (macOS), ~/Android/Sdk (Linux)
+```
+
+If either is missing, ask the user before downloading: the JDK and SDK together are
+about 1.5 GB. Install a JDK (`brew install openjdk@17`, or the OS package), then Google's
+command-line tools from developer.android.com/studio#command-tools, unzipped to
+`$ANDROID_HOME/cmdline-tools/latest`. Then:
+
+```sh
+sdkmanager --licenses      # the user accepts Google's SDK licence
+sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+```
+
+### 1. Build
+
+```sh
+cd android && ./gradlew assembleDebug
+```
+
+The APK is `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+### 2. Install
+
+Without a cable, send the APK to the phone and walk the user through the steps in
+[android/README.md](android/README.md#install-it-on-your-phone-no-mac-needed).
+
+With a cable:
+
+1. **USER**: Settings → About phone → tap **Build number** seven times. Then Settings →
+   System → Developer options → turn on **USB debugging**. Plug in the phone and tap
+   **Allow** on the prompt.
+2. Run `adb devices` and find the phone's serial. Always pass `-s <serial>`: TVs and
+   other devices on the network can show up in adb too.
+3. `adb -s <serial> install -r android/app/build/outputs/apk/debug/app-debug.apk`
+
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` means the installed copy was built on another
+computer, with a different signing key. Uninstalling deletes the user's logbook, so first
+ask them to back it up (More → Back up logbook), and only uninstall
+(`adb -s <serial> uninstall io.github.tutu2652.climbingfinder`) once they say so.
+
+### 3. Tell the user
+
+- The install doesn't expire.
+- To get new gyms later: `git pull`, then steps 1 and 2. The app also refreshes prices
+  from the website on its own.
+
+Don't commit anything during setup. `android/local.properties` and build folders stay
+out of git.
+
 ## Changing the code or data
 
 - `gyms.json` is the only source of data. After editing it, run
   `python3 tools/sync_data.py` and `python3 -m unittest discover -s tests`, and commit the
   generated files with it. Never hand-edit `assets/data.js`, `gyms/*/index.html`, the
   `.ics` calendars, `sitemap.xml` or the data inside `london_climbing_dashboard.html`.
-- Pricing logic exists three times (`assets/app.js`, `london_climbing_prices.py`,
-  `ios/ClimbingFinder/Core/Pricing.swift`) and the tests check they agree. Change all three
-  together.
+- Pricing logic exists four times (`assets/app.js`, `london_climbing_prices.py`,
+  `ios/ClimbingFinder/Core/Pricing.swift`,
+  `android/core/src/main/kotlin/io/github/tutu2652/climbingfinder/core/Pricing.kt`) and the
+  tests check they agree. Change all four together.
 - See README.md → "Updating the data" for the rules on adding gyms and offer end dates.
 - `README.md` has a Simplified Chinese copy, `README.zh-CN.md`, with the same sections in
   the same order. When you change one, make the same change in the other in the same

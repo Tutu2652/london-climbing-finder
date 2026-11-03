@@ -20,6 +20,7 @@ London climbing gyms. Pick a date and time and it shows the cheapest gym and whe
 |---|---|---|
 | **Website** | A browser | Open the link above. Works on phones. |
 | **iPhone app** | A Mac with Xcode and any Apple ID | Follow [ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use), about ten minutes the first time, or ask an AI coding agent to do it ([AGENTS.md](AGENTS.md)). |
+| **Android app** | Any Android phone (8.0 or newer) | Install the APK file, no computer needed: see [android/README.md](android/README.md#install-it-on-your-phone-no-mac-needed). To build it yourself you need a JDK and the Android SDK. |
 | **Offline dashboard** | A browser | Download and double-click `london_climbing_dashboard.html`. |
 | **Command line** | Python 3 (no packages) | `python3 london_climbing_prices.py` (see below). |
 | **Deal calendars** | A calendar app | Subscribe from the website, or add `london-climbing-deals-all.ics` (or `-no-student.ics`). |
@@ -120,8 +121,8 @@ Pushing to `main` redeploys the website automatically.
    place page URL), not from a postcode, which can be hundreds of metres out.
 3. Save the gym's logo as a PNG (256 px or smaller) in `assets/logos/` and set `logo` to
    that path. A test rejects web URLs, so the site and app never depend on a gym's website.
-4. Set `_meta.last_research_date` to today. The iPhone app ignores a website copy of the
-   data that isn't newer than its own, so without this it keeps the old gym list.
+4. Set `_meta.last_research_date` to today. The phone apps ignore a website copy of the
+   data that isn't newer than their own, so without this they keep the old gym list.
 5. Run the three commands above.
 
 ### Keeping prices fresh
@@ -187,9 +188,10 @@ Each `limited_promotions` entry has an `expires` date (`YYYY-MM-DD`) or `null`.
 | `london_climbing_prices.py` | Command-line tool and the price checker. |
 | `london-climbing-deals-*.ics` | Generated deal calendars, with and without student-only deals. |
 | `ios/` | Native SwiftUI iPhone app; bundles `gyms.json`. App Store screenshots are in `ios/screenshots/`. See [ios/README.md](ios/README.md). |
+| `android/` | Native Kotlin / Jetpack Compose Android app; bundles `gyms.json` at build time. See [android/README.md](android/README.md). |
 | `tools/` | `sync_data.py` (generates everything), `weekly_offer_check.py`, `generate_gym_pages.py`, `accessibility_check.py`. |
-| `tests/` | Pricing tests, plus parity tests proving the website (JS), CLI (Python) and app (Swift) price identically. The Swift one is skipped without `swiftc`. |
-| `.github/workflows/` | `ci.yml` (tests and drift check on every push), `price-check.yml` (Monday price check). |
+| `tests/` | Pricing tests, plus parity tests proving the website (JS), CLI (Python), iPhone app (Swift) and Android app (Kotlin) price identically. The Swift one is skipped without `swiftc`, the Kotlin one without a JDK. |
+| `.github/workflows/` | `ci.yml` (tests, drift check and Android build on every push), `price-check.yml` (Monday price check). |
 
 ## Running your own copy
 

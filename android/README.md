@@ -1,0 +1,95 @@
+# London Climbing Finder — Android app
+
+A native Android version of the site, written in Kotlin with Jetpack Compose. It matches
+the [iPhone app](../ios/README.md): the same tabs, prices and logbook. It reads the same
+`gyms.json`, built into the app so it works offline, and its pricing code is a port of
+`assets/app.js`. `tests/test_pricing.py` checks that the Kotlin, Swift, JS and Python
+pricing all agree.
+
+<p align="center">
+  <img src="screenshots/cheapest.png" width="200" alt="Cheapest gyms today">
+  <img src="screenshots/map.jpg" width="200" alt="Map of every gym">
+  <img src="screenshots/stats.png" width="200" alt="Climbing stats">
+</p>
+
+Tabs: **Cheapest**, **Map**, **Gyms**, **Log** and **More** (deals, memberships, classes,
+socials, your location, logbook backup, Google Maps export). Each gym has a page with
+prices, deals, opening hours, links, directions in Google Maps, and your own note, star
+rating and favourite heart.
+
+Not ported: the Live Activity, linking Photos to climbs (links made on an iPhone are kept
+in backups but can't be opened here), and Google sign-in sync.
+
+## Install it on your phone (no Mac needed)
+
+You need the app file, `app-debug.apk`. Ask whoever is sharing the app for it, or
+download it from GitHub: open the repo's **Actions** tab, pick the latest green **CI** run
+on `main`, and download **climbing-finder-android** under Artifacts (you need a GitHub
+account; the download is a zip with the APK inside).
+
+1. Get the APK onto the phone: download it there, or send it to yourself by email,
+   WhatsApp or Google Drive.
+2. Tap the file to open it. Android says installing apps from this source isn't allowed:
+   tap **Settings**, turn on **Allow from this source**, then go back.
+3. Tap **Install**. If Google Play Protect warns that it doesn't recognise the app, tap
+   **More details → Install anyway**. It warns because the app isn't from the Play Store.
+4. Open **Climbing Finder** from the app drawer.
+
+The install doesn't expire, unlike the free iPhone install.
+
+**Updates.** Install the newer APK over the top; your logbook and notes stay. Android
+only allows this when both files were built on the same computer, because each computer
+signs debug builds with its own key (and so does each CI run). If it says "App not
+installed" or the package conflicts, back up your logbook (More → Back up logbook),
+uninstall, install the new file, then restore the backup. Get your updates from one place
+to avoid this.
+
+**Google developer verification.** Google is starting to require that apps installed
+from outside the Play Store come from a verified developer. It began in a few countries
+(not the UK) in late 2026 and is due to reach every country in 2027. When it reaches the
+UK, the app will need registering under a developer account. Google offers a free
+"limited distribution" account for apps shared with a small group, which fits this app.
+Until then, nothing changes.
+
+## Build it
+
+You need JDK 17 and the Android SDK (platform 35). Android Studio includes both; or
+install a JDK and Google's command-line tools, then:
+
+```sh
+sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+cd android
+./gradlew assembleDebug
+```
+
+The APK is at `android/app/build/outputs/apk/debug/app-debug.apk`. To put it on a phone
+with a cable, turn on USB debugging (Settings → About phone → tap **Build number** seven
+times, then Settings → System → Developer options → **USB debugging**), plug it in, tap
+**Allow** on the phone, and run `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
+An AI coding agent can do this for you: ask it to "install the Android app on my phone"
+([AGENTS.md](../AGENTS.md#installing-on-android) has the steps).
+
+CI builds the same APK on every push and keeps it with the run.
+
+## Tests
+
+```sh
+cd android && ./gradlew :core:test      # pricing and logbook unit tests
+python3 -m unittest discover -s tests    # from the repo root: includes Kotlin parity
+```
+
+The parity test runs `./gradlew :core:parityDump` and compares every gym's prices with the
+Python CLI. It needs only a JDK, and is skipped without one.
+
+## How it works
+
+- `core/` is plain Kotlin with no Android code: data model, pricing, logbook and backups.
+  `app/` is the Compose app.
+- `gyms.json`, `bank_holidays.json` and `assets/logos/` are copied in at build time; the
+  app has no copy of its own. Edit `gyms.json` as usual and rebuild.
+- On opening, the app downloads `gyms.json` from the website and keeps it for offline use,
+  unless the built-in copy is newer. Bank holidays come from gov.uk.
+- Travel times come from TfL's Journey Planner, postcodes from postcodes.io, and the map
+  is OpenStreetMap. None of them needs a key.
+- The logbook is one JSON file in the app's private storage, in the iPhone app's backup
+  format. More → Back up logbook saves it as a file and restores one from either app.

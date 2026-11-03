@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A climbing hold on a wall: a rounded hold with a bolt hole. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,66 C30,58 34,42 46,38 C56,34 64,36 70,42 C78,50 76,62 68,68 C60,74 46,74 38,66 Z" />
+    <path
+        android:fillColor="#5DB07A"
+        android:pathData="M56,54 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+</vector>

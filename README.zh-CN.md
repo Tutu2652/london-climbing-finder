@@ -20,6 +20,7 @@
 |---|---|---|
 | **网站** | 浏览器 | 打开上面的链接，手机上也能用。 |
 | **iPhone App** | 一台装了 Xcode 的 Mac，以及任意 Apple ID | 按 [ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use)（英文）操作，第一次大约十分钟；也可以让 AI 编程助手代劳（见 [AGENTS.md](AGENTS.md)）。 |
+| **Android App** | 任意 Android 手机（8.0 及以上） | 安装 APK 文件即可，不需要电脑：见 [android/README.md](android/README.md#install-it-on-your-phone-no-mac-needed)（英文）。自己构建需要 JDK 和 Android SDK。 |
 | **离线版面板** | 浏览器 | 下载后双击 `london_climbing_dashboard.html`。 |
 | **命令行** | Python 3（无需安装任何包） | `python3 london_climbing_prices.py`（见下文）。 |
 | **优惠日历** | 日历 App | 在网站上订阅，或导入 `london-climbing-deals-all.ics`（或不含学生专属优惠的 `-no-student.ics`）。 |
@@ -111,7 +112,7 @@ npm ci && python3 tools/accessibility_check.py   # 可选；需要 Playwright + 
    不要用邮编——邮编中心点可能偏差几百米。
 3. 把岩馆 logo 存成 PNG（不超过 256 像素）放进 `assets/logos/`，并把 `logo` 设为该路径。
    测试会拒绝网络 URL，这样网站和 App 永远不依赖岩馆自己的网站。
-4. 把 `_meta.last_research_date` 改成今天。iPhone App 会忽略不比自身更新的网站数据，
+4. 把 `_meta.last_research_date` 改成今天。手机 App 会忽略不比自身更新的网站数据，
    不改的话 App 会一直显示旧的岩馆列表。
 5. 运行上面的三条命令。
 
@@ -169,9 +170,10 @@ python3 tools/weekly_offer_check.py                 # 检查，然后用 --draft
 | `london_climbing_prices.py` | 命令行工具和价格检查器。 |
 | `london-climbing-deals-*.ics` | 生成的优惠日历，分含/不含学生专属优惠两版。 |
 | `ios/` | 原生 SwiftUI iPhone App，内置 `gyms.json`。App Store 截图在 `ios/screenshots/`。见 [ios/README.md](ios/README.md)（英文）。 |
+| `android/` | 原生 Kotlin / Jetpack Compose Android App，构建时内置 `gyms.json`。见 [android/README.md](android/README.md)（英文）。 |
 | `tools/` | `sync_data.py`（生成所有文件）、`weekly_offer_check.py`、`generate_gym_pages.py`、`accessibility_check.py`。 |
-| `tests/` | 价格测试，以及证明网站（JS）、命令行（Python）和 App（Swift）计价完全一致的对照测试。没有 `swiftc` 时跳过 Swift 部分。 |
-| `.github/workflows/` | `ci.yml`（每次 push 运行测试和一致性检查）、`price-check.yml`（周一价格检查）。 |
+| `tests/` | 价格测试，以及证明网站（JS）、命令行（Python）、iPhone App（Swift）和 Android App（Kotlin）计价完全一致的对照测试。没有 `swiftc` 时跳过 Swift 部分，没有 JDK 时跳过 Kotlin 部分。 |
+| `.github/workflows/` | `ci.yml`（每次 push 运行测试、一致性检查和 Android 构建）、`price-check.yml`（周一价格检查）。 |
 
 ## 搭建你自己的副本
 
