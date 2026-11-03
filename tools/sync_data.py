@@ -72,19 +72,23 @@ def is_student_only(slot):
     return "student" in main
 
 
-def short_name(gym):
-    n = gym["name"]
-    n = n.replace(" (LCC)", "")
-    n = n.replace("Climbing District - ", "CD ")
-    n = n.replace("City Bouldering ", "")
-    n = n.replace("The Font ", "Font ")
-    n = n.replace(" (City Bouldering)", "")
-    return n
+def money(price):
+    # £8 rather than £8.00; keep the pence otherwise (£10.50).
+    return "£%d" % price if price == int(price) else "£%.2f" % price
 
 
-def summary_label(label):
-    # Drop "(concession …)" qualifiers from the summary; keep others (e.g. BOGOF prices).
-    return re.sub(r"\s*\(concession[^)]*\)", "", label, flags=re.I).strip()
+def summary(gym, slot):
+    """Short event title: gym, price, then "Student" and any calendar_tag.
+
+    Calendar apps cut titles at 10-15 characters, so the gym comes first and
+    the deal's own name goes in the description instead.
+    """
+    bits = [gym.get("calendar_name") or gym["name"], money(slot["price"])]
+    if is_student_only(slot):
+        bits.append("Student")
+    if slot.get("calendar_tag"):
+        bits.append(slot["calendar_tag"])
+    return " ".join(bits)
 
 
 def ics_escape(text):
@@ -122,9 +126,9 @@ def slot_events(gym, slot, variant, counter, dtstamp):
     """One VEVENT per recurrence day of a magic slot."""
     events = []
     price = slot["price"]
-    label = slot.get("label") or "deal"
+    label = slot.get("label") or "Deal"
     url = gym.get("prices_url") or gym.get("website") or ""
-    desc_bits = ["£%.2f" % price]
+    desc_bits = ["%s: £%.2f." % (label, price)]
     if is_student_only(slot):
         desc_bits.append("Students/concession only (ID).")
     if slot.get("except_bank_holidays"):
@@ -134,7 +138,7 @@ def slot_events(gym, slot, variant, counter, dtstamp):
     if url:
         desc_bits.append(url)
     description = " ".join(desc_bits)
-    summary = "£%.2f %s — %s" % (price, summary_label(label), short_name(gym))
+    title = summary(gym, slot)
     location = gym.get("address") or gym.get("postcode") or ""
     all_day = slot.get("start") == "00:00" and slot.get("end") in ("23:59", "24:00")
 
@@ -154,7 +158,7 @@ def slot_events(gym, slot, variant, counter, dtstamp):
             lines.append("DTEND:%sT%s00" %
                          (start_date.strftime("%Y%m%d"), slot["end"].replace(":", "")))
         lines.append("RRULE:FREQ=WEEKLY;BYDAY=%s" % ICAL_DAY[day])
-        lines.append("SUMMARY:%s" % ics_escape(summary))
+        lines.append("SUMMARY:%s" % ics_escape(title))
         lines.append("DESCRIPTION:%s" % ics_escape(description))
         if location:
             lines.append("LOCATION:%s" % ics_escape(location))

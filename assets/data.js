@@ -51,6 +51,7 @@ window.CLIMBING_DATA = {
     {
       "id": "castle",
       "name": "The Castle Climbing Centre",
+      "calendar_name": "Castle",
       "about": "Climbing inside a Grade II* listed Victorian water pumping station built in the 1850s, saved from redevelopment by local campaigners and opened as a climbing centre in 1995. Now one of Europe's leading climbing centres, with an organic garden, outdoor boulders and a strong sustainability focus.",
       "brand": "Independent",
       "type": "ropes+bouldering",
@@ -146,6 +147,7 @@ window.CLIMBING_DATA = {
     {
       "id": "arch_bermondsey",
       "name": "Climbing District - Bermondsey",
+      "calendar_name": "CD Bermondsey",
       "about": "Climbing District's Building One, billed as London's original bouldering hub: a 15,000 sq ft centre in a former biscuit factory hall a few minutes from Bermondsey tube, and one of the city's largest climbing floors. Steep angles and punchy setting for climbers who like to climb hard, alongside regular resets and workshops for beginners.",
       "brand": "Climbing District",
       "type": "bouldering",
@@ -246,6 +248,7 @@ window.CLIMBING_DATA = {
     {
       "id": "stronghold",
       "name": "Climbing District - Tottenham Hale",
+      "calendar_name": "CD Tottenham",
       "about": "Climbing District's Tottenham Hale centre, a few minutes from the Victoria line station (or ten minutes' walk from Seven Sisters). A lively, well-equipped hub with a café, shop and full training area, and its own Tottenham Hale-only offers.",
       "brand": "Climbing District",
       "type": "ropes+bouldering",
@@ -345,6 +348,7 @@ window.CLIMBING_DATA = {
     {
       "id": "climbingdistrict_londonfields",
       "name": "Climbing District - London Fields",
+      "calendar_name": "CD London Fields",
       "about": "A bright, open bouldering gym just off Broadway Market, with creative setting, good training facilities and a café for a post-climb coffee. A few minutes from Cambridge Heath Overground, or ten minutes' walk from Bethnal Green tube.",
       "brand": "Climbing District",
       "type": "bouldering",
@@ -438,6 +442,7 @@ window.CLIMBING_DATA = {
     {
       "id": "cb_aldgate",
       "name": "City Bouldering Aldgate",
+      "calendar_name": "Aldgate",
       "brand": "City Bouldering",
       "type": "bouldering",
       "area": "Aldgate",
@@ -507,7 +512,8 @@ window.CLIMBING_DATA = {
           "end": "20:00",
           "price": 8.5,
           "label": "BOGOF (£17 for 2, students £15 for 2)",
-          "prebook": true
+          "prebook": true,
+          "calendar_tag": "in pairs"
         }
       ],
       "student_note": "Concession £15. Bargain £7.50 (pre-book); Student Saver £9.50 Fridays; BOGOF £17 for two on Saturday eves 5-8pm.",
@@ -571,6 +577,7 @@ window.CLIMBING_DATA = {
     {
       "id": "cb_whitecity",
       "name": "City Bouldering White City",
+      "calendar_name": "White City",
       "brand": "City Bouldering",
       "type": "ropes+bouldering",
       "area": "White City / Shepherd's Bush",
@@ -693,6 +700,7 @@ window.CLIMBING_DATA = {
     {
       "id": "cb_stratford",
       "name": "City Bouldering Stratford",
+      "calendar_name": "Stratford",
       "brand": "City Bouldering",
       "type": "bouldering",
       "area": "Stratford",
@@ -827,6 +835,7 @@ window.CLIMBING_DATA = {
     {
       "id": "mileend",
       "name": "Mile End Climbing Wall",
+      "calendar_name": "Mile End",
       "about": "Run by the charity Develop through Challenge, in an old pipe engineering works in Mile End Park, open since the late 1980s. A big, relaxed and informal wall (about 1,500 m² of climbing) used by charities, schools and clubs as much as regulars, with the Board Room and the famous Monkey House for training. Proud to be one of London's most affordable walls; your entry supports the charity.",
       "brand": "Independent",
       "type": "ropes+bouldering",
@@ -932,6 +941,7 @@ window.CLIMBING_DATA = {
     {
       "id": "the_font_wandsworth",
       "name": "The Font Wandsworth",
+      "calendar_name": "Font Wandsworth",
       "about": "The Font's newest site, in Southside Shopping Centre on Garratt Lane, and the only one with ropes: hundreds of boulders plus auto-belay and roped walls up to 12 m, all regularly reset. There's a large functional fitness space (free weights, sled, squat and bench stations, calisthenics rig) and a café-bar with a workspace.",
       "brand": "The Font",
       "type": "ropes+bouldering",
@@ -1072,6 +1082,7 @@ window.CLIMBING_DATA = {
     {
       "id": "the_font_borough",
       "name": "The Font Borough",
+      "calendar_name": "Font Borough",
       "about": "A 9,000 sq ft bouldering gym at Bankside, a short walk from London Bridge, Southwark, Blackfriars and Borough, graded progressively from first-timers to competition climbers. Its café and bar serves speciality coffee, pastries and local craft beer, alongside a functional fitness gym, strength and mobility classes, women's socials and physio sessions.",
       "brand": "The Font",
       "type": "bouldering",
@@ -1213,6 +1224,7 @@ window.CLIMBING_DATA = {
     {
       "id": "the_font_hounslow",
       "name": "The Font Hounslow",
+      "calendar_name": "Font Hounslow",
       "about": "Formerly Hang, now part of The Font: a 5,400 sq ft bouldering gym packed with varied angles, plus the latest training boards and a fitness gym with fingerboards. The workspace and lounge sit on a raised level with views over the centre. Opposite Asda on Smithy Lane, near Hounslow East and Central, and 8 minutes from Heathrow Terminals 2 & 3.",
       "brand": "The Font",
       "type": "bouldering",
@@ -1355,6 +1367,7 @@ window.CLIMBING_DATA = {
     {
       "id": "yonder",
       "name": "Yonder Climbing",
+      "calendar_name": "Yonder",
       "about": "Independent and rooted in Walthamstow, Yonder began in 2016 as a Kickstarter project: London's first climbing, yoga and workspace under one roof (\"between a rock and a workspace\"). It mixes climbing, coworking and wellbeing into one community, tries to learn names and faces, and runs an access-to-climbing scheme to bring in more people.",
       "brand": "Independent",
       "type": "bouldering",
@@ -1454,6 +1467,7 @@ window.CLIMBING_DATA = {
     {
       "id": "the_reach",
       "name": "The Reach",
+      "calendar_name": "The Reach",
       "about": "Billed as the home of South London climbing. Run by a company set up in 2003 to take people, especially disadvantaged young people, on outdoor adventures, it opened this big indoor wall in Woolwich in 2010: bouldering, auto-belays, top-roping and lead, with a welcoming, fully qualified team.",
       "brand": "Independent",
       "type": "ropes+bouldering",
@@ -1543,6 +1557,7 @@ window.CLIMBING_DATA = {
     {
       "id": "rise",
       "name": "Rise Climbing",
+      "calendar_name": "Rise",
       "temporarily_closed": "Temporarily closed until further notice (gym website, 26 Oct 2026), after structural problems were found at its Canning Town building.",
       "about": "An independent bouldering gym, training centre, café and chill space in Canning Town, aiming to be a home away from home for the community, with free monthly improvers sessions and social clubs.",
       "brand": "Independent",
@@ -1603,7 +1618,8 @@ window.CLIMBING_DATA = {
           "start": "00:00",
           "end": "23:59",
           "price": 7.5,
-          "label": "Board Friday (board only)"
+          "label": "Board Friday (board only)",
+          "calendar_tag": "board only"
         }
       ],
       "student_note": "Concession £12 peak / £10.50 off-peak (Mon-Fri before 4pm, excl. bank holidays). Super off-peak £7.50 Tue & Thu before 10am. Student Fridays £7.50 (incl. shoes); Board Friday £7.50 (board only). Pay-what-you-can available.",
@@ -1664,6 +1680,7 @@ window.CLIMBING_DATA = {
     {
       "id": "sen",
       "name": "Sen Climbing",
+      "calendar_name": "Sen",
       "about": "A Japanese-run bouldering gym (sen, 千, means \"a thousand\" and stands for endless possibility) bringing the style, quality and atmosphere of Japanese gyms to London. It focuses on the satisfaction of solving problems and personal growth, a place to connect with Japanese culture, and helping strong climbers build careers.",
       "brand": "Independent",
       "type": "bouldering",
@@ -1739,6 +1756,7 @@ window.CLIMBING_DATA = {
     {
       "id": "westway",
       "name": "Westway Climbing Centre",
+      "calendar_name": "Westway",
       "about": "London's biggest climbing wall, climbing since 1994 at the Westway Sports & Fitness Centre (run by Everyone Active): 350 routes on 110 rope lines up to 13.5 m, 450 m² of bouldering reset every month, auto-belays and a serious training room. A family-friendly, all-ages centre known for its NICAS and junior coaching.",
       "brand": "Independent",
       "type": "ropes+bouldering",
@@ -1830,6 +1848,7 @@ window.CLIMBING_DATA = {
     {
       "id": "climbing_co_fulham",
       "name": "Climbing Co Fulham (City Bouldering)",
+      "calendar_name": "Climbing Co",
       "about": "One of London's original bouldering gyms: it opened in 2011 as Urban Ascent, became The Climbing Hangar's London site in 2016, and is now run by City Bouldering as Climbing Co Fulham, keeping its own identity and prices. It sets every Thursday, so the whole gym is new every five weeks, and it's a minute's walk from Parsons Green tube.",
       "brand": "City Bouldering",
       "type": "bouldering",
@@ -1928,6 +1947,7 @@ window.CLIMBING_DATA = {
     {
       "id": "substation_brixton",
       "name": "Substation Brixton",
+      "calendar_name": "Substation",
       "about": "A bouldering and fitness centre in Brixton (with a sister site in Macclesfield) that uses its own grading system: start and top tags with levels 1–6 instead of colour grades, so routes mix hold colours and climbers spread across the wall. Alongside the climbing there's a fitness studio, a wild sauna and plunge, and a café, pizzeria and workspace.",
       "brand": "Independent",
       "type": "bouldering",
@@ -2021,6 +2041,7 @@ window.CLIMBING_DATA = {
     {
       "id": "gantry",
       "name": "Gantry Climbing",
+      "calendar_name": "Gantry",
       "notice": "Reduced opening hours for now while the new team trains (gym website, 26 Oct 2026): Mon–Fri 2–10pm, Sat–Sun 9am–4pm. Check before you go.",
       "temporary_hours": {
         "Mon": [
@@ -2143,6 +2164,7 @@ window.CLIMBING_DATA = {
     {
       "id": "blocfit",
       "name": "Blocfit Brixton",
+      "calendar_name": "Blocfit",
       "about": "A bouldering and fitness gym in a Brixton railway arch since 2018. Members get the sauna, a guidebook library, free coffee on weekday mornings (6–8am) and unlimited guest passes for friends trying climbing for the first time.",
       "brand": "Independent",
       "type": "bouldering",
@@ -2230,6 +2252,7 @@ window.CLIMBING_DATA = {
     {
       "id": "muro",
       "name": "Muro Climbing Peckham",
+      "calendar_name": "Muro",
       "about": "An independent, community-focused bouldering wall in a Peckham railway arch by Copeland Park. Deliberately intimate, it aims to be a home-from-home for Peckham's diverse local community, with an open, playful atmosphere for climbers of every level.",
       "brand": "Independent",
       "type": "bouldering",
@@ -2306,6 +2329,7 @@ window.CLIMBING_DATA = {
     {
       "id": "rhino_bromley",
       "name": "Rhino Boulder Bromley",
+      "calendar_name": "Rhino",
       "about": "Bromley's climbing hub, built for everyone from first-timers to strong climbers, with quick links to central London and Kent. Climbing, coworking desks and a café in one place, a big youth community, and Climb & Connect: free climbing for referred Bromley residents, funded by the council and the NHS.",
       "brand": "Independent",
       "type": "bouldering",
@@ -2392,6 +2416,7 @@ window.CLIMBING_DATA = {
     {
       "id": "mount_palace",
       "name": "Mount Palace",
+      "calendar_name": "Mount Palace",
       "about": "One of London's oldest, smallest and friendliest climbing centres: a not-for-profit micro gym run by Crystal Palace locals, with roots in a climbing scene going back to 1991 and the Southern Sandstone crags nearby. It keeps prices low on purpose, works with local charities, and every staff member is a qualified roped-climbing instructor. Boulders use Font grades set to match outdoor climbing, so expect them a little stiff.",
       "brand": "Independent",
       "type": "ropes+bouldering",
@@ -2463,6 +2488,7 @@ window.CLIMBING_DATA = {
     {
       "id": "the_nest",
       "name": "The Nest",
+      "calendar_name": "The Nest",
       "about": "An independent, community-built gym started by two climbing friends and opened in 2019 after a crowdfunding push, to bring climbing to Hillingdon. More community hub than climbing wall: bouldering, a gym, yoga and a café under one roof, with women's socials, board-game nights, a running club and lots of youth and school work. Around 300 members.",
       "brand": "Independent",
       "type": "bouldering",
@@ -2544,6 +2570,7 @@ window.CLIMBING_DATA = {
     {
       "id": "yellow_spider",
       "name": "Yellow Spider Climbing",
+      "calendar_name": "Yellow Spider",
       "about": "One of five Spider Climbing centres and strongly family-focused: kids' sessions, holiday climbing, termly clubs, birthday parties and adult-plus-child memberships, alongside adult socials and coaching.",
       "brand": "Independent",
       "type": "bouldering",
@@ -2644,6 +2671,7 @@ window.CLIMBING_DATA = {
     {
       "id": "lcc_vauxwall_west",
       "name": "VauxWall West (LCC)",
+      "calendar_name": "VauxWall West",
       "brand": "London Climbing Centres",
       "type": "bouldering",
       "area": "Vauxhall",
@@ -2746,6 +2774,7 @@ window.CLIMBING_DATA = {
     {
       "id": "lcc_vauxwall_east",
       "name": "VauxWall East (LCC)",
+      "calendar_name": "VauxWall East",
       "brand": "London Climbing Centres",
       "type": "bouldering",
       "area": "Vauxhall",
@@ -2848,6 +2877,7 @@ window.CLIMBING_DATA = {
     {
       "id": "lcc_harrowall",
       "name": "HarroWall (LCC)",
+      "calendar_name": "HarroWall",
       "brand": "London Climbing Centres",
       "type": "bouldering",
       "area": "Harrow",
@@ -2948,6 +2978,7 @@ window.CLIMBING_DATA = {
     {
       "id": "lcc_croywall",
       "name": "CroyWall (LCC)",
+      "calendar_name": "CroyWall",
       "brand": "London Climbing Centres",
       "type": "bouldering",
       "area": "Croydon",
@@ -3057,6 +3088,7 @@ window.CLIMBING_DATA = {
     {
       "id": "lcc_ravenswall",
       "name": "RavensWall (LCC)",
+      "calendar_name": "RavensWall",
       "brand": "London Climbing Centres",
       "type": "bouldering",
       "area": "Ravenscourt Park",
@@ -3160,6 +3192,7 @@ window.CLIMBING_DATA = {
     {
       "id": "lcc_canarywall",
       "name": "CanaryWall (LCC)",
+      "calendar_name": "CanaryWall",
       "brand": "London Climbing Centres",
       "type": "bouldering",
       "area": "Canary Wharf",
@@ -3262,6 +3295,7 @@ window.CLIMBING_DATA = {
     {
       "id": "lcc_bethwall",
       "name": "BethWall Green (LCC)",
+      "calendar_name": "BethWall",
       "brand": "London Climbing Centres",
       "type": "bouldering",
       "area": "Bethnal Green",
@@ -3366,6 +3400,7 @@ window.CLIMBING_DATA = {
     {
       "id": "lcc_eustonwall",
       "name": "EustonWall (LCC)",
+      "calendar_name": "EustonWall",
       "brand": "London Climbing Centres",
       "type": "bouldering",
       "area": "Euston",

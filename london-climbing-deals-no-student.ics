@@ -14,8 +14,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240107T163000
 DTEND:20240107T200000
 RRULE:FREQ=WEEKLY;BYDAY=SU
-SUMMARY:£7.50 Bargain — Aldgate
-DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+SUMMARY:Aldgate £7.50
+DESCRIPTION:Bargain: £7.50. Pre-book. https://www.citybouldering.co.uk/pr
+ icing
 LOCATION:33 Aldgate High Street\, London EC3N 1AH
 END:VEVENT
 BEGIN:VEVENT
@@ -24,9 +25,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240101T080000
 DTEND:20240101T100000
 RRULE:FREQ=WEEKLY;BYDAY=MO
-SUMMARY:£7.50 Bargain — Aldgate
-DESCRIPTION:£7.50 Not valid on bank holidays. Pre-book. https://www.cityb
- ouldering.co.uk/pricing
+SUMMARY:Aldgate £7.50
+DESCRIPTION:Bargain: £7.50. Not valid on bank holidays. Pre-book. https:/
+ /www.citybouldering.co.uk/pricing
 LOCATION:33 Aldgate High Street\, London EC3N 1AH
 END:VEVENT
 BEGIN:VEVENT
@@ -35,8 +36,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240106T170000
 DTEND:20240106T200000
 RRULE:FREQ=WEEKLY;BYDAY=SA
-SUMMARY:£8.50 BOGOF (£17 for 2\, students £15 for 2) — Aldgate
-DESCRIPTION:£8.50 Pre-book. https://www.citybouldering.co.uk/pricing
+SUMMARY:Aldgate £8.50 in pairs
+DESCRIPTION:BOGOF (£17 for 2\, students £15 for 2): £8.50. Pre-book. ht
+ tps://www.citybouldering.co.uk/pricing
 LOCATION:33 Aldgate High Street\, London EC3N 1AH
 END:VEVENT
 BEGIN:VEVENT
@@ -45,8 +47,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240102T090000
 DTEND:20240102T150000
 RRULE:FREQ=WEEKLY;BYDAY=TU
-SUMMARY:£7.50 Bargain — White City
-DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+SUMMARY:White City £7.50
+DESCRIPTION:Bargain: £7.50. Pre-book. https://www.citybouldering.co.uk/pr
+ icing
 LOCATION:Ariel Way\, White City\, London W12 7HB
 END:VEVENT
 BEGIN:VEVENT
@@ -55,8 +58,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240107T170000
 DTEND:20240107T210000
 RRULE:FREQ=WEEKLY;BYDAY=SU
-SUMMARY:£7.50 Bargain — White City
-DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+SUMMARY:White City £7.50
+DESCRIPTION:Bargain: £7.50. Pre-book. https://www.citybouldering.co.uk/pr
+ icing
 LOCATION:Ariel Way\, White City\, London W12 7HB
 END:VEVENT
 BEGIN:VEVENT
@@ -65,8 +69,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240103T090000
 DTEND:20240103T150000
 RRULE:FREQ=WEEKLY;BYDAY=WE
-SUMMARY:£7.50 Bargain — Stratford
-DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+SUMMARY:Stratford £7.50
+DESCRIPTION:Bargain: £7.50. Pre-book. https://www.citybouldering.co.uk/pr
+ icing
 LOCATION:234 High Street\, Stratford\, London E15 2JA
 END:VEVENT
 BEGIN:VEVENT
@@ -75,8 +80,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240106T160000
 DTEND:20240106T210000
 RRULE:FREQ=WEEKLY;BYDAY=SA
-SUMMARY:£7.50 Bargain — Stratford
-DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+SUMMARY:Stratford £7.50
+DESCRIPTION:Bargain: £7.50. Pre-book. https://www.citybouldering.co.uk/pr
+ icing
 LOCATION:234 High Street\, Stratford\, London E15 2JA
 END:VEVENT
 BEGIN:VEVENT
@@ -85,9 +91,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240101T070000
 DTEND:20240101T093000
 RRULE:FREQ=WEEKLY;BYDAY=MO
-SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
-DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
- .uk/memberships-and-entries
+SUMMARY:Mile End £5
+DESCRIPTION:super off-peak: £5.00. Not valid on bank holidays. https://ww
+ w.mileendwall.org.uk/memberships-and-entries
 LOCATION:Haverfield Road\, London E3 5BN
 END:VEVENT
 BEGIN:VEVENT
@@ -96,9 +102,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240102T070000
 DTEND:20240102T093000
 RRULE:FREQ=WEEKLY;BYDAY=TU
-SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
-DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
- .uk/memberships-and-entries
+SUMMARY:Mile End £5
+DESCRIPTION:super off-peak: £5.00. Not valid on bank holidays. https://ww
+ w.mileendwall.org.uk/memberships-and-entries
 LOCATION:Haverfield Road\, London E3 5BN
 END:VEVENT
 BEGIN:VEVENT
@@ -107,9 +113,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240103T070000
 DTEND:20240103T093000
 RRULE:FREQ=WEEKLY;BYDAY=WE
-SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
-DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
- .uk/memberships-and-entries
+SUMMARY:Mile End £5
+DESCRIPTION:super off-peak: £5.00. Not valid on bank holidays. https://ww
+ w.mileendwall.org.uk/memberships-and-entries
 LOCATION:Haverfield Road\, London E3 5BN
 END:VEVENT
 BEGIN:VEVENT
@@ -118,9 +124,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240104T070000
 DTEND:20240104T093000
 RRULE:FREQ=WEEKLY;BYDAY=TH
-SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
-DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
- .uk/memberships-and-entries
+SUMMARY:Mile End £5
+DESCRIPTION:super off-peak: £5.00. Not valid on bank holidays. https://ww
+ w.mileendwall.org.uk/memberships-and-entries
 LOCATION:Haverfield Road\, London E3 5BN
 END:VEVENT
 BEGIN:VEVENT
@@ -129,9 +135,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240105T070000
 DTEND:20240105T093000
 RRULE:FREQ=WEEKLY;BYDAY=FR
-SUMMARY:£5.00 super off-peak — Mile End Climbing Wall
-DESCRIPTION:£5.00 Not valid on bank holidays. https://www.mileendwall.org
- .uk/memberships-and-entries
+SUMMARY:Mile End £5
+DESCRIPTION:super off-peak: £5.00. Not valid on bank holidays. https://ww
+ w.mileendwall.org.uk/memberships-and-entries
 LOCATION:Haverfield Road\, London E3 5BN
 END:VEVENT
 BEGIN:VEVENT
@@ -140,8 +146,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240102T060000
 DTEND:20240102T100000
 RRULE:FREQ=WEEKLY;BYDAY=TU
-SUMMARY:£7.50 super off-peak — Rise Climbing
-DESCRIPTION:£7.50 https://www.rise-climbing.com/entry-memberships
+SUMMARY:Rise £7.50
+DESCRIPTION:super off-peak: £7.50. https://www.rise-climbing.com/entry-me
+ mberships
 LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
  A
 END:VEVENT
@@ -151,8 +158,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240104T060000
 DTEND:20240104T100000
 RRULE:FREQ=WEEKLY;BYDAY=TH
-SUMMARY:£7.50 super off-peak — Rise Climbing
-DESCRIPTION:£7.50 https://www.rise-climbing.com/entry-memberships
+SUMMARY:Rise £7.50
+DESCRIPTION:super off-peak: £7.50. https://www.rise-climbing.com/entry-me
+ mberships
 LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
  A
 END:VEVENT
@@ -162,8 +170,9 @@ DTSTAMP:20261102T000000Z
 DTSTART;VALUE=DATE:20240105
 DTEND;VALUE=DATE:20240106
 RRULE:FREQ=WEEKLY;BYDAY=FR
-SUMMARY:£7.50 Board Friday (board only) — Rise Climbing
-DESCRIPTION:£7.50 https://www.rise-climbing.com/entry-memberships
+SUMMARY:Rise £7.50 board only
+DESCRIPTION:Board Friday (board only): £7.50. https://www.rise-climbing.c
+ om/entry-memberships
 LOCATION:Unit 6\, Caxton Works\, Hoy Street\, Canning Town\, London E16 1Z
  A
 END:VEVENT
@@ -173,8 +182,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240101T100000
 DTEND:20240101T160000
 RRULE:FREQ=WEEKLY;BYDAY=MO
-SUMMARY:£7.50 Bargain — Climbing Co Fulham
-DESCRIPTION:£7.50 Pre-book. https://www.citybouldering.co.uk/pricing
+SUMMARY:Climbing Co £7.50
+DESCRIPTION:Bargain: £7.50. Pre-book. https://www.citybouldering.co.uk/pr
+ icing
 LOCATION:5 Parsons Green Depot\, 33-35 Parsons Green Lane\, London SW6 4HH
 END:VEVENT
 BEGIN:VEVENT
@@ -183,8 +193,8 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240107T150000
 DTEND:20240107T190000
 RRULE:FREQ=WEEKLY;BYDAY=SU
-SUMMARY:£8.00 Sunday Slayer — Gantry Climbing
-DESCRIPTION:£8.00 https://gantryclimbing.com/
+SUMMARY:Gantry £8
+DESCRIPTION:Sunday Slayer: £8.00. https://gantryclimbing.com/
 LOCATION:24-26 Surrey Quays Shopping Centre\, London SE16 7LL
 END:VEVENT
 BEGIN:VEVENT
@@ -193,9 +203,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240107T080000
 DTEND:20240107T100000
 RRULE:FREQ=WEEKLY;BYDAY=SU
-SUMMARY:£8.00 Magic Time — VauxWall West
-DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
- es.co.uk/prices/
+SUMMARY:VauxWall West £8
+DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
+ climbingcentres.co.uk/prices/
 LOCATION:Arches 45b-47c\, South Lambeth Road\, Vauxhall\, London SW8 1SR
 END:VEVENT
 BEGIN:VEVENT
@@ -204,9 +214,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240101T090000
 DTEND:20240101T160000
 RRULE:FREQ=WEEKLY;BYDAY=MO
-SUMMARY:£8.00 Magic Time — VauxWall East
-DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
- es.co.uk/prices/
+SUMMARY:VauxWall East £8
+DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
+ climbingcentres.co.uk/prices/
 LOCATION:1 Cabanel Place\, Lollard Street\, London SE11 6BD
 END:VEVENT
 BEGIN:VEVENT
@@ -215,9 +225,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240105T200000
 DTEND:20240105T230000
 RRULE:FREQ=WEEKLY;BYDAY=FR
-SUMMARY:£8.00 Magic Time — HarroWall
-DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
- es.co.uk/prices/
+SUMMARY:HarroWall £8
+DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
+ climbingcentres.co.uk/prices/
 LOCATION:Unit 2a & 3a\, Neptune Trading Estate\, Neptune Road\, Harrow HA1
   4HX
 END:VEVENT
@@ -227,9 +237,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240102T060000
 DTEND:20240102T160000
 RRULE:FREQ=WEEKLY;BYDAY=TU
-SUMMARY:£8.00 Magic Time — CroyWall
-DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
- es.co.uk/prices/
+SUMMARY:CroyWall £8
+DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
+ climbingcentres.co.uk/prices/
 LOCATION:Unit 7 New South Quarter\, Whitestone Way\, Croydon CR0 4WN
 END:VEVENT
 BEGIN:VEVENT
@@ -238,9 +248,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240105T060000
 DTEND:20240105T160000
 RRULE:FREQ=WEEKLY;BYDAY=FR
-SUMMARY:£8.00 Magic Time — RavensWall
-DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
- es.co.uk/prices/
+SUMMARY:RavensWall £8
+DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
+ climbingcentres.co.uk/prices/
 LOCATION:Arch 105\, Ravenscourt Road\, London W6 0UQ
 END:VEVENT
 BEGIN:VEVENT
@@ -249,9 +259,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240107T090000
 DTEND:20240107T110000
 RRULE:FREQ=WEEKLY;BYDAY=SU
-SUMMARY:£8.00 Magic Time — CanaryWall
-DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
- es.co.uk/prices/
+SUMMARY:CanaryWall £8
+DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
+ climbingcentres.co.uk/prices/
 LOCATION:21-23 Trinidad Street\, Poplar\, London E14 8AA
 END:VEVENT
 BEGIN:VEVENT
@@ -260,9 +270,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240106T080000
 DTEND:20240106T100000
 RRULE:FREQ=WEEKLY;BYDAY=SA
-SUMMARY:£8.00 Magic Time — BethWall Green
-DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
- es.co.uk/prices/
+SUMMARY:BethWall £8
+DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
+ climbingcentres.co.uk/prices/
 LOCATION:Arches 243-247\, Hollybush Place\, London E2 9QX
 END:VEVENT
 BEGIN:VEVENT
@@ -271,9 +281,9 @@ DTSTAMP:20261102T000000Z
 DTSTART:20240106T170000
 DTEND:20240106T210000
 RRULE:FREQ=WEEKLY;BYDAY=SA
-SUMMARY:£8.00 Magic Time — EustonWall
-DESCRIPTION:£8.00 Not valid on bank holidays. https://londonclimbingcentr
- es.co.uk/prices/
+SUMMARY:EustonWall £8
+DESCRIPTION:Magic Time: £8.00. Not valid on bank holidays. https://london
+ climbingcentres.co.uk/prices/
 LOCATION:350 Euston Road\, London NW1 3AX
 END:VEVENT
 END:VCALENDAR

@@ -249,6 +249,14 @@ class DataValidation(unittest.TestCase):
             self.assertNotIn("ac available", fac,
                              "%s: move AC info to ac/ac_note" % g["id"])
 
+    def test_every_gym_has_a_short_calendar_name(self):
+        # Calendar apps cut event titles short, so the gym part has to be brief.
+        for g in DATA["gyms"]:
+            name = g.get("calendar_name")
+            self.assertTrue(name, "%s: add a calendar_name" % g["id"])
+            self.assertLessEqual(len(name), 16,
+                                 "%s: calendar_name %r is too long" % (g["id"], name))
+
     def test_logos_are_stored_in_the_repo(self):
         # Logos are copied into assets/logos so the site and app never depend on
         # a gym's website keeping the file (or allowing hotlinking).
