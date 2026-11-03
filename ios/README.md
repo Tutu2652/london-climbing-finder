@@ -27,13 +27,14 @@ step below, and it tells you when you need to tap something in Xcode or on the p
    platform it offers.
 2. Get the code: `git clone https://github.com/Tutu2652/london-climbing-finder.git`
    (or GitHub → Code → Download ZIP).
-3. Xcode → Settings → Accounts → **+** → sign in with your Apple ID. Select it →
-   **Manage Certificates…** → **+** → **Apple Development**.
+3. Xcode → Settings → Accounts → **+** → sign in with your Apple ID. You don't need to
+   sign up on the Apple Developer website first; Xcode sets up a free "Personal Team".
 4. Find your team ID (10 characters):
    ```sh
-   security find-certificate -c "Apple Development" -p | openssl x509 -noout -subject
+   defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier | grep -E 'teamID|teamType'
    ```
-   It is the `OU=` value.
+   Use the `teamID` next to `"Personal Team"`. If nothing is printed, Xcode isn't signed
+   in yet.
 5. Create `ios/Signing.local.xcconfig` with your team ID and a prefix that is yours
    (it only has to be unique, e.g. based on your name):
    ```
@@ -47,6 +48,10 @@ step below, and it tells you when you need to tap something in Xcode or on the p
 7. Pick the iPhone as the run destination at the top of Xcode and press **Run** (⌘R).
 8. The first time, the phone blocks the app: Settings → General → VPN & Device
    Management → your Apple ID → **Trust**.
+
+Xcode creates the signing certificate on the first run. If it says you must accept the
+Apple Developer Agreement, sign in once at developer.apple.com, accept it, then remove
+and re-add the account in Xcode → Settings → Accounts.
 
 To get new gyms and prices later: `git pull`, then Run again. (The app also refreshes
 prices from the website by itself.)
