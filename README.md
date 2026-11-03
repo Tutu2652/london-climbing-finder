@@ -7,6 +7,13 @@ London climbing gyms. Pick a date and time and it shows the cheapest gym and whe
 
 **Website:** https://london-climbing-finder.pages.dev/
 
+<p align="center">
+  <img src="ios/screenshots/01-cheapest.png" width="200" alt="Cheapest gyms today">
+  <img src="ios/screenshots/02-map.png" width="200" alt="Map of every gym">
+  <img src="ios/screenshots/03-deals.png" width="200" alt="Cheap slots by day">
+  <img src="ios/screenshots/07-stats.png" width="200" alt="Climbing stats">
+</p>
+
 ## Ways to use it
 
 | | What you need | How |
@@ -179,7 +186,7 @@ Each `limited_promotions` entry has an `expires` date (`YYYY-MM-DD`) or `null`.
 | `london_climbing_dashboard.html` | Offline single-file version (generated data). |
 | `london_climbing_prices.py` | Command-line tool and the price checker. |
 | `london-climbing-deals-*.ics` | Generated deal calendars, with and without student-only deals. |
-| `ios/` | Native SwiftUI iPhone app; bundles `gyms.json`. See [ios/README.md](ios/README.md). |
+| `ios/` | Native SwiftUI iPhone app; bundles `gyms.json`. App Store screenshots are in `ios/screenshots/`. See [ios/README.md](ios/README.md). |
 | `tools/` | `sync_data.py` (generates everything), `weekly_offer_check.py`, `generate_gym_pages.py`, `accessibility_check.py`. |
 | `tests/` | Pricing tests, plus parity tests proving the website (JS), CLI (Python) and app (Swift) price identically. The Swift one is skipped without `swiftc`. |
 | `.github/workflows/` | `ci.yml` (tests and drift check on every push), `price-check.yml` (Monday price check). |
