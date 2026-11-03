@@ -151,7 +151,7 @@ private struct MonthSummary: View {
         let value: String, label: String
         var body: some View {
             VStack(spacing: 2) {
-                Text(value).font(.title3.weight(.bold).monospacedDigit())
+                Text(value).font(.title3.weight(.bold).monospacedDigit()).minimumScaleFactor(0.6).lineLimit(1)
                 Text(label).font(.caption).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity)
