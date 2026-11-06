@@ -41,6 +41,9 @@ SHOTS = [
     ("05-gyms", "gyms", "Search by area,\nzone or wall type", "Sort by chain, price or distance", "green"),
     ("06-logbook", "logbook", "Log every\nsession", "Sends, top grades and what you spent", "green"),
     ("07-stats", "stats", "Watch yourself\nget stronger", "Grade pyramid and progress over time", "amber"),
+    ("08-session", "session", "Log climbs\nwith one tap", "By hold colour or V grade, as you climb", "green"),
+    ("09-session-tally", "session-tally", "Your session\nat a glance", "Sends, flashes and attempts, hardest first", "amber"),
+    ("10-climb", "climb", "Note how\nit really felt", "Felt grade, route photo and video", "green"),
 ]
 
 # gym id, date, start, minutes, entry price, climbs (V grade, result)

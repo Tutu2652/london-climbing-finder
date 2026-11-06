@@ -12,6 +12,11 @@
   <img src="ios/screenshots/02-map.png" width="200" alt="所有岩馆的地图">
   <img src="ios/screenshots/03-deals.png" width="200" alt="每天的便宜时段">
   <img src="ios/screenshots/07-stats.png" width="200" alt="攀岩统计">
+  <br>
+  <img src="ios/screenshots/06-logbook.png" width="200" alt="日志页和开始 session">
+  <img src="ios/screenshots/08-session.png" width="200" alt="按岩点颜色记录">
+  <img src="ios/screenshots/09-session-tally.png" width="200" alt="本次 session 统计，最难的在前">
+  <img src="ios/screenshots/10-climb.png" width="200" alt="单条线路和体感难度">
 </p>
 
 ## 使用方式
@@ -39,6 +44,13 @@
 - **笔记和星级评分**：每家岩馆的笔记和评分保存在你的浏览器里。可选用 Google 账号登录，
   在多台设备间同步，并发表公开评价。
 - 每家岩馆在 `gyms/` 下还有一个独立的纯文本页面，列出价格、优惠、营业时间和官网链接。
+
+### 记录攀岩（手机 App）
+
+iPhone 和 Android App 都有攀岩日志。到了岩馆就开始一次 session，每爬完一条线，点一下
+岩点颜色或 V 级，记为 flash、send 或 attempt。按颜色定级的岩馆，每种颜色都会标出对应的
+V 级范围。session 里有实时统计，最难的排在最前。点开任意一条线，可以填上体感难度，或关联
+线路照片和视频。Log 和 Stats 页会把这些汇总起来：完成数、最高难度、难度金字塔和花费。
 
 ### 命令行
 

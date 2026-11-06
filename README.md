@@ -12,6 +12,11 @@ London climbing gyms. Pick a date and time and it shows the cheapest gym and whe
   <img src="ios/screenshots/02-map.png" width="200" alt="Map of every gym">
   <img src="ios/screenshots/03-deals.png" width="200" alt="Cheap slots by day">
   <img src="ios/screenshots/07-stats.png" width="200" alt="Climbing stats">
+  <br>
+  <img src="ios/screenshots/06-logbook.png" width="200" alt="Logbook with start a session">
+  <img src="ios/screenshots/08-session.png" width="200" alt="Logging climbs by hold colour">
+  <img src="ios/screenshots/09-session-tally.png" width="200" alt="Session tally, hardest first">
+  <img src="ios/screenshots/10-climb.png" width="200" alt="One climb with its felt grade">
 </p>
 
 ## Ways to use it
@@ -44,6 +49,15 @@ every 7 days? See [Support the app](#support-the-app).
   Google (optional) syncs them across devices and lets you post a public review.
 - Each gym also has its own plain page under `gyms/` with prices, deals, opening hours and
   links to the gym's official pages.
+
+### Logging your climbs (phone apps)
+
+The iPhone and Android apps have a logbook. Start a session when you get to the gym, then
+tap a hold colour or V grade each time you finish a problem, as a flash, send or attempt.
+At gyms that grade by colour, each colour shows its V range. The session keeps a running
+tally, hardest first. Open any climb to set the grade it felt or link a route photo or
+video. The Log and Stats tabs add it all up: sends, top grades, a grade pyramid and what
+you spent.
 
 ### Command line
 

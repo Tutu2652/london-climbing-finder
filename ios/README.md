@@ -133,7 +133,7 @@ Manual device checks (requires Photos access and sample media):
 ## Screenshots
 
 `ios/screenshots/` holds the App Store / advert images (1290×2796, the 6.7" size): a cover
-plus seven framed screens with headlines. To remake them after the app or prices change
+plus ten framed screens with headlines. To remake them after the app or prices change
 (needs a Mac and `pip install pillow`):
 
 1. Build and run the app in a simulator, then run
@@ -142,7 +142,11 @@ plus seven framed screens with headlines. To remake them after the app or prices
    clean 9:41 status bar.
 2. Capture each screen with `xcrun simctl io booted screenshot build/screenshots/<name>.png`,
    where `<name>` is `cheapest`, `map`, `deals` (More → Deals → Weekly), `gym`,
-   `gyms`, `logbook` or `stats`.
+   `gyms`, `logbook` or `stats`. For the logging shots, start a session at Climbing
+   District Bermondsey (its colours have V ranges) and log a few climbs: `session` is the
+   top of that screen, `session-tally` is scrolled down to the tally, and `climb` is one
+   climb opened with a felt grade set. The app saves new climbs a few seconds after you
+   tap, so wait before quitting it.
 3. `python3 ios/tools/ad_screenshots.py compose` writes the framed images. To remake only
    some, name them: `compose stats`.
 4. `python3 ios/tools/ad_screenshots.py restore` puts the simulator's own data back.
