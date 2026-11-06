@@ -249,6 +249,7 @@ struct SessionView: View {
 /// Per-grade counts, hardest first, plus totals.
 @MainActor
 struct SessionTally: View {
+    @Environment(AppModel.self) private var model
     let session: ClimbSession
 
     var body: some View {
@@ -289,21 +290,15 @@ struct SessionTally: View {
         let flash: Int; let send: Int; let attempt: Int
     }
 
-    /// Regular climbs first, then comp problems; hardest first within each, ungraded last.
-    /// Colour climbs group by colour and, if you set one, the grade they felt.
+    /// In the order `tallyGroups` gives: hardest first, colours in the gym's order.
     private var rows: [Row] {
-        let groups = Dictionary(grouping: session.climbs) {
-            "\($0.disciplineRaw)#\($0.grade)#\($0.isComp)#\($0.colour ?? "")#\($0.listGradeIsFelt)"
+        tallyGroups(session.climbs, scale: model.colourScale(session.gymID)).map { cs in
+            let c = cs[0]
+            return Row(id: "\(c.disciplineRaw)#\(c.grade)#\(c.isComp)#\(c.colour ?? "")#\(c.listGradeIsFelt)",
+                       label: (c.colour ?? "") + c.listGrade, sample: c, comp: c.isComp,
+                       flash: cs.filter { $0.result == .flash }.count,
+                       send: cs.filter { $0.result == .send }.count,
+                       attempt: cs.filter { $0.result == .attempt }.count)
         }
-        return groups.compactMap { key, cs -> (Discipline, Int, Row)? in
-            guard let c = cs.first else { return nil }
-            let label = (c.colour ?? "") + c.listGrade
-            return (c.discipline, c.grade, Row(id: key, label: label, sample: c, comp: c.isComp,
-                                               flash: cs.filter { $0.result == .flash }.count,
-                                               send: cs.filter { $0.result == .send }.count,
-                                               attempt: cs.filter { $0.result == .attempt }.count))
-        }
-        .sorted { ($0.0 == .rope ? 1 : 0, $0.2.comp ? 1 : 0, -$0.1, $0.2.label) < ($1.0 == .rope ? 1 : 0, $1.2.comp ? 1 : 0, -$1.1, $1.2.label) }
-        .map(\.2)
     }
 }

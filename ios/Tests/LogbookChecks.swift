@@ -80,7 +80,35 @@ struct LogbookChecks {
         assert(remainingClimbs == 3)
         try compChecks()
         try colourChecks()
-        print("Logbook checks passed: sends, duration, backup round trip, deduplication, validation, active-session recovery, cascade deletion, media references, legacy backups, comp routes, colour grades, log order, editing, felt grades")
+        try tallyChecks()
+        print("Logbook checks passed: sends, duration, backup round trip, deduplication, validation, active-session recovery, cascade deletion, media references, legacy backups, comp routes, colour grades, log order, editing, felt grades, tally order")
+    }
+
+    @MainActor static func tallyChecks() throws {
+        let container = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                          configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        func climbs(_ cs: [(ColourGrade, ClimbResult)]) -> [Climb] {
+            cs.map { let c = Climb(colour: $0.0, result: $0.1, at: start); context.insert(c); return c }
+        }
+        func order(_ cs: [Climb], _ scale: [ColourGrade]) -> [String] {
+            tallyGroups(cs, scale: scale).map { $0[0].colour ?? $0[0].label }
+        }
+        // A gym that only ranks its colours (easiest first): hardest colour first,
+        // not alphabetical, and a colour that's left the scale goes last.
+        let ranked = ["White", "Red", "Blue", "Teal"].map { ColourGrade(name: $0) }
+        let mixed = climbs([(ranked[2], .send), (ranked[0], .flash), (ColourGrade(name: "Grey"), .send),
+                            (ranked[3], .attempt), (ranked[1], .send), (ranked[2], .send)])
+        assert(order(mixed, ranked) == ["Teal", "Blue", "Red", "White", "Grey"], "\(order(mixed, ranked))")
+        assert(tallyGroups(mixed, scale: ranked)[1].count == 2, "Same colour is one row")
+        // Ranges still come first; the scale only breaks ties (VB and V0–V1 both start at V0).
+        let chart = [ColourGrade(name: "Black", low: 0, high: 0), ColourGrade(name: "Pink", low: 0, high: 1),
+                     ColourGrade(name: "Blue", low: 1, high: 3)]
+        let ranged = climbs([(chart[0], .send), (chart[2], .send), (chart[1], .send)])
+        let plain = Climb(discipline: .boulder, grade: 2, result: .send, at: start)
+        context.insert(plain)
+        assert(order(ranged + [plain], chart) == ["V2", "Blue", "Pink", "Black"], "\(order(ranged + [plain], chart))")
     }
 
     @MainActor static func compChecks() throws {

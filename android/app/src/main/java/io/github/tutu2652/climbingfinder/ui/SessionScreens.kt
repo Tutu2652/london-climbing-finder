@@ -74,6 +74,7 @@ import io.github.tutu2652.climbingfinder.core.formatPrice
 import io.github.tutu2652.climbingfinder.core.gradeRange
 import io.github.tutu2652.climbingfinder.core.nowSecond
 import io.github.tutu2652.climbingfinder.core.shortName
+import io.github.tutu2652.climbingfinder.core.tallyGroups
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.Locale
@@ -414,15 +415,12 @@ fun SessionTally(session: ClimbSession) {
     val attempts = climbs.size - sends.size
     val comps = climbs.count { it.comp }
     data class TallyRow(val label: String, val sample: Climb, val comp: Boolean, val flash: Int, val send: Int, val attempt: Int)
-    // Regular climbs first, then comp problems; hardest first within each, ungraded last.
-    // Colour climbs group by colour and, if you set one, the grade they felt.
-    val rows = climbs.groupBy { listOf(it.disciplineRaw, it.grade, it.comp, it.colour, it.listGradeIsFelt) }.map { (_, cs) ->
+    // In the order tallyGroups gives: hardest first, colours in the gym's order.
+    val rows = tallyGroups(climbs, LocalModel.current.colourScale(session.gymID)).map { cs ->
         val c = cs.first()
-        val label = (c.colour ?: "") + c.listGrade
-        Triple(c, c.grade, TallyRow(label, c, c.comp, cs.count { it.result == ClimbResult.FLASH },
-            cs.count { it.result == ClimbResult.SEND }, cs.count { it.result == ClimbResult.ATTEMPT }))
-    }.sortedWith(compareBy({ if (it.first.discipline == Discipline.ROPE) 1 else 0 }, { if (it.third.comp) 1 else 0 }, { -it.second }, { it.third.label }))
-        .map { it.third }
+        TallyRow((c.colour ?: "") + c.listGrade, c, c.comp, cs.count { it.result == ClimbResult.FLASH },
+            cs.count { it.result == ClimbResult.SEND }, cs.count { it.result == ClimbResult.ATTEMPT })
+    }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text("${sends.size} sends" + (if (flashes > 0) " ($flashes flashed)" else "") +
             (if (attempts > 0) " · $attempts attempt${if (attempts == 1) "" else "s"}" else "") +

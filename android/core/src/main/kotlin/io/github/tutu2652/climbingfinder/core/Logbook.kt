@@ -170,6 +170,19 @@ data class Climb(
     }
 }
 
+/**
+ * A session's climbs grouped for its tally: boulders before ropes, regular before comp,
+ * hardest first, ungraded last. Colour climbs group by colour and, if set, felt grade.
+ * Colours that tie on grade (every colour, at a gym that only ranks its colours) follow
+ * the gym's scale, hardest first; a colour no longer on the scale goes after them.
+ */
+fun tallyGroups(climbs: List<Climb>, scale: List<ColourGrade>): List<List<Climb>> {
+    val rank = scale.withIndex().reversed().associate { it.value.name to it.index }
+    return climbs.groupBy { listOf(it.disciplineRaw, it.grade, it.comp, it.colour, it.listGradeIsFelt) }.values
+        .sortedWith(compareBy<List<Climb>>({ if (it[0].discipline == Discipline.ROPE) 1 else 0 }, { if (it[0].comp) 1 else 0 },
+            { -it[0].grade }, { -(it[0].colour?.let(rank::get) ?: -1) }, { (it[0].colour ?: "") + it[0].listGrade }))
+}
+
 /** Hold colours offered when setting up a gym's colour grades, with a swatch for each. */
 object HoldColour {
     val all: List<Pair<String, String>> = listOf(

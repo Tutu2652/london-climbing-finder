@@ -193,6 +193,23 @@ class LogbookTest {
         }
     }
 
+    @Test fun tallyFollowsTheGymsColourOrder() {
+        val at = Instant.parse("2026-11-06T18:00:00Z")
+        fun order(cs: List<Climb>, scale: List<ColourGrade>) = tallyGroups(cs, scale).map { it[0].colour ?: it[0].label }
+        // A gym that only ranks its colours (easiest first): hardest colour first,
+        // not alphabetical, and a colour that's left the scale goes last.
+        val ranked = listOf("White", "Red", "Blue", "Teal").map { ColourGrade(it) }
+        val mixed = listOf(ranked[2] to ClimbResult.SEND, ranked[0] to ClimbResult.FLASH, ColourGrade("Grey") to ClimbResult.SEND,
+            ranked[3] to ClimbResult.ATTEMPT, ranked[1] to ClimbResult.SEND, ranked[2] to ClimbResult.SEND).map { Climb.of(it.first, it.second, at) }
+        assertEquals(listOf("Teal", "Blue", "Red", "White", "Grey"), order(mixed, ranked))
+        assertEquals(2, tallyGroups(mixed, ranked)[1].size, "Same colour is one row")
+        // Ranges still come first; the scale only breaks ties (VB and V0–V1 both start at V0).
+        val chart = listOf(ColourGrade("Black", 0, 0), ColourGrade("Pink", 0, 1), ColourGrade("Blue", 1, 3))
+        val ranged = listOf(chart[0], chart[2], chart[1]).map { Climb.of(it, ClimbResult.SEND, at) } +
+            Climb.of(Discipline.BOULDER, 2, ClimbResult.SEND, at, comp = false)
+        assertEquals(listOf("V2", "Blue", "Pink", "Black"), order(ranged, chart))
+    }
+
     @Test fun readsColourChartsFromGymData() {
         val gym = """{"id":"g","name":"G","brand":"B","type":"bouldering","zone":1,"lat":51.5,"lng":0.0,"payg":{},
             "colour_grades":[{"colour":"Black","grades":"VB"},{"colour":"Red","grades":"V9+"},{"colour":"White"},{"colour":"Odd","grades":"6A"}]}"""

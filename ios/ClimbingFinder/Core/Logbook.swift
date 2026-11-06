@@ -200,6 +200,22 @@ final class Climb {
     }
 }
 
+/// A session's climbs grouped for its tally: boulders before ropes, regular before comp,
+/// hardest first, ungraded last. Colour climbs group by colour and, if set, felt grade.
+/// Colours that tie on grade (every colour, at a gym that only ranks its colours) follow
+/// the gym's scale, hardest first; a colour no longer on the scale goes after them.
+func tallyGroups(_ climbs: [Climb], scale: [ColourGrade]) -> [[Climb]] {
+    let rank = Dictionary(scale.enumerated().map { ($1.name, $0) }, uniquingKeysWith: { a, _ in a })
+    let groups = Dictionary(grouping: climbs) {
+        "\($0.disciplineRaw)#\($0.grade)#\($0.isComp)#\($0.colour ?? "")#\($0.listGradeIsFelt)"
+    }.values.map { Array($0) }
+    func key(_ c: Climb) -> (Int, Int, Int, Int, String) {
+        (c.discipline == .rope ? 1 : 0, c.isComp ? 1 : 0, -c.grade, -(c.colour.flatMap { rank[$0] } ?? -1),
+         (c.colour ?? "") + c.listGrade)
+    }
+    return groups.sorted { key($0[0]) < key($1[0]) }
+}
+
 // MARK: - Backup (JSON)
 
 struct LogbookBackup: Codable {
