@@ -4,3 +4,6 @@ local.properties
 .idea/
 *.iml
 .kotlin/
+# Signing keys never go in git (see README.md → Signing key).
+*.jks
+*.keystore

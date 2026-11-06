@@ -184,8 +184,9 @@ With a cable:
    other devices on the network can show up in adb too.
 3. `adb -s <serial> install -r android/app/build/outputs/apk/debug/app-debug.apk`
 
-`INSTALL_FAILED_UPDATE_INCOMPATIBLE` means the installed copy was built on another
-computer, with a different signing key. Uninstalling deletes the user's logbook, so first
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` means the installed copy has a different signing
+key: one of the two was built without the shared key (see android/README.md → Signing
+key; check `~/.gradle/gradle.properties`). Uninstalling deletes the user's logbook, so first
 ask them to back it up (More → Back up logbook), and only uninstall
 (`adb -s <serial> uninstall io.github.tutu2652.climbingfinder`) once they say so.
 
@@ -195,8 +196,8 @@ ask them to back it up (More → Back up logbook), and only uninstall
 - To get new gyms later: `git pull`, then steps 1 and 2. The app also refreshes prices
   from the website on its own.
 
-Don't commit anything during setup. `android/local.properties` and build folders stay
-out of git.
+Don't commit anything during setup. `android/local.properties`, build folders and any
+signing key or password stay out of git.
 
 ## Changing the code or data
 

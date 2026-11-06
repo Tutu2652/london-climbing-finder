@@ -54,6 +54,11 @@ jobs:
 
   android:
     runs-on: ubuntu-latest
+    env:
+      # The shared signing key (see android/README.md). Forks don't have it; their
+      # APKs get a throwaway debug key instead.
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ORG_GRADLE_PROJECT_climbingFinderKeystorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -63,6 +68,12 @@ jobs:
           java-version: "17"
 
       - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unpack the shared signing key
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/climbing-finder.jks"
+          echo "ORG_GRADLE_PROJECT_climbingFinderKeystore=$RUNNER_TEMP/climbing-finder.jks" >> "$GITHUB_ENV"
 
       # Unit tests for the shared Kotlin code, then the debug APK. The runner
       # has the Android SDK preinstalled.
