@@ -101,6 +101,8 @@ struct GymVisitsView: View {
                 NavigationLink(value: gym) { Label("Gym details & prices", systemImage: "info.circle") }
             }
 
+            ColourSendsSection(gymID: gym.id, sends: sends)
+
             ForEach(monthGroups(visits), id: \.title) { group in
                 Section(group.title) {
                     ForEach(group.sessions) { s in

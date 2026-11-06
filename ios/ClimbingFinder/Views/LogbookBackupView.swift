@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 @MainActor
 struct LogbookBackupView: View {
     @Environment(\.modelContext) private var context
+    @Environment(AppModel.self) private var model
     @Query(sort: \ClimbSession.start) private var sessions: [ClimbSession]
     @State private var file: URL?
     @State private var importing = false
@@ -28,6 +29,7 @@ struct LogbookBackupView: View {
         .navigationTitle("Back up logbook")
         .inlineTitle()
         .task(id: sessions.count) { write() }
+        .onChange(of: model.colourScales) { write() }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
             do {
                 let url = try result.get()
@@ -36,6 +38,7 @@ struct LogbookBackupView: View {
                 let backup = try LogbookBackup.decoder.decode(LogbookBackup.self, from: Data(contentsOf: url))
                 let added = try backup.restore(into: context, existing: sessions)
                 try context.save()
+                model.replaceColourScales(backup.mergedColourScales(into: model.colourScales))
                 write()
                 message = added == 0 ? "Nothing new in that file." : "Added \(added) session\(added == 1 ? "" : "s")."
             } catch {
@@ -47,7 +50,7 @@ struct LogbookBackupView: View {
     private func write() {
         let name = "Climbing logbook \(Moment(.now).ymd).json"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
-        guard let data = try? LogbookBackup.encoder.encode(LogbookBackup(sessions)),
+        guard let data = try? LogbookBackup.encoder.encode(LogbookBackup(sessions, colourScales: model.colourScales)),
               (try? data.write(to: url, options: .atomic)) != nil else { file = nil; return }
         file = url
     }

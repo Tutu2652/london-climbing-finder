@@ -131,21 +131,51 @@ struct StatsView: View {
         .inlineTitle()
     }
 
+    /// One row per grade, hardest at the top: a rounded bar of flashes (amber) then sends
+    /// (green) on a faint track, scaled to the busiest grade, with the count after it.
     private func pyramid(_ sends: [Climb]) -> some View {
         let top = sends.map(\.grade).max() ?? 0
-        let low = max(0, (sends.map(\.grade).min() ?? 0))
-        struct Bar: Identifiable { let type: String; let grade: Int; let count: Int; var id: String { "\(type)\(grade)" } }
-        let data = (low...top).reversed().flatMap { g in
-            [Bar(type: "Flash", grade: g, count: sends.filter { $0.grade == g && $0.result == .flash }.count),
-             Bar(type: "Send", grade: g, count: sends.filter { $0.grade == g && $0.result == .send }.count)]
+        let low = max(0, sends.map(\.grade).min() ?? 0)
+        let rows = (low...top).reversed().map { g in
+            (grade: g, flash: sends.filter { $0.grade == g && $0.result == .flash }.count,
+             send: sends.filter { $0.grade == g && $0.result == .send }.count)
         }
-        return Chart(data) { d in
-            BarMark(x: .value("Sends", d.count), y: .value("Grade", discipline.grades[d.grade]))
-                .foregroundStyle(by: .value("Type", d.type))
+        let most = CGFloat(max(1, rows.map { $0.flash + $0.send }.max() ?? 1))
+        let flashes = rows.map(\.flash).reduce(0, +), plain = rows.map(\.send).reduce(0, +)
+        return VStack(alignment: .leading, spacing: 10) {
+            ForEach(rows, id: \.grade) { row in
+                HStack(spacing: 10) {
+                    Text(discipline.grades[row.grade])
+                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .frame(width: 40, alignment: .leading)
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Color.secondary.opacity(0.12))
+                            HStack(spacing: 0) {
+                                Rectangle().fill(Color.amber).frame(width: geo.size.width * CGFloat(row.flash) / most)
+                                Rectangle().fill(Color.brand).frame(width: geo.size.width * CGFloat(row.send) / most)
+                            }
+                            .clipShape(Capsule())
+                        }
+                    }
+                    .frame(height: 14)
+                    Text("\(row.flash + row.send)")
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(row.flash + row.send > 0 ? .primary : .tertiary)
+                        .frame(width: 30, alignment: .trailing)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(discipline.grades[row.grade]): \(row.flash) flashed, \(row.send) sent")
+            }
+            HStack(spacing: 16) {
+                Label("Flash \(flashes)", systemImage: "circle.fill").foregroundStyle(Color.amber)
+                Label("Send \(plain)", systemImage: "circle.fill").foregroundStyle(Color.brand)
+            }
+            .labelStyle(.compact)
+            .font(.caption.weight(.medium))
+            .padding(.top, 2)
         }
-        .chartForegroundStyleScale(["Flash": Color.amber, "Send": Color.brand])
-        .chartYScale(domain: (low...top).reversed().map { discipline.grades[$0] })
-        .frame(height: CGFloat(max(3, top - low + 1)) * 30 + 30)
+        .padding(.vertical, 8)
     }
 
     private func weekly(_ s: [ClimbSession]) -> [(Date, Int)] {

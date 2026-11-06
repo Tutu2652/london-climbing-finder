@@ -73,6 +73,8 @@ struct Gym: Decodable, Identifiable, Hashable {
     /// A temporary note such as reduced hours, with the hours that apply meanwhile.
     let notice: String?
     let temporaryHours: [String: [String]]?
+    /// The gym's bouldering colours, easiest first, from its grade chart; empty if it doesn't grade by colour.
+    let colourGrades: [ColourGrade]
 
     enum CodingKeys: String, CodingKey {
         case id, name, brand, type, area, borough, zone, postcode, lat, lng, website, payg
@@ -82,7 +84,11 @@ struct Gym: Decodable, Identifiable, Hashable {
         case hoursAssumed = "hours_assumed", instagram, eventsURL = "events_url", classesURL = "classes_url"
         case classInfo = "class_info", routeSettingURL = "route_setting_url", socials, ac, acNote = "ac_note"
         case logo, logoBackground = "logo_background", about, temporarilyClosed = "temporarily_closed", notice, temporaryHours = "temporary_hours"
+        case colourGrades = "colour_grades"
     }
+
+    /// One entry of `colour_grades` in gyms.json: a colour and, if the chart gives one, its V range.
+    private struct ColourEntry: Decodable { let colour: String; let grades: String? }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -134,6 +140,13 @@ struct Gym: Decodable, Identifiable, Hashable {
         temporaryHours = try c.decodeIfPresent([String: [String]].self, forKey: .temporaryHours)
         logo = try c.decodeIfPresent(String.self, forKey: .logo)
         logoBackground = try c.decodeIfPresent(String.self, forKey: .logoBackground)
+        // A colour whose range can't be read is still offered, without a range.
+        // A malformed list is ignored rather than failing the whole gym.
+        let entries = (try? c.decodeIfPresent([ColourEntry].self, forKey: .colourGrades)) ?? nil
+        colourGrades = (entries ?? []).map { e in
+            let r = e.grades.flatMap(ColourGrade.parseRange)
+            return ColourGrade(name: e.colour, low: r?.low, high: r?.high)
+        }
     }
 
     static func == (a: Gym, b: Gym) -> Bool { a.id == b.id }

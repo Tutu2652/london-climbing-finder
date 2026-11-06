@@ -40,6 +40,8 @@ final class AppModel {
     private var lastDataCheck: Date?
     /// Logos from the copy built into the app, used when a downloaded copy lacks them.
     private let bundledLogos: [String: (url: String, background: String?)]
+    /// Colour charts from the copy built into the app, used when a downloaded copy lacks them.
+    private let bundledColourGrades: [String: [ColourGrade]]
 
     // Filters shared by the Cheapest, Map and Gyms tabs.
     /// The date and time being priced. Follows the clock unless you pick one yourself.
@@ -76,6 +78,39 @@ final class AppModel {
         static let concession = "concession", notes = "gymNotes", ratings = "gymRatings"
         static let origin = "origin", bankHolidays = "bankHolidays"
         static let favourites = "favourites", favouritesOnly = "favouritesOnly"
+        static let colourScales = "colourScales"
+    }
+
+    /// Colour grades you've set up yourself, by gym id. They replace the gym's chart from
+    /// gyms.json; an empty list means you've removed the gym's colours.
+    private(set) var colourScales: [String: [ColourGrade]] = AppModel.load(Keys.colourScales) ?? [:]
+
+    /// The colours to log by at a gym: yours if you've set them, else the gym's chart.
+    func colourScale(_ gymID: String) -> [ColourGrade] { colourScales[gymID] ?? gymColourChart(gymID) }
+
+    /// The gym's own chart from gyms.json, falling back to the copy built into the app.
+    func gymColourChart(_ gymID: String) -> [ColourGrade] {
+        if let chart = gym(gymID)?.colourGrades, !chart.isEmpty { return chart }
+        return bundledColourGrades[gymID] ?? []
+    }
+
+    /// You've changed this gym's colours from its chart in gyms.json (or it has no chart).
+    func hasOwnColourScale(_ gymID: String) -> Bool { colourScales[gymID] != nil }
+
+    func setColourScale(_ scale: [ColourGrade], for gymID: String) {
+        colourScales[gymID] = scale == gymColourChart(gymID) ? nil : scale
+        AppModel.save(colourScales, Keys.colourScales)
+    }
+
+    /// Go back to the gym's own chart.
+    func resetColourScale(_ gymID: String) {
+        colourScales[gymID] = nil
+        AppModel.save(colourScales, Keys.colourScales)
+    }
+
+    func replaceColourScales(_ scales: [String: [ColourGrade]]) {
+        colourScales = scales
+        AppModel.save(colourScales, Keys.colourScales)
     }
 
     private static let remoteURL = URL(string: "https://london-climbing-finder.pages.dev/gyms.json")!
@@ -89,6 +124,9 @@ final class AppModel {
             contentsOf: Bundle.main.url(forResource: "gyms", withExtension: "json")!))
         bundledLogos = Dictionary(uniqueKeysWithValues: bundled.gyms.compactMap { g in
             g.logo.map { (g.id, ($0, g.logoBackground)) }
+        })
+        bundledColourGrades = Dictionary(uniqueKeysWithValues: bundled.gyms.compactMap { g in
+            g.colourGrades.isEmpty ? nil : (g.id, g.colourGrades)
         })
         // Start from the last website download unless this build carries newer research.
         if let d = try? Data(contentsOf: Self.cacheURL),

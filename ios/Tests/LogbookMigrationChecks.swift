@@ -25,6 +25,7 @@ struct LogbookMigrationChecks {
         assert(session.climbs.count == 1 && session.climbs[0].grade == 3)
         let climb = session.climbs[0]
         assert(!climb.isComp && climb.isGraded)
+        assert(climb.colour == nil && climb.colourGrade == nil, "Existing climbs migrate as V-graded")
         if CommandLine.arguments.count > 2 {
             assert(climb.videoAssetID == "persisted-video" && climb.routePhotoAssetID == "persisted-photo")
             climb.videoAssetID = nil
