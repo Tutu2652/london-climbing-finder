@@ -97,7 +97,7 @@ in backups are restored as finished at their last logged climb (or start if empt
 Run the in-memory logbook regression checks on a Mac with Xcode:
 
 ```sh
-xcrun swiftc -parse-as-library ios/ClimbingFinder/Core/Logbook.swift ios/Tests/LogbookChecks.swift -o /tmp/climbing-logbook-checks
+xcrun swiftc -parse-as-library ios/ClimbingFinder/Core/Logbook.swift ios/ClimbingFinder/Core/ColourGrades.swift ios/Tests/LogbookChecks.swift -o /tmp/climbing-logbook-checks
 /tmp/climbing-logbook-checks
 ```
 
@@ -116,7 +116,8 @@ A missing original or revoked permission shows recovery controls instead of remo
 the link. These local identifiers may need relinking on a different phone/library.
 
 JSON backups include the references, not media files. Version 3 adds the comp tag;
-version 1 and 2 backups remain supported. Run `zsh ios/Tests/check-logbook.sh` for backup, on-disk migration,
+version 4 adds colour grades (each climb's colour and the range it was logged with, plus
+any gym colours you changed). Version 1–3 backups remain supported. Run `zsh ios/Tests/check-logbook.sh` for backup, on-disk migration,
 and reference persistence checks. The migration fixture freezes the pre-media schema.
 
 Manual device checks (requires Photos access and sample media):

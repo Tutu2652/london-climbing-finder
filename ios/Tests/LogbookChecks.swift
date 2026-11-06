@@ -23,7 +23,7 @@ struct LogbookChecks {
         assert(session.hardest(.boulder) == 3)
         assert(formatDuration(session.duration) == "1h 00m")
         var backup = try LogbookBackup.decoder.decode(LogbookBackup.self, from: LogbookBackup.encoder.encode(LogbookBackup([session])))
-        assert(backup.version == 3)
+        assert(backup.version == 4)
         let linked = backup.sessions[0].climbs.first { $0.grade == 3 }!
         assert(linked.videoAssetID == "test-video-reference")
         assert(linked.routePhotoAssetID == "test-route-reference")
@@ -79,7 +79,8 @@ struct LogbookChecks {
         let remainingClimbs = try restoredContext.fetchCount(FetchDescriptor<Climb>())
         assert(remainingClimbs == 3)
         try compChecks()
-        print("Logbook checks passed: sends, duration, backup round trip, deduplication, validation, active-session recovery, cascade deletion, media references, legacy backups, comp routes")
+        try colourChecks()
+        print("Logbook checks passed: sends, duration, backup round trip, deduplication, validation, active-session recovery, cascade deletion, media references, legacy backups, comp routes, colour grades, log order, editing")
     }
 
     @MainActor static func compChecks() throws {
@@ -115,5 +116,187 @@ struct LogbookChecks {
             try invalid.validate()
             assertionFailure("Ungraded non-comp climbs must be rejected")
         } catch LogbookBackup.RestoreError.invalidRecord { }
+    }
+
+    @MainActor static func colourChecks() throws {
+        let container = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                          configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let session = ClimbSession(gymID: "colour-gym", start: start, end: start.addingTimeInterval(3600), price: nil)
+        context.insert(session)
+        let blue = ColourGrade(name: "Blue", low: 2, high: 3)
+        let red = ColourGrade(name: "Red", low: 4, high: 6)
+        assert(blue.range == "V2–V3" && ColourGrade(name: "Black", low: 7, high: 7).range == "V7")
+        for (colour, result) in [(blue, ClimbResult.flash), (red, .send), (red, .attempt)] {
+            let climb = Climb(colour: colour, result: result, at: start)
+            context.insert(climb)
+            climb.session = session
+        }
+        try context.save()
+        let r = session.climbs.first { $0.colour == "Red" && $0.result == .send }!
+        assert(r.grade == 4 && r.label == "Red" && r.colourDetail == "V4–V6" && !r.hasFeltGrade)
+        assert(session.hardest(.boulder) == 4, "Colour climbs count as the bottom of their range")
+        r.grade = 5
+        assert(r.hasFeltGrade && r.colourDetail == "V4–V6 · felt V5")
+        assert(session.hardest(.boulder) == 5, "A felt grade replaces the bottom of the range")
+
+        // Scales: validity and the default range for a new colour.
+        assert(ColourGrade.isValidScale([blue, red]))
+        assert(!ColourGrade.isValidScale([blue, blue]), "Each colour appears once")
+        assert(!ColourGrade.isValidScale([ColourGrade(name: "Green", low: 3, high: 1)]))
+        assert(ColourGrade.nextRange(after: []) == (0, 1))
+        assert(ColourGrade.nextRange(after: [blue, red]) == (7, 8))
+        assert(ColourGrade.nextRange(after: [ColourGrade(name: "Black", low: 16, high: 17)]) == (17, 17))
+
+        // Backup round trip keeps colours, the range as logged, and the gym's scale.
+        let scales = ["colour-gym": [blue, red]]
+        let backup = try LogbookBackup.decoder.decode(LogbookBackup.self,
+                                                      from: LogbookBackup.encoder.encode(LogbookBackup([session], colourScales: scales)))
+        try backup.validate()
+        assert(backup.colourScales == scales)
+        let restoredContainer = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                                  configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        _ = try backup.restore(into: restoredContainer.mainContext, existing: [])
+        let restored = try restoredContainer.mainContext.fetch(FetchDescriptor<Climb>())
+        let felt = restored.first { $0.colour == "Red" && $0.result == .send }!
+        assert(felt.colourGrade == red && felt.grade == 5)
+        assert(restored.filter { $0.colour == "Blue" }.allSatisfy { $0.colourGrade == blue && $0.grade == 2 })
+        // Restoring keeps a scale you already have and adds the rest.
+        let mine = ["colour-gym": [red], "other-gym": [blue]]
+        let merged = backup.mergedColourScales(into: mine)
+        assert(merged["colour-gym"] == [red] && merged["other-gym"] == [blue])
+        assert(backup.mergedColourScales(into: [:]) == scales)
+
+        // A version 3 file has no colour fields and still restores.
+        var legacy = try JSONSerialization.jsonObject(with: LogbookBackup.encoder.encode(LogbookBackup([], colourScales: [:]))) as! [String: Any]
+        legacy["version"] = 3
+        assert(legacy["colourScales"] == nil)
+        try LogbookBackup.decoder.decode(LogbookBackup.self, from: JSONSerialization.data(withJSONObject: legacy)).validate()
+
+        // Half-filled colour fields, ropes and broken scales are rejected.
+        let i = backup.sessions[0].climbs.firstIndex { $0.colour != nil }!
+        var invalid = backup
+        invalid.sessions[0].climbs[i].colourHigh = nil
+        do { try invalid.validate(); assertionFailure("Partial colour fields must be rejected") } catch LogbookBackup.RestoreError.invalidRecord { }
+        invalid = backup
+        invalid.sessions[0].climbs[i].colourLow = 9
+        do { try invalid.validate(); assertionFailure("Inverted ranges must be rejected") } catch LogbookBackup.RestoreError.invalidRecord { }
+        invalid = backup
+        invalid.sessions[0].climbs[i].discipline = Discipline.rope.rawValue
+        do { try invalid.validate(); assertionFailure("Colour grades are for boulders") } catch LogbookBackup.RestoreError.invalidRecord { }
+        invalid = backup
+        invalid.colourScales = ["colour-gym": [blue, blue]]
+        do { try invalid.validate(); assertionFailure("Duplicate colours must be rejected") } catch LogbookBackup.RestoreError.invalidRecord { }
+        try rankedColourChecks()
+        try editingChecks()
+    }
+
+    /// Log order (so Undo removes the last tap) and changing a logged climb.
+    @MainActor static func editingChecks() throws {
+        let container = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                          configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let end = start.addingTimeInterval(3600)
+        let past = ClimbSession(gymID: "edit-gym", start: start, end: end, price: nil)
+        context.insert(past)
+        // In a past session every tap used to land on the end time, so "last" was a coin toss.
+        var logged: [Climb] = []
+        for g in [3, 1, 2] {
+            let c = Climb(discipline: .boulder, grade: g, result: .send, at: past.nextLogTime(now: end.addingTimeInterval(86_400)))
+            context.insert(c)
+            c.session = past
+            logged.append(c)
+        }
+        assert(past.climbs.map(\.loggedAt).sorted() == logged.map(\.loggedAt), "Each tap is logged after the last")
+        assert(Set(past.climbs.map(\.loggedAt)).count == 3)
+        assert(past.lastClimb === logged[2] && past.lastClimb?.grade == 2, "Undo removes the last tap")
+        // A live session: two taps in the same instant still get an order.
+        let live = ClimbSession(gymID: "edit-gym", start: start, price: nil)
+        context.insert(live)
+        let a = Climb(discipline: .boulder, grade: 4, result: .send, at: live.nextLogTime(now: end))
+        context.insert(a); a.session = live
+        let b = Climb(discipline: .boulder, grade: 5, result: .send, at: live.nextLogTime(now: end))
+        context.insert(b); b.session = live
+        assert(a.loggedAt == end && b.loggedAt == end.addingTimeInterval(1) && live.lastClimb === b)
+
+        // Changing colour, back to V grade, and discipline.
+        let blue = ColourGrade(name: "Blue", low: 2, high: 3)
+        let c = logged[0]
+        c.isComp = true
+        c.setColour(blue)
+        assert(c.colourGrade == blue && c.grade == 2 && !c.isComp, "A colour climb counts as the bottom of the range")
+        c.grade = 3
+        c.setColour(blue)
+        assert(c.grade == 3, "Picking the same colour keeps the felt grade")
+        c.setColour(nil)
+        assert(c.colour == nil && c.colourLow == nil && c.grade == 3, "Back to V grade keeps the grade it counted as")
+        c.setColour(ColourGrade(name: "White", low: nil, high: nil))
+        assert(c.grade == Climb.ungraded)
+        c.setColour(nil)
+        assert(c.grade == 0 && c.isGraded, "A V-graded climb always has a grade")
+        c.grade = 16
+        c.setDiscipline(.rope)
+        assert(c.discipline == .rope && c.gradeLabel == "8a")
+        c.grade = 20
+        c.setDiscipline(.boulder)
+        assert(c.discipline == .boulder && c.grade == 17, "Grades past the top clamp to it")
+        c.setColour(blue)
+        c.setDiscipline(.rope)
+        assert(c.colour == nil && c.discipline == .rope, "Ropes have no colours")
+        let comp = Climb(discipline: .boulder, grade: Climb.ungraded, result: .send, comp: true)
+        comp.setDiscipline(.rope)
+        assert(comp.grade == Climb.ungraded && comp.isComp, "An ungraded comp climb stays ungraded")
+        try context.save()
+        _ = try LogbookBackup(past.climbs.isEmpty ? [] : [past]).validate()
+    }
+
+    /// Gyms that only rank their colours (no V grades), and how gyms.json writes ranges.
+    @MainActor static func rankedColourChecks() throws {
+        assert(ColourGrade.parseRange("VB")! == (0, 0), "VB counts as V0")
+        assert(ColourGrade.parseRange("V3")! == (3, 3))
+        assert(ColourGrade.parseRange("V2-V5")! == (2, 5))
+        assert(ColourGrade.parseRange("V9+")! == (9, 17))
+        assert(ColourGrade.parseRange("V5-V2") == nil && ColourGrade.parseRange("6A") == nil && ColourGrade.parseRange("V99") == nil)
+        assert(gradeRange(9, 17) == "V9+" && gradeRange(16, 17) == "V16+" && gradeRange(17, 17) == "V17")
+
+        let container = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                          configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let session = ClimbSession(gymID: "ranked-gym", start: start, end: start.addingTimeInterval(3600), price: nil)
+        context.insert(session)
+        let yellow = ColourGrade(name: "Yellow", low: nil, high: nil)
+        assert(yellow.isValid && !yellow.hasRange && yellow.range == "")
+        assert(!ColourGrade(name: "Pink", low: 2, high: nil).isValid, "A range has both ends or neither")
+        assert(ColourGrade.nextRange(after: [yellow]) == (0, 1))
+        let climb = Climb(colour: yellow, result: .send, at: start)
+        context.insert(climb)
+        climb.session = session
+        try context.save()
+        assert(climb.grade == Climb.ungraded && !climb.isGraded && !climb.hasFeltGrade && climb.colourDetail == nil)
+        assert(session.sends.count == 1 && session.hardest(.boulder) == nil, "Counts as a send, not in grade stats")
+        climb.grade = 4
+        assert(climb.hasFeltGrade && climb.colourDetail == "felt V4" && session.hardest(.boulder) == 4)
+        climb.grade = Climb.ungraded
+
+        let backup = try LogbookBackup.decoder.decode(LogbookBackup.self, from: LogbookBackup.encoder.encode(
+            LogbookBackup([session], colourScales: ["ranked-gym": [yellow], "cleared-gym": []])))
+        try backup.validate()
+        assert(backup.colourScales?["cleared-gym"] == [], "Removing a gym's chart survives a backup")
+        let restoredContainer = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                                  configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        _ = try backup.restore(into: restoredContainer.mainContext, existing: [])
+        let restored = try restoredContainer.mainContext.fetch(FetchDescriptor<Climb>()).first!
+        assert(restored.colourGrade == yellow && restored.grade == Climb.ungraded)
+        // Ungraded is only allowed for comp climbs and colours without a range.
+        var invalid = backup
+        invalid.sessions[0].climbs[0].colourLow = 1
+        invalid.sessions[0].climbs[0].colourHigh = 2
+        do { try invalid.validate(); assertionFailure("A ranged colour climb needs a grade") } catch LogbookBackup.RestoreError.invalidRecord { }
+        invalid = backup
+        invalid.sessions[0].climbs[0].colour = nil
+        do { try invalid.validate(); assertionFailure("An ungraded climb needs a colour or comp tag") } catch LogbookBackup.RestoreError.invalidRecord { }
     }
 }

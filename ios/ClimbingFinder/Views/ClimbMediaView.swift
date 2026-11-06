@@ -12,7 +12,13 @@ struct ClimbMediaRow: View {
             Image(systemName: climb.result.icon)
                 .foregroundStyle(climb.result == .flash ? Color.amber : Color.brand)
                 .frame(width: 22)
-            Text(climb.gradeLabel).font(.body.weight(.semibold).monospacedDigit())
+            if let colour = climb.colour {
+                ColourSwatch(name: colour)
+                Text(colour).font(.body.weight(.semibold))
+                if let detail = climb.colourDetail { Text(detail).font(.caption).foregroundStyle(.secondary) }
+            } else {
+                Text(climb.gradeLabel).font(.body.weight(.semibold).monospacedDigit())
+            }
             Text(climb.result.title).foregroundStyle(.secondary)
             if climb.isComp { Pill(text: "Comp", color: .amber) }
             Spacer()
@@ -30,6 +36,9 @@ struct ClimbMediaRow: View {
 
 @MainActor
 struct ClimbMediaView: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
     @Bindable var climb: Climb
     @State private var photoMedia = LinkedMediaLoader()
     @State private var videoMedia = LinkedMediaLoader()
@@ -37,19 +46,66 @@ struct ClimbMediaView: View {
     @State private var photoLink = MediaLinkState()
     @State private var videoLink = MediaLinkState()
 
+    /// Boulders and ropes only matter where the gym has ropes, or the climb is already a rope.
+    private var showsDiscipline: Bool {
+        climb.discipline == .rope || climb.session.flatMap { model.gym($0.gymID) }?.type.contains("ropes") == true
+    }
+
+    /// The gym's colours, with this climb's own colour (as logged) in place of the chart's
+    /// if the chart has changed since, so picking it again changes nothing.
+    private var colourChoices: [ColourGrade] {
+        let chart = climb.session.map { model.colourScale($0.gymID) } ?? []
+        guard let mine = climb.colourGrade else { return chart }
+        return chart.contains { $0.name == mine.name } ? chart.map { $0.name == mine.name ? mine : $0 } : chart + [mine]
+    }
+
     var body: some View {
         List {
             Section {
-                LabeledContent("Outcome", value: climb.result.title)
+                Picker("Outcome", selection: $climb.resultRaw) {
+                    ForEach(ClimbResult.allCases) { Label($0.title, systemImage: $0.icon).tag($0.rawValue) }
+                }
+                .pickerStyle(.segmented)
                 LabeledContent("Logged", value: climb.loggedAt.formatted(date: .abbreviated, time: .shortened))
-                SwitchRow(isOn: $climb.isComp) { Text("Comp route") }
-                    .disabled(climb.isComp && !climb.isGraded)
-                Picker(climb.isComp ? "Felt grade" : "Grade", selection: $climb.grade) {
-                    if climb.isComp { Text("No grade").tag(Climb.ungraded) }
-                    ForEach(climb.discipline.grades.indices, id: \.self) { Text(climb.discipline.grades[$0]).tag($0) }
+                if showsDiscipline {
+                    Picker("Discipline", selection: Binding(get: { climb.discipline }, set: { climb.setDiscipline($0) })) {
+                        ForEach(Discipline.allCases) { Text($0.title).tag($0) }
+                    }
+                }
+                if climb.discipline == .boulder && !colourChoices.isEmpty {
+                    Picker("Colour", selection: Binding(get: { climb.colourGrade }, set: { climb.setColour($0) })) {
+                        Text("None (V grade)").tag(ColourGrade?.none)
+                        ForEach(colourChoices) { c in
+                            Label { Text(c.name) } icon: { ColourSwatch(name: c.name) }.tag(ColourGrade?.some(c))
+                        }
+                    }
+                }
+                if let c = climb.colourGrade {
+                    LabeledContent("Range", value: c.hasRange ? c.range : "No V grade")
+                    Picker("Felt grade", selection: $climb.grade) {
+                        if !c.hasRange { Text("No grade").tag(Climb.ungraded) }
+                        ForEach(climb.discipline.grades.indices, id: \.self) { Text(climb.discipline.grades[$0]).tag($0) }
+                    }
+                } else {
+                    SwitchRow(isOn: $climb.isComp) { Text("Comp route") }
+                        .disabled(climb.isComp && !climb.isGraded)
+                    Picker(climb.isComp ? "Felt grade" : "Grade", selection: $climb.grade) {
+                        if climb.isComp { Text("No grade").tag(Climb.ungraded) }
+                        ForEach(climb.discipline.grades.indices, id: \.self) { Text(climb.discipline.grades[$0]).tag($0) }
+                    }
                 }
             } footer: {
-                if climb.isComp && !climb.isGraded {
+                if let c = climb.colourGrade {
+                    if let low = c.low {
+                        Text(climb.hasFeltGrade
+                             ? "Stats count this climb as \(climb.gradeLabel). Set it back to \(gradeRange(low, low)) to count it as the bottom of the range."
+                             : "Stats count this climb as \(climb.gradeLabel), the bottom of the range. Change it if it felt harder.")
+                    } else {
+                        Text(climb.isGraded
+                             ? "This gym's colours have no V grades. Stats count this climb as \(climb.gradeLabel), the grade you said it felt."
+                             : "This gym's colours have no V grades, so this climb counts as a send but not in grade stats. Set a felt grade to count it.")
+                    }
+                } else if climb.isComp && !climb.isGraded {
                     Text("Add a grade to count this climb in grade stats, or to untag it as comp.")
                 }
             }
@@ -62,6 +118,14 @@ struct ClimbMediaView: View {
             Section {
                 Text("Only links are saved here. Originals stay in Photos. iCloud items may download for viewing. If you delete an original or remove Photos access, its link becomes unavailable. Links may need replacing after moving to another phone.")
                     .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Delete climb", systemImage: "trash", role: .destructive) {
+                    context.delete(climb)
+                    dismiss()
+                }
             }
         }
         .navigationTitle(climb.label + " · " + climb.result.title)

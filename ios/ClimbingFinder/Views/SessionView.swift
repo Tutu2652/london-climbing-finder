@@ -15,6 +15,13 @@ struct SessionView: View {
     @State private var allGrades = false
     @State private var comp = false
     @State private var confirmDelete = false
+    /// At a gym with colour grades: log by colour (true) or by V grade.
+    @State private var byColour = true
+
+    private var scale: [ColourGrade] { model.colourScale(session.gymID) }
+    /// Colour grades only apply to boulders, and comps are logged by V grade.
+    private var colourGradable: Bool { discipline == .boulder && !comp }
+    private var usingColours: Bool { colourGradable && byColour && !scale.isEmpty }
 
     var body: some View {
         let gym = model.gym(session.gymID)
@@ -48,11 +55,20 @@ struct SessionView: View {
                 }
                 .pickerStyle(.segmented)
                 SwitchRow(isOn: $comp) { Label("Comp routes", systemImage: "trophy") }
-                gradeGrid
+                if colourGradable && !scale.isEmpty {
+                    Picker("Grade by", selection: $byColour) {
+                        Text("Colour").tag(true)
+                        Text("V grade").tag(false)
+                    }
+                    .pickerStyle(.segmented)
+                }
+                if usingColours { colourGrid } else { gradeGrid }
                 HStack {
-                    Button(allGrades ? "Fewer grades" : "More grades") { allGrades.toggle() }
+                    if !usingColours {
+                        Button(allGrades ? "Fewer grades" : "More grades") { allGrades.toggle() }
+                    }
                     Spacer()
-                    if let last = session.climbs.max(by: { $0.loggedAt < $1.loggedAt }) {
+                    if let last = session.lastClimb {
                         Button("Undo \(last.result.title.lowercased()) \(last.label)", role: .destructive) {
                             withAnimation { context.delete(last) }
                         }
@@ -60,9 +76,16 @@ struct SessionView: View {
                 }
                 .font(.callout)
                 .buttonStyle(.borderless)
+                if colourGradable {
+                    NavigationLink { ColourScaleEditor(gymID: session.gymID) } label: {
+                        Label(scale.isEmpty ? "Gym grades by colour? Set up colours" : "Edit colour grades",
+                              systemImage: "paintpalette")
+                    }
+                    .font(.callout)
+                }
             } header: {
                 Text(comp ? "Tap the grade it felt, or No grade, to log a comp \(mode.title.lowercased())"
-                          : "Tap a grade to log \(mode == .attempt ? "an" : "a") \(mode.title.lowercased())")
+                          : "Tap \(usingColours ? "a colour" : "a grade") to log \(mode == .attempt ? "an" : "a") \(mode.title.lowercased())")
             }
 
             if !session.climbs.isEmpty {
@@ -70,13 +93,15 @@ struct SessionView: View {
                     SessionTally(session: session)
                 }
                 Section {
-                    ForEach(session.climbs.sorted { $0.loggedAt > $1.loggedAt }) { climb in
+                    let ordered = session.climbs.sorted { $0.loggedAt > $1.loggedAt }
+                    ForEach(ordered) { climb in
                         NavigationLink { ClimbMediaView(climb: climb) } label: { ClimbMediaRow(climb: climb) }
                     }
+                    .onDelete { offsets in withAnimation { offsets.map { ordered[$0] }.forEach(context.delete) } }
                 } header: {
-                    Text("Climbs & media")
+                    Text("Climbs, newest first")
                 } footer: {
-                    Text("Tap a climb to link a route photo or video from Photos.")
+                    Text("Swipe left to delete a climb. Tap one to change it or link a route photo or video.")
                 }
             }
 
@@ -142,8 +167,10 @@ struct SessionView: View {
             if gym?.type.contains("ropes") != true && !session.climbs.contains(where: { $0.discipline == .rope }) {
                 discipline = .boulder
             }
-            // Carry on in comp mode if that's what you were last logging.
-            comp = session.climbs.max(by: { $0.loggedAt < $1.loggedAt })?.isComp ?? false
+            // Carry on in comp mode, or by V grade, if that's what you were last logging.
+            let last = session.lastClimb
+            comp = last?.isComp ?? false
+            if let last, last.discipline == .boulder, !last.isComp { byColour = last.colour != nil }
         }
         .sensoryFeedback(.success, trigger: session.climbs.count)
     }
@@ -162,8 +189,42 @@ struct SessionView: View {
         .padding(.vertical, 4)
     }
 
+    private var colourGrid: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8)], spacing: 8) {
+            ForEach(scale) { colourTile($0) }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func colourTile(_ c: ColourGrade) -> some View {
+        let count = session.climbs.filter { $0.colour == c.name && $0.result.isSend }.count
+        // A tap gesture rather than a Button, for the same reason as gradeTile.
+        return VStack(spacing: 2) {
+            HStack(spacing: 5) {
+                ColourSwatch(name: c.name)
+                Text(c.name).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            Text(c.range).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                .opacity(c.hasRange ? 1 : 0)
+            Text(count > 0 ? "\(count)" : " ").font(.caption2.weight(.semibold)).foregroundStyle(Color.brand)
+        }
+        .frame(maxWidth: .infinity, minHeight: 58)
+        .background(Color.brand.opacity(count > 0 ? 0.16 : 0.07), in: RoundedRectangle(cornerRadius: 10))
+        .contentShape(Rectangle())
+        .onTapGesture { log(colour: c) }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("Log \(mode.title.lowercased()) on \(c.name)" + (c.hasRange ? ", \(c.range)" : ""))
+    }
+
+    private func log(colour: ColourGrade) {
+        let climb = Climb(colour: colour, result: mode, at: session.nextLogTime())
+        climb.session = session
+        context.insert(climb)
+    }
+
+
     private func gradeTile(_ grade: Int, title: String, accessibility: String) -> some View {
-        let count = session.climbs.filter { $0.discipline == discipline && $0.grade == grade && $0.isComp == comp && $0.result.isSend }.count
+        let count = session.climbs.filter { $0.discipline == discipline && $0.grade == grade && $0.isComp == comp && $0.colour == nil && $0.result.isSend }.count
         // A plain tap gesture, not a Button: Buttons inside a List row drop
         // quick repeat taps, and logging three V2s in a row should just work.
         return VStack(spacing: 2) {
@@ -179,8 +240,7 @@ struct SessionView: View {
     }
 
     private func log(grade: Int) {
-        let at = session.isActive ? Date.now : min(session.end ?? session.start, Date.now)
-        let climb = Climb(discipline: discipline, grade: grade, result: mode, at: at, comp: comp)
+        let climb = Climb(discipline: discipline, grade: grade, result: mode, at: session.nextLogTime(), comp: comp)
         climb.session = session
         context.insert(climb)
     }
@@ -203,7 +263,14 @@ struct SessionTally: View {
                 .font(.subheadline.weight(.semibold))
             ForEach(rows, id: \.id) { row in
                 HStack(spacing: 10) {
-                    Text(row.label).font(.callout.weight(.semibold).monospacedDigit()).frame(width: 44, alignment: .leading)
+                    if let colour = row.colour {
+                        HStack(spacing: 5) {
+                            ColourSwatch(name: colour)
+                            Text(row.label).font(.callout.weight(.semibold))
+                        }
+                    } else {
+                        Text(row.label).font(.callout.weight(.semibold).monospacedDigit()).frame(width: 44, alignment: .leading)
+                    }
                     if row.comp { Image(systemName: "trophy").foregroundStyle(.secondary).accessibilityLabel("Comp") }
                     if row.flash > 0 { Label("\(row.flash)", systemImage: "bolt.fill").foregroundStyle(Color.amber) }
                     if row.send > 0 { Label("\(row.send)", systemImage: "checkmark").foregroundStyle(Color.brand) }
@@ -215,19 +282,24 @@ struct SessionTally: View {
         }
     }
 
-    private struct Row { let id: String; let label: String; let comp: Bool; let flash: Int; let send: Int; let attempt: Int }
+    private struct Row {
+        let id: String; let label: String; let colour: String?; let comp: Bool
+        let flash: Int; let send: Int; let attempt: Int
+    }
 
     /// Regular climbs first, then comp problems; hardest first within each, ungraded last.
+    /// Colour climbs group by colour and, if you set one, the grade they felt.
     private var rows: [Row] {
-        let groups = Dictionary(grouping: session.climbs) { "\($0.disciplineRaw)#\($0.grade)#\($0.isComp)" }
+        let groups = Dictionary(grouping: session.climbs) { "\($0.disciplineRaw)#\($0.grade)#\($0.isComp)#\($0.colour ?? "")" }
         return groups.compactMap { key, cs -> (Discipline, Int, Row)? in
             guard let c = cs.first else { return nil }
-            return (c.discipline, c.grade, Row(id: key, label: c.gradeLabel, comp: c.isComp,
+            let label = c.colour.map { c.hasFeltGrade ? "\($0) (felt \(c.gradeLabel))" : $0 } ?? c.gradeLabel
+            return (c.discipline, c.grade, Row(id: key, label: label, colour: c.colour, comp: c.isComp,
                                                flash: cs.filter { $0.result == .flash }.count,
                                                send: cs.filter { $0.result == .send }.count,
                                                attempt: cs.filter { $0.result == .attempt }.count))
         }
-        .sorted { ($0.0 == .rope ? 1 : 0, $0.2.comp ? 1 : 0, -$0.1) < ($1.0 == .rope ? 1 : 0, $1.2.comp ? 1 : 0, -$1.1) }
+        .sorted { ($0.0 == .rope ? 1 : 0, $0.2.comp ? 1 : 0, -$0.1, $0.2.label) < ($1.0 == .rope ? 1 : 0, $1.2.comp ? 1 : 0, -$1.1, $1.2.label) }
         .map(\.2)
     }
 }

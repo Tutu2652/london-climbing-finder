@@ -203,7 +203,7 @@ class SwiftPythonParity(unittest.TestCase):
             exe = os.path.join(tmp, "parity")
             build = subprocess.run(
                 ["swiftc", "-o", exe, os.path.join(core, "Models.swift"),
-                 os.path.join(core, "Pricing.swift"), main],
+                 os.path.join(core, "Pricing.swift"), os.path.join(core, "ColourGrades.swift"), main],
                 capture_output=True, text=True, timeout=600)
             if build.returncode != 0:
                 self.fail("swift harness failed to build:\n" + build.stderr[:2000])
