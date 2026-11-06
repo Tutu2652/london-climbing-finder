@@ -143,7 +143,8 @@ plus seven framed screens with headlines. To remake them after the app or prices
 2. Capture each screen with `xcrun simctl io booted screenshot build/screenshots/<name>.png`,
    where `<name>` is `cheapest`, `map`, `deals` (More → Deals → Weekly), `gym`,
    `gyms`, `logbook` or `stats`.
-3. `python3 ios/tools/ad_screenshots.py compose` writes the framed images.
+3. `python3 ios/tools/ad_screenshots.py compose` writes the framed images. To remake only
+   some, name them: `compose stats`.
 4. `python3 ios/tools/ad_screenshots.py restore` puts the simulator's own data back.
 
 Headlines and the demo logbook are at the top of `ios/tools/ad_screenshots.py`. Never

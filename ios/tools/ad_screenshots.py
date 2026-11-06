@@ -5,6 +5,7 @@ Makes the App Store / advert screenshots in ios/screenshots/.
     python3 ios/tools/ad_screenshots.py demo      # prepare the booted simulator
     python3 ios/tools/ad_screenshots.py restore   # put the simulator's own data back
     python3 ios/tools/ad_screenshots.py compose   # frame build/screenshots/*.png
+    python3 ios/tools/ad_screenshots.py compose stats   # remake just the named shots
 
 `demo` backs up the app's data on the booted simulator, then sets the start location
 to Trafalgar Square (WC2N 5DU), fills the logbook with made-up sessions and cleans up
@@ -113,8 +114,8 @@ def seed_logbook(store):
                    " values (?,2,1,0,?,?,?,?,'',?)", (pk, t0 + mins * 60, price, t0, gym, uuid.uuid4().bytes))
         for i, (grade, result) in enumerate(climbs, 1):
             climb += 1
-            db.execute("insert into ZCLIMB (Z_PK,Z_ENT,Z_OPT,ZGRADE,ZSESSION,ZLOGGEDAT,ZDISCIPLINERAW,ZRESULTRAW,ZID,ZISCOMP)"
-                       " values (?,1,1,?,?,?,'boulder',?,?,0)",
+            db.execute("insert into ZCLIMB (Z_PK,Z_ENT,Z_OPT,ZGRADE,ZSESSION,ZLOGGEDAT,ZDISCIPLINERAW,ZRESULTRAW,ZID,ZISCOMP,ZFELTGRADESET)"
+                       " values (?,1,1,?,?,?,'boulder',?,?,0,0)",
                        (climb, grade, pk, t0 + i * mins * 60 / (len(climbs) + 1), result, uuid.uuid4().bytes))
     db.execute("update Z_PRIMARYKEY set Z_MAX=? where Z_NAME='Climb'", (climb,))
     db.execute("update Z_PRIMARYKEY set Z_MAX=? where Z_NAME='ClimbSession'", (len(DEMO_SESSIONS),))
@@ -139,7 +140,7 @@ def restore():
     print("Restored.")
 
 
-def compose():
+def compose(only=()):
     from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
     W, H = 1290, 2796                      # App Store 6.7"/6.9" portrait
@@ -196,7 +197,30 @@ def compose():
         return body
 
     os.makedirs(OUT, exist_ok=True)
+    shots = [s for s in SHOTS if not only or s[1] in only]
+    if only and len(shots) != len(set(only)):
+        sys.exit("Unknown shot name; use " + ", ".join(s[1] for s in SHOTS))
+    if not only:
+        compose_cover(background, centred, font, colours, white, muted)
+    for name, raw, title, sub, accent in shots:
+        bg = background()
+        d = ImageDraw.Draw(bg)
+        y = centred(d, 190, title, font(112, "Bold"), white, gap=12)
+        centred(d, y + 34, sub, font(52, "Medium"), colours[accent], gap=12)
+        p = phone(os.path.join(RAW, raw + ".png"), 920)
+        x, top = (W - p.width) // 2, 700
+        shadow = Image.new("L", (W, H), 0)
+        ImageDraw.Draw(shadow).rounded_rectangle((x + 10, top + 40, x + p.width - 10, top + p.height + 40), 150, fill=170)
+        bg.paste(Image.new("RGB", (W, H), (0, 0, 0)), (0, 0), shadow.filter(ImageFilter.GaussianBlur(50)))
+        bg.paste(p, (x, top), p)
+        bg.save(os.path.join(OUT, name + ".png"), optimize=True)
+    print(f"Wrote {len(shots) + (0 if only else 1)} images to {os.path.relpath(OUT, ROOT)}/")
 
+
+def compose_cover(background, centred, font, colours, white, muted):
+    from PIL import Image, ImageDraw
+
+    W, H = 1290, 2796
     bg = background()
     d = ImageDraw.Draw(bg)
     icon = Image.open(ICON).convert("RGBA").resize((380, 380), Image.LANCZOS)
@@ -213,23 +237,12 @@ def compose():
     d.text((W / 2, H - 170), "Free · iPhone · web", font=font(44, "Semibold"), fill=muted, anchor="ma")
     bg.save(os.path.join(OUT, "00-cover.png"), optimize=True)
 
-    for name, raw, title, sub, accent in SHOTS:
-        bg = background()
-        d = ImageDraw.Draw(bg)
-        y = centred(d, 190, title, font(112, "Bold"), white, gap=12)
-        centred(d, y + 34, sub, font(52, "Medium"), colours[accent], gap=12)
-        p = phone(os.path.join(RAW, raw + ".png"), 920)
-        x, top = (W - p.width) // 2, 700
-        shadow = Image.new("L", (W, H), 0)
-        ImageDraw.Draw(shadow).rounded_rectangle((x + 10, top + 40, x + p.width - 10, top + p.height + 40), 150, fill=170)
-        bg.paste(Image.new("RGB", (W, H), (0, 0, 0)), (0, 0), shadow.filter(ImageFilter.GaussianBlur(50)))
-        bg.paste(p, (x, top), p)
-        bg.save(os.path.join(OUT, name + ".png"), optimize=True)
-    print(f"Wrote {len(SHOTS) + 1} images to {os.path.relpath(OUT, ROOT)}/")
-
 
 if __name__ == "__main__":
     cmds = {"demo": demo, "restore": restore, "compose": compose}
-    if len(sys.argv) != 2 or sys.argv[1] not in cmds:
+    if len(sys.argv) < 2 or sys.argv[1] not in cmds or (len(sys.argv) > 2 and sys.argv[1] != "compose"):
         sys.exit(__doc__)
-    cmds[sys.argv[1]]()
+    if sys.argv[1] == "compose":
+        compose(sys.argv[2:])
+    else:
+        cmds[sys.argv[1]]()
