@@ -20,7 +20,7 @@ London climbing gyms. Pick a date and time and it shows the cheapest gym and whe
 |---|---|---|
 | **Website** | A browser | Open the link above. Works on phones. |
 | **iPhone app** | A Mac with Xcode and any Apple ID | Follow [ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use), about ten minutes the first time, or ask an AI coding agent to do it ([AGENTS.md](AGENTS.md)). |
-| **Android app** | Any Android phone (8.0 or newer) | Install the APK file, no computer needed: see [android/README.md](android/README.md#install-it-on-your-phone-no-mac-needed). To build it yourself you need a JDK and the Android SDK. |
+| **Android app** | Any Android phone (8.0 or newer) | [Download the APK](https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.apk) on the phone and install it, no computer needed: see [android/README.md](android/README.md#install-it-on-your-phone-no-mac-needed). To build it yourself you need a JDK and the Android SDK. |
 | **Offline dashboard** | A browser | Download and double-click `london_climbing_dashboard.html`. |
 | **Command line** | Python 3 (no packages) | `python3 london_climbing_prices.py` (see below). |
 | **Deal calendars** | A calendar app | Subscribe from the website, or add `london-climbing-deals-all.ics` (or `-no-student.ics`). |

@@ -22,13 +22,16 @@ in backups but can't be opened here), and Google sign-in sync.
 
 ## Install it on your phone (no Mac needed)
 
-You need the app file, `app-debug.apk`. Ask whoever is sharing the app for it, or
-download it from GitHub: open the repo's **Actions** tab, pick the latest green **CI** run
-on `main`, and download **climbing-finder-android** under Artifacts (you need a GitHub
-account; the download is a zip with the APK inside).
+You need the app file. On the phone, open this link to download it (no GitHub account
+needed):
 
-1. Get the APK onto the phone: download it there, or send it to yourself by email,
-   WhatsApp or Google Drive.
+**https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.apk**
+
+The [Releases page](https://github.com/Tutu2652/london-climbing-finder/releases) lists
+every version.
+
+1. Get the APK onto the phone: download it there, or download it on a computer and send
+   it to yourself by email, WhatsApp or Google Drive.
 2. Tap the file to open it. Android says installing apps from this source isn't allowed:
    tap **Settings**, turn on **Allow from this source**, then go back.
 3. Tap **Install**. If Google Play Protect warns that it doesn't recognise the app, tap
@@ -38,7 +41,7 @@ account; the download is a zip with the APK inside).
 The install doesn't expire, unlike the free iPhone install.
 
 **Updates.** Install the newer APK over the top; your logbook and notes stay. This works
-for any APK from CI or from the maintainer, because they are all signed with the same key
+for any APK from Releases, CI or the maintainer, because they are all signed with the same key
 (see [Signing key](#signing-key)). An APK someone built on their own computer has a
 different key: Android then says "App not installed". To switch to it, back up your
 logbook (More → Back up logbook), uninstall, install the new file and restore the backup.
@@ -68,7 +71,10 @@ times, then Settings → System → Developer options → **USB debugging**), pl
 An AI coding agent can do this for you: ask it to "install the Android app on my phone"
 ([AGENTS.md](../AGENTS.md#installing-on-android) has the steps).
 
-CI builds the same APK on every push and keeps it with the run.
+CI builds the same APK on every push and keeps it with the run for 90 days (Actions tab →
+a green **CI** run → **climbing-finder-android**; needs a GitHub account). To publish a
+new version, attach that APK to a new GitHub release, renamed to
+`london-climbing-finder.apk` so the download link above keeps working.
 
 ### Signing key
 

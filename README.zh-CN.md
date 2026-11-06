@@ -20,7 +20,7 @@
 |---|---|---|
 | **网站** | 浏览器 | 打开上面的链接，手机上也能用。 |
 | **iPhone App** | 一台装了 Xcode 的 Mac，以及任意 Apple ID | 按 [ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use)（英文）操作，第一次大约十分钟；也可以让 AI 编程助手代劳（见 [AGENTS.md](AGENTS.md)）。 |
-| **Android App** | 任意 Android 手机（8.0 及以上） | 安装 APK 文件即可，不需要电脑：见 [android/README.md](android/README.md#install-it-on-your-phone-no-mac-needed)（英文）。自己构建需要 JDK 和 Android SDK。 |
+| **Android App** | 任意 Android 手机（8.0 及以上） | 在手机上[下载 APK](https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.apk) 并安装即可，不需要电脑：见 [android/README.md](android/README.md#install-it-on-your-phone-no-mac-needed)（英文）。自己构建需要 JDK 和 Android SDK。 |
 | **离线版面板** | 浏览器 | 下载后双击 `london_climbing_dashboard.html`。 |
 | **命令行** | Python 3（无需安装任何包） | `python3 london_climbing_prices.py`（见下文）。 |
 | **优惠日历** | 日历 App | 在网站上订阅，或导入 `london-climbing-deals-all.ics`（或不含学生专属优惠的 `-no-student.ics`）。 |
