@@ -80,7 +80,7 @@ struct LogbookChecks {
         assert(remainingClimbs == 3)
         try compChecks()
         try colourChecks()
-        print("Logbook checks passed: sends, duration, backup round trip, deduplication, validation, active-session recovery, cascade deletion, media references, legacy backups, comp routes, colour grades, log order, editing")
+        print("Logbook checks passed: sends, duration, backup round trip, deduplication, validation, active-session recovery, cascade deletion, media references, legacy backups, comp routes, colour grades, log order, editing, felt grades")
     }
 
     @MainActor static func compChecks() throws {
@@ -190,6 +190,59 @@ struct LogbookChecks {
         do { try invalid.validate(); assertionFailure("Duplicate colours must be rejected") } catch LogbookBackup.RestoreError.invalidRecord { }
         try rankedColourChecks()
         try editingChecks()
+        try feltGradeChecks()
+    }
+
+    /// Picking the bottom of the range as the felt grade still counts as a felt grade.
+    @MainActor static func feltGradeChecks() throws {
+        let container = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                          configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let session = ClimbSession(gymID: "felt-gym", start: start, end: start.addingTimeInterval(3600), price: nil)
+        context.insert(session)
+        let purple = ColourGrade(name: "Purple", low: 3, high: 5)
+        let c = Climb(colour: purple, result: .send, at: start)
+        context.insert(c); c.session = session
+        assert(c.feltGrade == nil && !c.hasFeltGrade && c.colourDetail == "V3–V5")
+        c.feltGrade = 3
+        assert(c.grade == 3 && c.hasFeltGrade && c.colourDetail == "V3–V5 · felt V3", "Felt V3 shows, though it's the bottom")
+        assert(c.listGrade == "V3" && c.listGradeIsFelt)
+        assert(Climb(discipline: .boulder, grade: 4, result: .flash).listGrade == "V4")
+        c.feltGrade = nil
+        assert(c.grade == 3 && !c.hasFeltGrade && c.colourDetail == "V3–V5")
+        assert(c.listGrade == "V3–V5" && !c.listGradeIsFelt)
+        c.feltGrade = 4
+        c.setColour(ColourGrade(name: "White", low: 4, high: 6))
+        assert(!c.hasFeltGrade && c.grade == 4, "A new colour starts from its own range")
+        let ranked = Climb(colour: ColourGrade(name: "Yellow", low: nil, high: nil), result: .send, at: start)
+        context.insert(ranked); ranked.session = session
+        ranked.feltGrade = 2
+        assert(ranked.grade == 2 && ranked.colourDetail == "felt V2")
+        ranked.feltGrade = nil
+        assert(ranked.grade == Climb.ungraded && ranked.colourDetail == nil && ranked.listGrade == "")
+        // Old climbs (no flag) still count a moved grade as felt.
+        let old = Climb(colour: purple, result: .send, at: start)
+        old.grade = 5
+        assert(old.hasFeltGrade && old.feltGrade == 5)
+
+        c.feltGrade = 4
+        try context.save()
+        let backup = try LogbookBackup.decoder.decode(LogbookBackup.self, from: LogbookBackup.encoder.encode(LogbookBackup([session])))
+        try backup.validate()
+        assert(backup.sessions[0].climbs.contains { $0.feltGradeSet == true })
+        assert(backup.sessions[0].climbs.contains { $0.colour == "Yellow" && $0.feltGradeSet == nil }, "Only written when set")
+        let restoredContainer = try ModelContainer(for: ClimbSession.self, Climb.self,
+                                                  configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        _ = try backup.restore(into: restoredContainer.mainContext, existing: [])
+        let restored = try restoredContainer.mainContext.fetch(FetchDescriptor<Climb>())
+        assert(restored.contains { $0.colour == "White" && $0.feltGrade == 4 })
+        var invalid = backup
+        let i = invalid.sessions[0].climbs.firstIndex { $0.colour == "Yellow" }!
+        invalid.sessions[0].climbs[i].colour = nil
+        invalid.sessions[0].climbs[i].grade = 2
+        invalid.sessions[0].climbs[i].feltGradeSet = true
+        do { try invalid.validate(); assertionFailure("Felt grades are for colour climbs") } catch LogbookBackup.RestoreError.invalidRecord { }
     }
 
     /// Log order (so Undo removes the last tap) and changing a logged climb.

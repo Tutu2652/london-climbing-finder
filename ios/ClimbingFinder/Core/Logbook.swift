@@ -107,6 +107,8 @@ final class Climb {
     var colour: String?
     var colourLow: Int?
     var colourHigh: Int?
+    /// You picked how a colour climb felt, even if that's the bottom of its range.
+    var feltGradeSet: Bool = false
 
     /// Grade value for a comp problem logged without a grade.
     static let ungraded = -1
@@ -135,10 +137,20 @@ final class Climb {
     var colourGrade: ColourGrade? {
         colour.map { ColourGrade(name: $0, low: colourLow, high: colourHigh) }
     }
-    /// A felt grade has been set on a colour climb (it no longer counts as the bottom of the range).
+    /// A felt grade has been set on a colour climb, rather than it counting as the bottom of
+    /// its range. Climbs from before felt grades were remembered count if the grade moved.
     var hasFeltGrade: Bool {
         guard let c = colourGrade else { return false }
-        return c.low.map { grade != $0 } ?? isGraded
+        return feltGradeSet || grade != (c.low ?? Climb.ungraded)
+    }
+    /// How a colour climb felt, or nil to count it as the bottom of its range (or, with no
+    /// range, to leave it out of grade stats).
+    var feltGrade: Int? {
+        get { hasFeltGrade && isGraded ? grade : nil }
+        set {
+            guard let c = colourGrade else { return }
+            if let newValue { grade = newValue; feltGradeSet = true } else { grade = c.low ?? Climb.ungraded; feltGradeSet = false }
+        }
     }
     /// "V2–V3", "V2–V3 · felt V3" or "felt V3" for a colour climb; nil otherwise or when there's nothing to say.
     var colourDetail: String? {
@@ -146,6 +158,15 @@ final class Climb {
         let parts = [c.range, hasFeltGrade ? "felt " + gradeLabel : ""].filter { !$0.isEmpty }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
+    /// The grade a list shows next to a colour dot: the felt grade if you set one, else the
+    /// colour's range ("" for a colour with no V grades). Plain climbs show their grade.
+    var listGrade: String {
+        guard let c = colourGrade else { return gradeLabel }
+        return hasFeltGrade && isGraded ? gradeLabel : c.range
+    }
+    /// Show "felt" after `listGrade`.
+    var listGradeIsFelt: Bool { colourGrade != nil && hasFeltGrade && isGraded }
+
     /// Grade it by a colour from the gym's chart (counting as the bottom of its range), or,
     /// with nil, by V grade again (keeping the grade it counts as).
     func setColour(_ c: ColourGrade?) {
@@ -155,9 +176,11 @@ final class Climb {
             disciplineRaw = Discipline.boulder.rawValue
             isComp = false
             grade = c.low ?? Climb.ungraded
+            feltGradeSet = false
         } else {
             guard colour != nil else { return }
             colour = nil; colourLow = nil; colourHigh = nil
+            feltGradeSet = false
             if !isGraded { grade = 0 }
         }
     }
@@ -194,6 +217,8 @@ struct LogbookBackup: Codable {
         var colour: String?
         var colourLow: Int?
         var colourHigh: Int?
+        /// Present (true) only when you picked how a colour climb felt.
+        var feltGradeSet: Bool?
     }
     var version = 4
     var exported = Date.now
@@ -207,7 +232,8 @@ struct LogbookBackup: Codable {
                     climbs: s.climbs.sorted { $0.loggedAt < $1.loggedAt }.map {
                         ClimbRecord(id: $0.id, discipline: $0.disciplineRaw, grade: $0.grade, result: $0.resultRaw, loggedAt: $0.loggedAt,
                                     videoAssetID: $0.videoAssetID, routePhotoAssetID: $0.routePhotoAssetID, isComp: $0.isComp,
-                                    colour: $0.colour, colourLow: $0.colourLow, colourHigh: $0.colourHigh)
+                                    colour: $0.colour, colourLow: $0.colourLow, colourHigh: $0.colourHigh,
+                                    feltGradeSet: $0.feltGradeSet ? true : nil)
                     })
         }
         self.colourScales = colourScales.isEmpty ? nil : colourScales
@@ -253,7 +279,7 @@ struct LogbookBackup: Codable {
                 if let name = c.colour {
                     guard discipline == .boulder,
                           ColourGrade(name: name, low: c.colourLow, high: c.colourHigh).isValid else { throw RestoreError.invalidRecord }
-                } else if c.colourLow != nil || c.colourHigh != nil {
+                } else if c.colourLow != nil || c.colourHigh != nil || c.feltGradeSet == true {
                     throw RestoreError.invalidRecord
                 }
             }
@@ -280,6 +306,7 @@ struct LogbookBackup: Codable {
                 climb.colour = c.colour
                 climb.colourLow = c.colourLow
                 climb.colourHigh = c.colourHigh
+                climb.feltGradeSet = c.feltGradeSet ?? false
                 context.insert(climb)
                 climb.session = session
             }

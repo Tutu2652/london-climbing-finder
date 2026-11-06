@@ -8,29 +8,45 @@ import AVKit
 struct ClimbMediaRow: View {
     let climb: Climb
     var body: some View {
-        HStack {
+        // One line: outcome icon, colour dot and the grade that counts, outcome, media, time.
+        HStack(spacing: 8) {
             Image(systemName: climb.result.icon)
-                .foregroundStyle(climb.result == .flash ? Color.amber : Color.brand)
+                .foregroundStyle(climb.result == .flash ? Color.amber : climb.result == .send ? Color.brand : .secondary)
                 .frame(width: 22)
-            if let colour = climb.colour {
-                ColourSwatch(name: colour)
-                Text(colour).font(.body.weight(.semibold))
-                if let detail = climb.colourDetail { Text(detail).font(.caption).foregroundStyle(.secondary) }
-            } else {
-                Text(climb.gradeLabel).font(.body.weight(.semibold).monospacedDigit())
-            }
+            ClimbGradeLabel(climb: climb)
             Text(climb.result.title).foregroundStyle(.secondary)
             if climb.isComp { Pill(text: "Comp", color: .amber) }
-            Spacer()
+            Spacer(minLength: 8)
             if climb.routePhotoAssetID != nil {
-                Image(systemName: "photo").accessibilityLabel("Route photo linked")
+                Image(systemName: "photo").foregroundStyle(.secondary).accessibilityLabel("Route photo linked")
             }
             if climb.videoAssetID != nil {
-                Image(systemName: "video").accessibilityLabel("Video linked")
+                Image(systemName: "video").foregroundStyle(.secondary).accessibilityLabel("Video linked")
             }
             Text(climb.loggedAt.formatted(date: .omitted, time: .shortened))
                 .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
         }
+        .lineLimit(1)
+    }
+}
+
+/// A colour dot (for colour climbs) and the grade that counts: "● V1–V3", "● V2 felt" or "V4".
+struct ClimbGradeLabel: View {
+    let climb: Climb
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let colour = climb.colour { ColourSwatch(name: colour, size: 14) }
+            if !climb.listGrade.isEmpty {
+                Text(climb.listGrade).font(.body.weight(.semibold).monospacedDigit())
+            }
+            if climb.listGradeIsFelt {
+                Text("felt").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel([climb.colour, climb.listGrade, climb.listGradeIsFelt ? "felt" : nil]
+            .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " "))
     }
 }
 
@@ -82,9 +98,9 @@ struct ClimbMediaView: View {
                 }
                 if let c = climb.colourGrade {
                     LabeledContent("Range", value: c.hasRange ? c.range : "No V grade")
-                    Picker("Felt grade", selection: $climb.grade) {
-                        if !c.hasRange { Text("No grade").tag(Climb.ungraded) }
-                        ForEach(climb.discipline.grades.indices, id: \.self) { Text(climb.discipline.grades[$0]).tag($0) }
+                    Picker("Felt grade", selection: $climb.feltGrade) {
+                        Text("Not set").tag(Int?.none)
+                        ForEach(climb.discipline.grades.indices, id: \.self) { Text(climb.discipline.grades[$0]).tag(Int?.some($0)) }
                     }
                 } else {
                     SwitchRow(isOn: $climb.isComp) { Text("Comp route") }
@@ -96,10 +112,10 @@ struct ClimbMediaView: View {
                 }
             } footer: {
                 if let c = climb.colourGrade {
-                    if let low = c.low {
-                        Text(climb.hasFeltGrade
-                             ? "Stats count this climb as \(climb.gradeLabel). Set it back to \(gradeRange(low, low)) to count it as the bottom of the range."
-                             : "Stats count this climb as \(climb.gradeLabel), the bottom of the range. Change it if it felt harder.")
+                    if c.low != nil {
+                        Text(climb.feltGrade != nil
+                             ? "Stats count this climb as \(climb.gradeLabel), the grade you said it felt."
+                             : "Stats count this climb as \(climb.gradeLabel), the bottom of the range. Set a felt grade if it felt different.")
                     } else {
                         Text(climb.isGraded
                              ? "This gym's colours have no V grades. Stats count this climb as \(climb.gradeLabel), the grade you said it felt."

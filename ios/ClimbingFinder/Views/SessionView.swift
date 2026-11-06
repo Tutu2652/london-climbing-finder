@@ -257,20 +257,22 @@ struct SessionTally: View {
         let flashes = climbs.filter { $0.result == .flash }.count
         let attempts = climbs.count - sends.count
         let comps = climbs.filter(\.isComp).count
+        let hasColours = climbs.contains { $0.colour != nil }
         VStack(alignment: .leading, spacing: 6) {
             Text("\(sends.count) sends" + (flashes > 0 ? " (\(flashes) flashed)" : "") + (attempts > 0 ? " · \(attempts) attempt\(attempts == 1 ? "" : "s")" : "")
                  + (comps > 0 ? " · \(comps) comp" : ""))
                 .font(.subheadline.weight(.semibold))
             ForEach(rows, id: \.id) { row in
                 HStack(spacing: 10) {
-                    if let colour = row.colour {
-                        HStack(spacing: 5) {
-                            ColourSwatch(name: colour)
-                            Text(row.label).font(.callout.weight(.semibold))
+                    // A fixed-width label column keeps the counts lined up.
+                    Group {
+                        if row.sample.colour != nil {
+                            ClimbGradeLabel(climb: row.sample)
+                        } else {
+                            Text(row.label).font(.callout.weight(.semibold).monospacedDigit())
                         }
-                    } else {
-                        Text(row.label).font(.callout.weight(.semibold).monospacedDigit()).frame(width: 44, alignment: .leading)
                     }
+                    .frame(width: hasColours ? 112 : 44, alignment: .leading)
                     if row.comp { Image(systemName: "trophy").foregroundStyle(.secondary).accessibilityLabel("Comp") }
                     if row.flash > 0 { Label("\(row.flash)", systemImage: "bolt.fill").foregroundStyle(Color.amber) }
                     if row.send > 0 { Label("\(row.send)", systemImage: "checkmark").foregroundStyle(Color.brand) }
@@ -283,18 +285,20 @@ struct SessionTally: View {
     }
 
     private struct Row {
-        let id: String; let label: String; let colour: String?; let comp: Bool
+        let id: String; let label: String; let sample: Climb; let comp: Bool
         let flash: Int; let send: Int; let attempt: Int
     }
 
     /// Regular climbs first, then comp problems; hardest first within each, ungraded last.
     /// Colour climbs group by colour and, if you set one, the grade they felt.
     private var rows: [Row] {
-        let groups = Dictionary(grouping: session.climbs) { "\($0.disciplineRaw)#\($0.grade)#\($0.isComp)#\($0.colour ?? "")" }
+        let groups = Dictionary(grouping: session.climbs) {
+            "\($0.disciplineRaw)#\($0.grade)#\($0.isComp)#\($0.colour ?? "")#\($0.listGradeIsFelt)"
+        }
         return groups.compactMap { key, cs -> (Discipline, Int, Row)? in
             guard let c = cs.first else { return nil }
-            let label = c.colour.map { c.hasFeltGrade ? "\($0) (felt \(c.gradeLabel))" : $0 } ?? c.gradeLabel
-            return (c.discipline, c.grade, Row(id: key, label: label, colour: c.colour, comp: c.isComp,
+            let label = (c.colour ?? "") + c.listGrade
+            return (c.discipline, c.grade, Row(id: key, label: label, sample: c, comp: c.isComp,
                                                flash: cs.filter { $0.result == .flash }.count,
                                                send: cs.filter { $0.result == .send }.count,
                                                attempt: cs.filter { $0.result == .attempt }.count))
