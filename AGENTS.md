@@ -214,3 +214,31 @@ signing key or password stay out of git.
   the same order. When you change one, make the same change in the other in the same
   commit. Keep gym names, file and field names, and commands in English in both.
   `README.md` is authoritative if the two disagree.
+
+## Releasing a new Android version
+
+Friends install the APK from GitHub Releases through one fixed link,
+`https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.apk`,
+and the app tells them about updates through `gyms.json`. Follow these steps in order, and
+ask the user before publishing a release (it is public).
+
+1. Raise `versionCode` (by 1) and `versionName` in `android/app/build.gradle.kts`.
+   Commit and push to `main`, and wait for CI to pass.
+2. Download that CI run's APK (`gh run download <run id> -n climbing-finder-android`).
+   Check it with `apksigner verify --print-certs`: it must be signed with the shared key,
+   SHA-256 `2c22927244f368e02a392f0d98dc032b92097cec6eea3e1ef2a18691c3cae932`.
+   An APK signed with any other key won't install over earlier versions.
+3. Rename it `london-climbing-finder.apk` and create the release:
+   `gh release create v<versionName> london-climbing-finder.apk --target <full commit SHA> --title "…" --latest`.
+   - Don't mark it as a pre-release: `releases/latest` skips pre-releases, so the link
+     would break.
+   - Versions below 1.0 are test versions; say so in the title.
+4. Only after the release exists, set `_meta.android_app` in `gyms.json` (`version_code`,
+   `version_name`) to the new version. Then run `python3 tools/sync_data.py` and the tests,
+   commit and push. Once the website redeploys, older copies of the app show an
+   **Update** banner. A test stops `version_code` going above the one in
+   `build.gradle.kts`. Announcing a version before its release exists sends people to a
+   missing or older file.
+
+To check it worked, run
+`curl -sL <the link above> | shasum -a 256`. The hash must match the file you uploaded.
