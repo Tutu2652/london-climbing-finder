@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.StopCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -35,6 +37,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -42,6 +47,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,10 +66,12 @@ import androidx.compose.ui.unit.dp
 import io.github.tutu2652.climbingfinder.core.Climb
 import io.github.tutu2652.climbingfinder.core.ClimbResult
 import io.github.tutu2652.climbingfinder.core.ClimbSession
+import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.Discipline
 import io.github.tutu2652.climbingfinder.core.London
 import io.github.tutu2652.climbingfinder.core.formatDuration
 import io.github.tutu2652.climbingfinder.core.formatPrice
+import io.github.tutu2652.climbingfinder.core.gradeRange
 import io.github.tutu2652.climbingfinder.core.nowSecond
 import io.github.tutu2652.climbingfinder.core.shortName
 import java.time.Instant
@@ -109,15 +117,27 @@ fun SessionLogScreen(id: String) {
     if (!ropesHere) discipline = Discipline.BOULDER
     var mode by remember { mutableStateOf(ClimbResult.of(prefs.getString("logMode", "send")!!) ?: ClimbResult.SEND) }
     var allGrades by remember { mutableStateOf(false) }
-    // Carry on in comp mode if that's what you were last logging.
-    var comp by remember { mutableStateOf(session.climbs.maxByOrNull { it.loggedAt }?.comp ?: false) }
+    // Carry on in comp mode, or by V grade, if that's what you were last logging.
+    val last = session.lastClimb
+    var comp by remember { mutableStateOf(last?.comp ?: false) }
+    /** At a gym with colour grades: log by colour (true) or by V grade. */
+    var byColour by remember {
+        mutableStateOf(if (last != null && last.discipline == Discipline.BOULDER && !last.comp) last.colour != null else true)
+    }
+    val scale = model.colourScale(session.gymID)
+    // Colour grades only apply to boulders, and comps are logged by V grade.
+    val colourGradable = discipline == Discipline.BOULDER && !comp
+    val usingColours = colourGradable && byColour && scale.isNotEmpty()
     var confirmDelete by remember { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
     val now by rememberNow(1000)
 
     fun log(grade: Int) {
-        val at = if (session.isActive) nowSecond() else minOf(session.end ?: session.start, nowSecond())
-        model.logbook.update(id) { it.copy(climbs = it.climbs + Climb.of(discipline, grade, mode, at, comp)) }
+        model.logbook.update(id) { it.copy(climbs = it.climbs + Climb.of(discipline, grade, mode, it.nextLogTime(), comp)) }
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+    fun log(colour: ColourGrade) {
+        model.logbook.update(id) { it.copy(climbs = it.climbs + Climb.of(colour, mode, it.nextLogTime())) }
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
@@ -146,7 +166,7 @@ fun SessionLogScreen(id: String) {
         }
 
         section(if (comp) "Tap the grade it felt, or No grade, to log a comp ${mode.title.lowercase()}"
-        else "Tap a grade to log ${if (mode == ClimbResult.ATTEMPT) "an" else "a"} ${mode.title.lowercase()}") {
+        else "Tap ${if (usingColours) "a colour" else "a grade"} to log ${if (mode == ClimbResult.ATTEMPT) "an" else "a"} ${mode.title.lowercase()}") {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (ropesHere) {
                     Segmented(Discipline.entries, discipline, { it.title }) { discipline = it; prefs.edit().putString("logDiscipline", it.raw).apply() }
@@ -157,13 +177,24 @@ fun SessionLogScreen(id: String) {
                     Text("  Comp routes", modifier = Modifier.weight(1f))
                     Switch(comp, { comp = it })
                 }
+                if (colourGradable && scale.isNotEmpty()) {
+                    Segmented(listOf(true, false), byColour, { if (it) "Colour" else "V grade" }) { byColour = it }
+                }
                 val grades = discipline.grades
                 val shown = if (allGrades) grades.size else minOf(discipline.commonCount, grades.size)
                 val tiles = (if (comp) listOf(Climb.UNGRADED to "No grade") else emptyList()) + (0 until shown).map { it to grades[it] }
-                for (row in tiles.chunked(5)) {
+                if (usingColours) for (row in scale.chunked(3)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (c in row) {
+                            val count = session.climbs.count { it.colour == c.name && it.result.isSend }
+                            ColourTile(c, count, Modifier.weight(1f), "Log ${mode.title.lowercase()} on ${c.name}" + (if (c.hasRange) ", ${c.range}" else "")) { log(c) }
+                        }
+                        repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                } else for (row in tiles.chunked(5)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         for ((g, title) in row) {
-                            val count = session.climbs.count { it.discipline == discipline && it.grade == g && it.comp == comp && it.result.isSend }
+                            val count = session.climbs.count { it.discipline == discipline && it.grade == g && it.comp == comp && it.colour == null && it.result.isSend }
                             GradeTile(title, count, Modifier.weight(1f),
                                 if (g == Climb.UNGRADED) "Log comp ${mode.title.lowercase()} with no grade"
                                 else "Log ${if (comp) "comp " else ""}${mode.title.lowercase()} at $title") { log(g) }
@@ -172,22 +203,29 @@ fun SessionLogScreen(id: String) {
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = { allGrades = !allGrades }) { Text(if (allGrades) "Fewer grades" else "More grades") }
+                    if (!usingColours) TextButton(onClick = { allGrades = !allGrades }) { Text(if (allGrades) "Fewer grades" else "More grades") }
                     Spacer(Modifier.weight(1f))
-                    session.climbs.maxByOrNull { it.loggedAt }?.let { last ->
+                    last?.let { last ->
                         TextButton(onClick = { model.logbook.update(id) { s -> s.copy(climbs = s.climbs.filterNot { it.id == last.id }) } }) {
                             Text("Undo ${last.result.title.lowercase()} ${last.label}", color = Warn)
                         }
                     }
                 }
             }
+            if (colourGradable) {
+                ActionRow(Icons.Filled.Palette, if (scale.isEmpty()) "Gym grades by colour? Set up colours" else "Edit colour grades") {
+                    nav.navigate("colours/${session.gymID}")
+                }
+            }
         }
 
         if (session.climbs.isNotEmpty()) {
             section("This session") { RowItem(divider = false) { SessionTally(session) } }
-            section("Climbs", footer = "Tap a climb to change its grade or comp tag.") {
+            section("Climbs, newest first", footer = "Swipe left to delete a climb. Tap one to change it.") {
                 session.climbs.sortedByDescending { it.loggedAt }.forEachIndexed { i, c ->
-                    RowItem(onClick = { nav.navigate("climb/${session.id}/${c.id}") }, divider = i > 0) { ClimbRow(c) }
+                    SwipeToDelete(c.id, onDelete = { deleteClimb(model, session.id, c.id) }) {
+                        RowItem(onClick = { nav.navigate("climb/${session.id}/${c.id}") }, divider = i > 0) { ClimbRow(c) }
+                    }
                 }
             }
         }
@@ -231,6 +269,49 @@ fun SessionLogScreen(id: String) {
             confirmButton = { TextButton(onClick = { confirmDelete = false; nav.popBackStack(); model.logbook.delete(id) }) { Text("Delete", color = Warn) } },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
         )
+    }
+}
+
+private fun deleteClimb(model: io.github.tutu2652.climbingfinder.AppModel, sessionID: String, climbID: String) =
+    model.logbook.update(sessionID) { s -> s.copy(climbs = s.climbs.filterNot { it.id == climbID }) }
+
+/** A row you can swipe left to delete. */
+@Composable
+private fun SwipeToDelete(id: String, onDelete: () -> Unit, content: @Composable () -> Unit) = key(id) {
+    val state = rememberSwipeToDismissBoxState(confirmValueChange = {
+        if (it == SwipeToDismissBoxValue.EndToStart) onDelete()
+        it == SwipeToDismissBoxValue.EndToStart
+    })
+    SwipeToDismissBox(
+        state,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(Modifier.fillMaxSize().background(Warn).padding(horizontal = 20.dp), contentAlignment = Alignment.CenterEnd) {
+                Icon(Icons.Filled.Delete, "Delete", tint = androidx.compose.ui.graphics.Color.White)
+            }
+        },
+    ) {
+        Box(Modifier.background(MaterialTheme.colorScheme.surfaceContainerLowest)) { content() }
+    }
+}
+
+@Composable
+private fun ColourTile(c: ColourGrade, count: Int, modifier: Modifier, description: String, onTap: () -> Unit) {
+    Column(
+        modifier.heightIn(min = 60.dp)
+            .background(Brand.copy(alpha = if (count > 0) 0.16f else 0.07f), RoundedCornerShape(10.dp))
+            .clickable(onClick = onTap)
+            .semantics { contentDescription = description }
+            .padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            ColourSwatch(c.name)
+            Text(c.name, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+        }
+        Text(c.range.ifEmpty { " " }, style = MaterialTheme.typography.labelSmall, color = secondaryText, maxLines = 1)
+        Text(if (count > 0) "$count" else " ", style = MaterialTheme.typography.labelSmall, color = Brand, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -316,7 +397,7 @@ fun ClimbRow(climb: Climb) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Icon(climb.result.icon, null, tint = if (climb.result == ClimbResult.FLASH) Amber else if (climb.result == ClimbResult.SEND) Brand else secondaryText,
             modifier = Modifier.size(20.dp))
-        Text(climb.gradeLabel, fontWeight = FontWeight.SemiBold)
+        if (climb.colour != null) ColourLabel(climb) else Text(climb.gradeLabel, fontWeight = FontWeight.SemiBold)
         Text(climb.result.title, color = secondaryText)
         if (climb.comp) Pill("Comp", Amber)
         Spacer(Modifier.weight(1f))
@@ -332,13 +413,15 @@ fun SessionTally(session: ClimbSession) {
     val flashes = climbs.count { it.result == ClimbResult.FLASH }
     val attempts = climbs.size - sends.size
     val comps = climbs.count { it.comp }
-    data class TallyRow(val label: String, val comp: Boolean, val flash: Int, val send: Int, val attempt: Int)
+    data class TallyRow(val label: String, val colour: String?, val comp: Boolean, val flash: Int, val send: Int, val attempt: Int)
     // Regular climbs first, then comp problems; hardest first within each, ungraded last.
-    val rows = climbs.groupBy { Triple(it.disciplineRaw, it.grade, it.comp) }.map { (_, cs) ->
+    // Colour climbs group by colour and, if you set one, the grade they felt.
+    val rows = climbs.groupBy { listOf(it.disciplineRaw, it.grade, it.comp, it.colour) }.map { (_, cs) ->
         val c = cs.first()
-        Triple(c, c.grade, TallyRow(c.gradeLabel, c.comp, cs.count { it.result == ClimbResult.FLASH },
+        val label = c.colour?.let { if (c.hasFeltGrade) "$it (felt ${c.gradeLabel})" else it } ?: c.gradeLabel
+        Triple(c, c.grade, TallyRow(label, c.colour, c.comp, cs.count { it.result == ClimbResult.FLASH },
             cs.count { it.result == ClimbResult.SEND }, cs.count { it.result == ClimbResult.ATTEMPT }))
-    }.sortedWith(compareBy({ if (it.first.discipline == Discipline.ROPE) 1 else 0 }, { if (it.third.comp) 1 else 0 }, { -it.second }))
+    }.sortedWith(compareBy({ if (it.first.discipline == Discipline.ROPE) 1 else 0 }, { if (it.third.comp) 1 else 0 }, { -it.second }, { it.third.label }))
         .map { it.third }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text("${sends.size} sends" + (if (flashes > 0) " ($flashes flashed)" else "") +
@@ -346,7 +429,14 @@ fun SessionTally(session: ClimbSession) {
             (if (comps > 0) " · $comps comp" else ""), fontWeight = FontWeight.SemiBold)
         for (r in rows) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(r.label, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(44.dp))
+                if (r.colour != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        ColourSwatch(r.colour)
+                        Text(r.label, fontWeight = FontWeight.SemiBold)
+                    }
+                } else {
+                    Text(r.label, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(44.dp))
+                }
                 if (r.comp) Icon(Icons.Filled.EmojiEvents, "Comp", tint = secondaryText, modifier = Modifier.size(16.dp))
                 if (r.flash > 0) IconText(Icons.Filled.Bolt, "${r.flash}", MaterialTheme.typography.bodyMedium, Amber)
                 if (r.send > 0) IconText(Icons.Filled.Check, "${r.send}", MaterialTheme.typography.bodyMedium, Brand)
@@ -400,7 +490,11 @@ private fun VisitDetailScreen(session: ClimbSession) {
         } else {
             section("Summary") { RowItem(divider = false) { SessionTally(session) } }
             section("Climbs in order") {
-                climbs.forEachIndexed { i, c -> RowItem(onClick = { nav.navigate("climb/${session.id}/${c.id}") }, divider = i > 0) { ClimbRow(c) } }
+                climbs.forEachIndexed { i, c ->
+                    SwipeToDelete(c.id, onDelete = { deleteClimb(model, session.id, c.id) }) {
+                        RowItem(onClick = { nav.navigate("climb/${session.id}/${c.id}") }, divider = i > 0) { ClimbRow(c) }
+                    }
+                }
             }
         }
     }
@@ -429,8 +523,31 @@ fun ClimbScreen(sessionID: String, climbID: String) {
         ?: return Screen("Climb") { section { RowItem(divider = false) { Text("This climb was deleted.") } } }
     fun change(f: (Climb) -> Climb) = model.logbook.update(sessionID) { s -> s.copy(climbs = s.climbs.map { if (it.id == climbID) f(it) else it }) }
     var gradeMenu by remember { mutableStateOf(false) }
+    var colourMenu by remember { mutableStateOf(false) }
+    val gymID = model.logbook.session(sessionID)?.gymID ?: ""
+    // Boulders and ropes only matter where the gym has ropes, or the climb is already a rope.
+    val showsDiscipline = climb.discipline == Discipline.ROPE || model.gym(gymID)?.type?.contains("ropes") == true
+    val colourGrade = climb.colourGrade
+    // The gym's colours, with this climb's own colour (as logged) in place of the chart's.
+    val colourChoices = model.colourScale(gymID).let { chart ->
+        if (colourGrade == null) chart
+        else if (chart.any { it.name == colourGrade.name }) chart.map { if (it.name == colourGrade.name) colourGrade else it }
+        else chart + colourGrade
+    }
+    val low = colourGrade?.low
+    val footer = when {
+        colourGrade != null && low == null && climb.isGraded ->
+            "This gym's colours have no V grades. Stats count this climb as ${climb.gradeLabel}, the grade you said it felt."
+        colourGrade != null && low == null ->
+            "This gym's colours have no V grades, so this climb counts as a send but not in grade stats. Set a felt grade to count it."
+        low != null && climb.hasFeltGrade ->
+            "Stats count this climb as ${climb.gradeLabel}. Set it back to ${gradeRange(low, low)} to count it as the bottom of the range."
+        colourGrade != null -> "Stats count this climb as ${climb.gradeLabel}, the bottom of the range. Change it if it felt harder."
+        climb.comp && !climb.isGraded -> "Add a grade to count this climb in grade stats, or to untag it as comp."
+        else -> null
+    }
     Screen(climb.label + " · " + climb.result.title) {
-        section(footer = if (climb.comp && !climb.isGraded) "Add a grade to count this climb in grade stats, or to untag it as comp." else null) {
+        section(footer = footer) {
             RowItem(divider = false) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Outcome", style = MaterialTheme.typography.labelMedium, color = secondaryText)
@@ -438,16 +555,40 @@ fun ClimbScreen(sessionID: String, climbID: String) {
                 }
             }
             LabeledRow("Logged", dayFormat.format(climb.loggedAt) + ", " + timeFormat.format(climb.loggedAt))
-            RowItem(onClick = if (climb.comp && !climb.isGraded) null else ({ change { it.copy(isComp = !it.comp) } }), chevron = false) {
+            if (showsDiscipline) {
+                RowItem {
+                    Segmented(Discipline.entries, climb.discipline, { it.title }) { d -> change { it.withDiscipline(d) } }
+                }
+            }
+            if (climb.discipline == Discipline.BOULDER && colourChoices.isNotEmpty()) {
+                Box {
+                    RowItem(onClick = { colourMenu = true }) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Colour", Modifier.weight(1f))
+                            if (colourGrade != null) ColourLabel(climb, detail = false) else Text("None (V grade)", color = secondaryText)
+                        }
+                    }
+                    DropdownMenu(colourMenu, { colourMenu = false }) {
+                        DropdownMenuItem({ Text("None (V grade)") }, { colourMenu = false; change { it.withColour(null) } })
+                        for (c in colourChoices) {
+                            DropdownMenuItem({ Text(c.name + c.range.let { r -> if (r.isEmpty()) "" else "  $r" }) },
+                                { colourMenu = false; change { it.withColour(c) } }, leadingIcon = { ColourSwatch(c.name) })
+                        }
+                    }
+                }
+            }
+            if (colourGrade != null) {
+                LabeledRow("Range", colourGrade.range.ifEmpty { "No V grade" })
+            } else RowItem(onClick = if (climb.comp && !climb.isGraded) null else ({ change { it.copy(isComp = !it.comp) } }), chevron = false) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Comp route", Modifier.weight(1f))
                     Switch(climb.comp, { on -> change { it.copy(isComp = on) } }, enabled = !(climb.comp && !climb.isGraded))
                 }
             }
             Box {
-                LabeledRow(if (climb.comp) "Felt grade" else "Grade", climb.gradeLabel.let { if (it == "–") "No grade" else it }) { gradeMenu = true }
+                LabeledRow(if (climb.comp || colourGrade != null) "Felt grade" else "Grade", climb.gradeLabel.let { if (it == "–") "No grade" else it }) { gradeMenu = true }
                 DropdownMenu(gradeMenu, { gradeMenu = false }) {
-                    if (climb.comp) DropdownMenuItem({ Text("No grade") }, { gradeMenu = false; change { it.copy(grade = Climb.UNGRADED) } })
+                    if ((climb.comp && colourGrade == null) || colourGrade?.hasRange == false) DropdownMenuItem({ Text("No grade") }, { gradeMenu = false; change { it.copy(grade = Climb.UNGRADED) } })
                     climb.discipline.grades.forEachIndexed { i, g ->
                         DropdownMenuItem({ Text(g) }, { gradeMenu = false; change { it.copy(grade = i) } })
                     }

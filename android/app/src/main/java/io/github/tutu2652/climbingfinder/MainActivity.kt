@@ -38,6 +38,7 @@ import io.github.tutu2652.climbingfinder.ui.CheapestScreen
 import io.github.tutu2652.climbingfinder.ui.ClassesScreen
 import io.github.tutu2652.climbingfinder.ui.ClimbScreen
 import io.github.tutu2652.climbingfinder.ui.ClimbingTheme
+import io.github.tutu2652.climbingfinder.ui.ColourScaleScreen
 import io.github.tutu2652.climbingfinder.ui.DealsScreen
 import io.github.tutu2652.climbingfinder.ui.EventsScreen
 import io.github.tutu2652.climbingfinder.ui.ExportScreen
@@ -129,6 +130,7 @@ class MainActivity : ComponentActivity() {
                             composable("stats") { StatsScreen() }
                             composable("visits") { VisitsByGymScreen() }
                             composable("gymVisits/{id}") { GymVisitsScreen(it.arguments?.getString("id") ?: "") }
+                            composable("colours/{id}") { ColourScaleScreen(it.arguments?.getString("id") ?: "") }
                             composable(
                                 "start?past={past}&gym={gym}",
                                 arguments = listOf(
