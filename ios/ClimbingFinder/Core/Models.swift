@@ -75,6 +75,12 @@ struct Gym: Decodable, Identifiable, Hashable {
     let temporaryHours: [String: [String]]?
     /// The gym's bouldering colours, easiest first, from its grade chart; empty if it doesn't grade by colour.
     let colourGrades: [ColourGrade]
+    /// Cheap slots only some climbers can get (women+ sessions, local residents). Priced only
+    /// for climbers who qualify; see `Eligibility`. Kept apart from `magicSlots` so older app
+    /// versions, which don't know the conditions, never offer them to everyone.
+    let restrictedSlots: [MagicSlot]
+    /// One-off events (comps, watch parties). Each hides itself once its day has passed.
+    let events: [GymEvent]
 
     enum CodingKeys: String, CodingKey {
         case id, name, brand, type, area, borough, zone, postcode, lat, lng, website, payg
@@ -85,6 +91,7 @@ struct Gym: Decodable, Identifiable, Hashable {
         case classInfo = "class_info", routeSettingURL = "route_setting_url", socials, ac, acNote = "ac_note"
         case logo, logoBackground = "logo_background", about, temporarilyClosed = "temporarily_closed", notice, temporaryHours = "temporary_hours"
         case colourGrades = "colour_grades"
+        case restrictedSlots = "restricted_slots", events
     }
 
     /// One entry of `colour_grades` in gyms.json: a colour and, if the chart gives one, its V range.
@@ -147,6 +154,10 @@ struct Gym: Decodable, Identifiable, Hashable {
             let r = e.grades.flatMap(ColourGrade.parseRange)
             return ColourGrade(name: e.colour, low: r?.low, high: r?.high)
         }
+        // Entries this version can't read are dropped rather than failing the gym.
+        restrictedSlots = ((try? c.decodeIfPresent([Lenient<MagicSlot>].self, forKey: .restrictedSlots)) ?? nil)?
+            .compactMap(\.value).filter(\.isRestricted) ?? []
+        events = ((try? c.decodeIfPresent([Lenient<GymEvent>].self, forKey: .events)) ?? nil)?.compactMap(\.value) ?? []
     }
 
     static func == (a: Gym, b: Gym) -> Bool { a.id == b.id }
@@ -192,8 +203,13 @@ struct MagicSlot: Decodable {
     let months: [Int]?
     let prebook: Bool
     let exceptBankHolidays: Bool
+    /// Only for women+ climbers (restricted slots only).
+    let womenOnly: Bool
+    /// Only for people living in these postcode districts, e.g. ["SE16"] (restricted slots only).
+    let postcodes: [String]
     enum CodingKeys: String, CodingKey {
         case days, start, end, price, label, months, prebook, exceptBankHolidays = "except_bank_holidays"
+        case womenOnly = "women_only", postcodes
     }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -205,9 +221,63 @@ struct MagicSlot: Decodable {
         months = try c.decodeIfPresent([Int].self, forKey: .months)
         prebook = try c.decodeIfPresent(Bool.self, forKey: .prebook) ?? false
         exceptBankHolidays = try c.decodeIfPresent(Bool.self, forKey: .exceptBankHolidays) ?? false
+        womenOnly = try c.decodeIfPresent(Bool.self, forKey: .womenOnly) ?? false
+        postcodes = (try c.decodeIfPresent([String].self, forKey: .postcodes) ?? []).map { $0.uppercased() }
+    }
+    var isRestricted: Bool { womenOnly || !postcodes.isEmpty }
+    /// Who can get it, e.g. "women+" or "SE16 residents"; empty for everyone.
+    var condition: String {
+        var parts: [String] = []
+        if womenOnly { parts.append("women+") }
+        if !postcodes.isEmpty { parts.append(postcodes.joined(separator: "/") + " residents") }
+        return parts.joined(separator: ", ")
     }
     var isConcession: Bool { label.range(of: "concession", options: .caseInsensitive) != nil }
     var isAllDay: Bool { start == "00:00" && end == "23:59" }
+}
+
+/// A one-off event at a gym. Shown until the end of `endDate` (or `date`), then hidden.
+struct GymEvent: Decodable, Hashable, Identifiable {
+    let date: String          // YYYY-MM-DD
+    let endDate: String?
+    let start: String?
+    let end: String?
+    let title: String
+    let details: String?
+    let url: String?
+    let price: String?
+    var id: String { date + title }
+    enum CodingKeys: String, CodingKey {
+        case date, endDate = "end_date", start, end, title, details, url, price
+    }
+
+    /// Still to come (or on) the given London day, "YYYY-MM-DD".
+    func isUpcoming(today: String) -> Bool { (endDate ?? date) >= today }
+
+    /// "Sat 14 Nov · from 18:00".
+    var whenText: String {
+        func day(_ ymd: String) -> String {
+            let p = ymd.split(separator: "-").compactMap { Int($0) }
+            guard p.count == 3 else { return ymd }
+            let m = Moment(year: p[0], month: p[1], day: p[2])
+            let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            return "\(m.weekday) \(p[2]) \(months[p[1] - 1])"
+        }
+        var s = day(date)
+        if let endDate, endDate != date { s += " – " + day(endDate) }
+        switch (start, end) {
+        case let (a?, b?): s += " · \(a)–\(b)"
+        case let (a?, nil): s += " · from \(a)"
+        default: break
+        }
+        return s
+    }
+}
+
+/// Decodes a list entry, or nil if it doesn't fit, so one bad entry can't hide the rest.
+struct Lenient<T: Decodable>: Decodable {
+    let value: T?
+    init(from decoder: Decoder) throws { value = try? T(from: decoder) }
 }
 
 struct Membership: Decodable {

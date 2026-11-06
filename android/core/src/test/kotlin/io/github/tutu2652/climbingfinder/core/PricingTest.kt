@@ -33,6 +33,51 @@ class PricingTest {
         assertTrue(price("mileend", "2026-08-31", "07:30").price!! > 5.0)
     }
 
+    // Wednesday 8 July 2026 at Climbing District Bermondsey: £8 SE16 Local Day all day,
+    // £10 women+ Sister Sessions from 19:00, otherwise £15 peak.
+    private fun bermondseyWed(time: String, e: Eligibility): Double? {
+        val p = Pricer(eligibility = e)
+        return p.applicable(gym("arch_bermondsey"), Moment(2026, 7, 8, toMin(time)), false).price
+    }
+
+    @Test fun restrictedSlotsOnlyPriceForClimbersWhoQualify() {
+        assertEquals(15.0, bermondseyWed("12:00", Eligibility()))
+        assertEquals(15.0, bermondseyWed("19:30", Eligibility()))
+        assertEquals(10.0, bermondseyWed("19:30", Eligibility(women = true)))
+        assertEquals(15.0, bermondseyWed("12:00", Eligibility(women = true)))
+        assertEquals(8.0, bermondseyWed("12:00", Eligibility(postcode = "se16 2aa")))
+        assertEquals(8.0, bermondseyWed("19:30", Eligibility(women = true, postcode = "SE16")))
+        assertEquals(15.0, bermondseyWed("12:00", Eligibility(postcode = "SE1 7PB")))
+        assertEquals(15.0, bermondseyWed("12:00", Eligibility(postcode = "SE1")))
+    }
+
+    @Test fun postcodeDistrict() {
+        assertEquals("SE16", Eligibility(postcode = "se16 4dg").district)
+        assertEquals("SE16", Eligibility(postcode = "SE16").district)
+        assertEquals("SE16", Eligibility(postcode = "SE165DJ").district)
+        assertEquals("SE16", Eligibility(postcode = "SE16 5DJ").district)
+        assertEquals("E14", Eligibility(postcode = "E149ZZ").district)
+        assertEquals("SW1A", Eligibility(postcode = "SW1A 1AA").district)
+        assertEquals(null, Eligibility(postcode = " ").district)
+    }
+
+    @Test fun restrictedSlotsAreListedWithTheirCondition() {
+        val lines = gym("arch_bermondsey").dealLines(false)
+        assertTrue(lines.any { it.label == "Local Day" && "SE16 residents only" in it.extra })
+        assertTrue(lines.any { it.label == "Sister Sessions" && "women+ only" in it.extra })
+        assertEquals(null, gym("arch_bermondsey").bestOffpeak(false))   // no adult deal for everyone
+        assertEquals(10.0, gym("arch_bermondsey").bestOffpeak(false, Eligibility(women = true)))
+        assertEquals(8.0, gym("arch_bermondsey").bestOffpeak(false, Eligibility(postcode = "SE16")))
+    }
+
+    @Test fun eventsHideAfterTheirDay() {
+        val e = GymEvent(date = "2026-11-14", start = "18:00", title = "Watch party")
+        assertTrue(e.isUpcoming("2026-11-14"))
+        assertFalse(e.isUpcoming("2026-11-15"))
+        assertTrue(e.copy(endDate = "2026-11-16").isUpcoming("2026-11-15"))
+        assertEquals("Sat 14 Nov · from 18:00", e.whenText)
+    }
+
     @Test fun boardOnlySlotNeverPricesEntry() {
         val r = price("rise", "2026-07-10", "12:00")
         assertEquals(12.5, r.price)

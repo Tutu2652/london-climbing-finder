@@ -780,6 +780,26 @@ function fmtDays(days){
   }
   return runs.map(r=> r.days.length>=3 ? order[r.start]+"-"+order[r.end] : r.days.join(",")).join(",");
 }
+// Who a restricted slot is for, e.g. "women+" or "SE16 residents"; '' for everyone.
+function slotCondition(s){
+  const parts=[];
+  if(s.women_only) parts.push('women+');
+  if(s.postcodes && s.postcodes.length) parts.push(s.postcodes.join('/')+' residents');
+  return parts.join(', ');
+}
+// One-off events still to come (they hide themselves the day after).
+function upcomingEvents(){
+  const today=ymd(new Date()), out=[];
+  DATA.gyms.forEach(g=>(g.events||[]).forEach(e=>{ if((e.end_date||e.date)>=today) out.push({g,e}); }));
+  return out.sort((a,b)=>(a.e.date+(a.e.start||'')).localeCompare(b.e.date+(b.e.start||'')));
+}
+function eventWhen(e){
+  const day=iso=>{ const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); };
+  let t=day(e.date);
+  if(e.end_date && e.end_date!==e.date) t+=' – '+day(e.end_date);
+  if(e.start) t+= e.end ? ' · '+e.start+'–'+e.end : ' · from '+e.start;
+  return t;
+}
 function dealsCell(g){
   let items=[];
   const ao=g.payg.adult_offpeak, co=g.payg.concession_offpeak;
@@ -798,20 +818,22 @@ function dealsCell(g){
     if(whens.length) items.push({price:main,label:'off-peak',when:whens.join(', '),approx:g.offpeak_assumed,magic:false,extra});
   }
   // Merge slots with the same label + price (e.g. a gym's two Bargain windows) onto one line.
+  // restricted_slots (women+ sessions, local residents) are listed with who can get them but
+  // never priced here: the site has no way to know who you are. The phone apps price them.
   const groups=[];
-  for(const s of (g.magic_slots||[])){
+  for(const s of (g.magic_slots||[]).concat(g.restricted_slots||[])){
     const allday = s.start==='00:00' && s.end==='23:59';
     let when = fmtDays(s.days)+(allday?' all day':(' '+s.start+'-'+s.end));
     if(s.except_bank_holidays) when += ' (not bank hols)';
     const label=(s.label||'magic').replace(' (concession)','');
-    const prebook=!!s.prebook, conc=/concession/i.test(s.label||'');
-    let grp=groups.find(x=>x.label===label && x.price===s.price && x.prebook===prebook && x.conc===conc);
-    if(!grp){ grp={price:s.price,label,prebook,conc,whens:[]}; groups.push(grp); }
+    const prebook=!!s.prebook, conc=/concession/i.test(s.label||''), cond=slotCondition(s);
+    let grp=groups.find(x=>x.label===label && x.price===s.price && x.prebook===prebook && x.conc===conc && x.cond===cond);
+    if(!grp){ grp={price:s.price,label,prebook,conc,cond,whens:[]}; groups.push(grp); }
     grp.whens.push(when);
   }
   groups.forEach(m=>{
     items.push({price:m.price,label:m.label,when:m.whens.join(', '),approx:false,magic:true,
-      extra:(m.prebook?' (pre-book)':'')+(m.conc?' conc':'')});
+      extra:(m.prebook?' (pre-book)':'')+(m.conc?' conc':'')+(m.cond?' · '+esc(m.cond)+' only':'')});
   });
   items.sort((a,b)=>a.price-b.price);
   if(!items.length) return '—';
@@ -869,7 +891,15 @@ function viewCalendar(){
   return html;
 }
 function viewWhatsOn(){
-  let html=`<div class="card"><div class="tscroll"><table style="min-width:auto"><thead><tr><th>Gym</th><th>Regular socials &amp; sessions</th><th>Events</th><th>Route setting</th><th>Instagram</th></tr></thead><tbody>`;
+  let html='';
+  const ev=upcomingEvents();
+  if(ev.length){
+    html+=`<div class="card"><div style="padding:12px 14px"><span class="znum">Coming up</span>`+ev.map(({g,e})=>
+      `<div style="margin:8px 0"><b>${esc(e.title)}</b> <span class="meta">· ${esc(shortName(g))} · ${esc(eventWhen(e))}${e.price?' · '+esc(e.price):''}</span>`+
+      (e.details?`<div class="meta">${esc(e.details)}</div>`:'')+
+      (e.url?`<div><a href="${esc(e.url)}" target="_blank" rel="noopener">details ↗</a></div>`:'')+`</div>`).join('')+`</div></div>`;
+  }
+  html+=`<div class="card"><div class="tscroll"><table style="min-width:auto"><thead><tr><th>Gym</th><th>Regular socials &amp; sessions</th><th>Events</th><th>Route setting</th><th>Instagram</th></tr></thead><tbody>`;
   brandGroups().forEach(b=>{
     html+=`<tr><td colspan="5" style="background:var(--card2)"><span class="znum">${esc(b.brand)}</span></td></tr>`;
     b.sites.forEach(g=>{

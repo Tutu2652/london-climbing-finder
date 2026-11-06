@@ -89,6 +89,14 @@ data class Gym(
     val temporaryHours: Map<String, List<String>>?,
     /** The gym's bouldering colours, easiest first, from its grade chart; empty if it doesn't grade by colour. */
     val colourGrades: List<ColourGrade> = emptyList(),
+    /**
+     * Cheap slots only some climbers can get (women+ sessions, local residents). Priced only for
+     * climbers who qualify; see [Eligibility]. Kept apart from [magicSlots] so older app versions,
+     * which don't know the conditions, never offer them to everyone.
+     */
+    val restrictedSlots: List<MagicSlot> = emptyList(),
+    /** One-off events (comps, watch parties). Each hides itself once its day has passed. */
+    val events: List<GymEvent> = emptyList(),
 ) {
     companion object {
         fun from(o: JsonObject): Gym {
@@ -152,6 +160,10 @@ data class Gym(
                 temporarilyClosed = o.str("temporarily_closed"),
                 notice = o.str("notice"),
                 temporaryHours = hoursFrom(o.obj("temporary_hours")),
+                // Entries this version can't read are dropped rather than failing the gym.
+                restrictedSlots = o.objects("restricted_slots")
+                    .mapNotNull { runCatching { MagicSlot.from(it) }.getOrNull() }.filter { it.isRestricted },
+                events = o.objects("events").mapNotNull { runCatching { GymEvent.from(it) }.getOrNull() },
             )
         }
 
@@ -202,9 +214,20 @@ data class MagicSlot(
     val months: List<Int>?,
     val prebook: Boolean,
     val exceptBankHolidays: Boolean,
+    /** Only for women+ climbers (restricted slots only). */
+    val womenOnly: Boolean = false,
+    /** Only for people living in these postcode districts, e.g. ["SE16"] (restricted slots only). */
+    val postcodes: List<String> = emptyList(),
 ) {
     val isConcession: Boolean get() = label.contains("concession", ignoreCase = true)
     val isAllDay: Boolean get() = start == "00:00" && end == "23:59"
+    val isRestricted: Boolean get() = womenOnly || postcodes.isNotEmpty()
+
+    /** Who can get it, e.g. "women+" or "SE16 residents"; empty for everyone. */
+    val condition: String get() = listOfNotNull(
+        "women+".takeIf { womenOnly },
+        postcodes.takeIf { it.isNotEmpty() }?.let { it.joinToString("/") + " residents" },
+    ).joinToString(", ")
 
     companion object {
         fun from(o: JsonObject) = MagicSlot(
@@ -216,6 +239,55 @@ data class MagicSlot(
             months = (o["months"] as? JsonArray)?.map { (it as JsonPrimitive).intOrNull ?: error("bad month") },
             prebook = o.bool("prebook") ?: false,
             exceptBankHolidays = o.bool("except_bank_holidays") ?: false,
+            womenOnly = o.bool("women_only") ?: false,
+            postcodes = o.strings("postcodes")?.map { it.uppercase() } ?: emptyList(),
+        )
+    }
+}
+
+/** A one-off event at a gym. Shown until the end of [endDate] (or [date]), then hidden. */
+data class GymEvent(
+    val date: String,
+    val endDate: String? = null,
+    val start: String? = null,
+    val end: String? = null,
+    val title: String,
+    val details: String? = null,
+    val url: String? = null,
+    val price: String? = null,
+) {
+    val id: String get() = date + title
+
+    /** Still to come (or on) the given London day, "YYYY-MM-DD". */
+    fun isUpcoming(today: String): Boolean = (endDate ?: date) >= today
+
+    /** "Sat 14 Nov · from 18:00". */
+    val whenText: String get() {
+        fun day(ymd: String): String {
+            val p = ymd.split("-").mapNotNull { it.toIntOrNull() }
+            if (p.size != 3) return ymd
+            val months = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+            return "${Moment(p[0], p[1], p[2]).weekday} ${p[2]} ${months[p[1] - 1]}"
+        }
+        var s = day(date)
+        if (endDate != null && endDate != date) s += " – " + day(endDate)
+        when {
+            start != null && end != null -> s += " · $start–$end"
+            start != null -> s += " · from $start"
+        }
+        return s
+    }
+
+    companion object {
+        fun from(o: JsonObject) = GymEvent(
+            date = o.req("date"),
+            endDate = o.str("end_date"),
+            start = o.str("start"),
+            end = o.str("end"),
+            title = o.req("title"),
+            details = o.str("details"),
+            url = o.str("url"),
+            price = o.str("price"),
         )
     }
 }

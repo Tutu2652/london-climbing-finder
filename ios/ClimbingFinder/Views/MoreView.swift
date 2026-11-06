@@ -18,6 +18,17 @@ struct MoreView: View {
                 Text("Used for public-transport travel times and sorting by distance.")
             }
             Section {
+                NavigationLink { PricesForYouSettings() } label: {
+                    LabeledContent {
+                        Text(pricesForYouSummary)
+                    } label: {
+                        Label("Prices for you", systemImage: "person.crop.circle")
+                    }
+                }
+            } footer: {
+                Text("Shows women+ session and local-resident prices you can get.")
+            }
+            Section {
                 NavigationLink { DealsView() } label: { Label("Deals & offers", systemImage: "tag") }
                 NavigationLink { MembershipsView() } label: { Label("Memberships & passes", systemImage: "creditcard") }
                 NavigationLink { ClassesView() } label: { Label("Classes", systemImage: "graduationcap") }
@@ -58,6 +69,45 @@ struct MoreView: View {
             }
         }
         .navigationTitle("More")
+    }
+
+    private var pricesForYouSummary: String {
+        let parts = [model.gender == .unset ? nil : model.gender.title,
+                     model.eligibility.district]
+        let s = parts.compactMap { $0 }.joined(separator: " · ")
+        return s.isEmpty ? "Not set" : s
+    }
+}
+
+/// Gender (for women+ sessions) and home postcode (for local-resident days).
+@MainActor
+struct PricesForYouSettings: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        @Bindable var model = model
+        List {
+            Section {
+                Picker("Gender", selection: $model.gender) {
+                    ForEach(Gender.allCases) { Text($0.title).tag($0) }
+                }
+            } footer: {
+                Text("Woman or non-binary adds women+ session prices, such as Sister Sessions, to your prices.")
+            }
+            Section {
+                TextField("e.g. SE16 4DG or SE16", text: $model.homePostcode)
+                    .textInputAutocapitalization(.characters)
+                    .autocorrectionDisabled()
+            } header: {
+                Text("Home postcode")
+            } footer: {
+                Text("Adds local-resident days for your postcode district"
+                     + (model.eligibility.district.map { " (\($0))" } ?? "")
+                     + ". Separate from your travel start. Both settings stay on this phone.")
+            }
+        }
+        .navigationTitle("Prices for you")
+        .inlineTitle()
     }
 }
 
@@ -201,7 +251,23 @@ private struct EventsView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
+        let today = Moment(.now).ymd
+        let upcoming = model.data.gyms
+            .flatMap { g in g.events.filter { $0.isUpcoming(today: today) }.map { (gym: g, event: $0) } }
+            .sorted { ($0.event.date, $0.event.start ?? "") < ($1.event.date, $1.event.start ?? "") }
         List {
+            if !upcoming.isEmpty {
+                Section("Coming up") {
+                    ForEach(upcoming, id: \.event.id) { item in
+                        NavigationLink { GymDetailView(gym: item.gym) } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                EventRow(event: item.event)
+                                Text(item.gym.name).font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
             ForEach(brandGroups(model.data.gyms), id: \.brand) { b in
                 Section(b.brand) {
                     ForEach(b.sites) { g in

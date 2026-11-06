@@ -79,6 +79,29 @@ final class AppModel {
         static let origin = "origin", bankHolidays = "bankHolidays"
         static let favourites = "favourites", favouritesOnly = "favouritesOnly"
         static let colourScales = "colourScales"
+        static let gender = "gender", homePostcode = "homePostcode"
+    }
+
+    /// For women+ session prices. Kept on this phone only.
+    var gender: Gender = Gender(rawValue: UserDefaults.standard.string(forKey: Keys.gender) ?? "") ?? .unset {
+        didSet {
+            UserDefaults.standard.set(gender.rawValue, forKey: Keys.gender)
+            pricer.eligibility = AppModel.storedEligibility()
+        }
+    }
+    /// Where you live, for local-resident prices. Separate from the travel start, and kept on this phone only.
+    var homePostcode: String = UserDefaults.standard.string(forKey: Keys.homePostcode) ?? "" {
+        didSet {
+            UserDefaults.standard.set(homePostcode, forKey: Keys.homePostcode)
+            pricer.eligibility = AppModel.storedEligibility()
+        }
+    }
+    var eligibility: Eligibility { pricer.eligibility }
+
+    private static func storedEligibility() -> Eligibility {
+        let d = UserDefaults.standard
+        let g = Gender(rawValue: d.string(forKey: Keys.gender) ?? "") ?? .unset
+        return Eligibility(women: g.womenPlus, postcode: d.string(forKey: Keys.homePostcode) ?? "")
     }
 
     /// Colour grades you've set up yourself, by gym id. They replace the gym's chart from
@@ -144,7 +167,7 @@ final class AppModel {
            let d = try? Data(contentsOf: u) {
             bh = AppModel.parseBankHolidays(d)
         }
-        pricer = Pricer(bankHolidays: bh)
+        pricer = Pricer(bankHolidays: bh, eligibility: AppModel.storedEligibility())
     }
 
     var moment: Moment { Moment(when) }
@@ -338,4 +361,19 @@ final class AppModel {
         guard let value else { UserDefaults.standard.removeObject(forKey: key); return }
         UserDefaults.standard.set(try? JSONEncoder().encode(value), forKey: key)
     }
+}
+
+enum Gender: String, CaseIterable, Identifiable {
+    case unset = "", woman, man, nonBinary = "non-binary"
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .unset: return "Not set"
+        case .woman: return "Woman"
+        case .man: return "Man"
+        case .nonBinary: return "Non-binary"
+        }
+    }
+    /// Women+ sessions are for women, and usually trans and non-binary climbers too.
+    var womenPlus: Bool { self == .woman || self == .nonBinary }
 }

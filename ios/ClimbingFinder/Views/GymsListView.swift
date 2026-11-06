@@ -91,7 +91,7 @@ struct GymsListView: View {
         let key: (Gym) -> Double
         switch sort {
         case .peak: key = { $0.peakPrice(conc: conc) ?? .infinity }
-        case .offpeak: key = { $0.bestOffpeak(conc: conc) ?? .infinity }
+        case .offpeak: key = { $0.bestOffpeak(conc: conc, eligibility: model.eligibility) ?? .infinity }
         default: key = { model.distanceKm($0) ?? .infinity }
         }
         return filtered.sorted { (key($0), $0.name) < (key($1), $1.name) }
@@ -118,7 +118,7 @@ private struct GymRow: View {
                     .font(.caption).foregroundStyle(.secondary)
                 HStack(spacing: 6) {
                     Pill(text: "peak " + formatPrice(gym.peakPrice(conc: conc)), color: .peakPurple)
-                    if let off = gym.bestOffpeak(conc: conc) {
+                    if let off = gym.bestOffpeak(conc: conc, eligibility: model.eligibility) {
                         Pill(text: "from " + formatPrice(off), color: .amber)
                     }
                     if let d = model.distanceKm(gym) {

@@ -75,9 +75,38 @@ struct DealOption {
     let when: String
 }
 
-/// Holds the bank-holiday set the pricing consults (England & Wales, "YYYY-MM-DD").
+/// Who the climber is, for the cheap slots only some people can get. Set in More → Prices
+/// for you and kept on the phone. Nobody qualifies by default, which matches the website
+/// and the command line (they never price restricted slots).
+struct Eligibility: Equatable {
+    var women = false
+    var postcode = ""
+
+    /// The postcode district ("SE16" from "se16 4dg" or "SE16"), or nil if too short.
+    var district: String? {
+        let c = postcode.uppercased().filter { $0.isLetter || $0.isNumber }
+        guard c.count >= 2 else { return nil }
+        return c.count >= 5 ? String(c.dropLast(3)) : c
+    }
+
+    func allows(_ s: MagicSlot) -> Bool {
+        if s.womenOnly && !women { return false }
+        if !s.postcodes.isEmpty {
+            guard let d = district, s.postcodes.contains(d) else { return false }
+        }
+        return true
+    }
+}
+
+extension Gym {
+    /// Every cheap slot this climber can get: the open ones plus restricted ones they qualify for.
+    func slots(_ e: Eligibility) -> [MagicSlot] { magicSlots + restrictedSlots.filter(e.allows) }
+}
+
+/// Holds the bank-holiday set and the climber's eligibility the pricing consults.
 struct Pricer {
     var bankHolidays: Set<String> = []
+    var eligibility = Eligibility()
 
     func isBankHoliday(_ m: Moment) -> Bool { bankHolidays.contains(m.ymd) }
 
@@ -85,7 +114,7 @@ struct Pricer {
         let day = when.weekday, mins = when.minutes, p = gym.payg
         let bh = isBankHoliday(when)
         var bestMagic: (Double, String)?
-        for s in gym.magicSlots where inWindow(day, mins, days: s.days, start: s.start, end: s.end) {
+        for s in gym.slots(eligibility) where inWindow(day, mins, days: s.days, start: s.start, end: s.end) {
             if let months = s.months, !months.contains(when.month) { continue }
             if s.exceptBankHolidays && bh { continue }
             let lbl = s.label
@@ -133,7 +162,7 @@ struct Pricer {
     func slotsOnDay(_ gym: Gym, _ when: Moment, conc: Bool) -> [DealOption] {
         let day = when.weekday, bh = isBankHoliday(when), p = gym.payg
         var opts: [DealOption] = []
-        for s in gym.magicSlots where s.days.contains(day) {
+        for s in gym.slots(eligibility) where s.days.contains(day) {
             if let months = s.months, !months.contains(when.month) { continue }
             if s.exceptBankHolidays && bh { continue }
             if s.isConcession && !conc { continue }
@@ -248,10 +277,10 @@ extension Gym {
     func peakPrice(conc: Bool) -> Double? { conc ? payg.concessionPeak : payg.adultPeak }
 
     /// Cheapest off-peak / deal price the selected climber can actually use.
-    func bestOffpeak(conc: Bool) -> Double? {
+    func bestOffpeak(conc: Bool, eligibility: Eligibility = Eligibility()) -> Double? {
         var ps: [Double] = []
         if let off = conc ? (payg.concessionOffpeak ?? payg.adultOffpeak) : payg.adultOffpeak { ps.append(off) }
-        for s in magicSlots where conc || !s.isConcession { ps.append(s.price) }
+        for s in slots(eligibility) where conc || !s.isConcession { ps.append(s.price) }
         return ps.min()
     }
 
@@ -265,7 +294,8 @@ extension Gym {
         let magic: Bool
     }
 
-    /// Off-peak plus every special cheap slot, one line each, cheapest first.
+    /// Off-peak plus every special cheap slot, one line each, cheapest first. Restricted slots
+    /// are always listed, with who can get them, so you can see them before you qualify.
     func dealLines(conc: Bool) -> [DealLine] {
         var items: [DealLine] = []
         let ao = payg.adultOffpeak, co = payg.concessionOffpeak
@@ -282,21 +312,23 @@ extension Gym {
                                       extra: extra, approx: offpeakAssumed, magic: false))
             }
         }
-        struct Group { let price: Double; let label: String; let prebook: Bool; let conc: Bool; var whens: [String] }
+        struct Group { let price: Double; let label: String; let prebook: Bool; let conc: Bool; let condition: String; var whens: [String] }
         var groups: [Group] = []
-        for s in magicSlots {
+        for s in magicSlots + restrictedSlots {
             var when = formatDays(s.days) + (s.isAllDay ? " all day" : " " + s.start + "-" + s.end)
             if s.exceptBankHolidays { when += " (not bank hols)" }
             let label = s.label.replacingFirst(" (concession)", with: "")
-            if let i = groups.firstIndex(where: { $0.label == label && $0.price == s.price && $0.prebook == s.prebook && $0.conc == s.isConcession }) {
+            if let i = groups.firstIndex(where: { $0.label == label && $0.price == s.price && $0.prebook == s.prebook && $0.conc == s.isConcession && $0.condition == s.condition }) {
                 groups[i].whens.append(when)
             } else {
-                groups.append(Group(price: s.price, label: label, prebook: s.prebook, conc: s.isConcession, whens: [when]))
+                groups.append(Group(price: s.price, label: label, prebook: s.prebook, conc: s.isConcession, condition: s.condition, whens: [when]))
             }
         }
         for g in groups {
             items.append(DealLine(price: g.price, label: g.label, when: g.whens.joined(separator: ", "),
-                                  extra: (g.prebook ? " (pre-book)" : "") + (g.conc ? " conc" : ""), approx: false, magic: true))
+                                  extra: (g.prebook ? " (pre-book)" : "") + (g.conc ? " conc" : "")
+                                      + (g.condition.isEmpty ? "" : " · " + g.condition + " only"),
+                                  approx: false, magic: true))
         }
         return items.enumerated().sorted { ($0.element.price, $0.offset) < ($1.element.price, $1.offset) }.map(\.element)
     }

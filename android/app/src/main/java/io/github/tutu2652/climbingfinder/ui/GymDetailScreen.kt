@@ -56,7 +56,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.tutu2652.climbingfinder.AppModel
 import io.github.tutu2652.climbingfinder.core.Discipline
+import io.github.tutu2652.climbingfinder.core.Eligibility
 import io.github.tutu2652.climbingfinder.core.Gym
+import io.github.tutu2652.climbingfinder.core.GymEvent
+import io.github.tutu2652.climbingfinder.core.Moment
 import io.github.tutu2652.climbingfinder.core.PriceKind
 import io.github.tutu2652.climbingfinder.core.dealLines
 import io.github.tutu2652.climbingfinder.core.formatPrice
@@ -128,7 +131,7 @@ fun GymDetailScreen(id: String) {
 
         val deals = gym.dealLines(conc)
         if (deals.isNotEmpty()) {
-            section("Off-peak & cheap slots") {
+            section("Off-peak & cheap slots", footer = restrictedNote(gym, model.eligibility)) {
                 deals.forEachIndexed { i, d ->
                     RowItem(divider = i > 0) {
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -177,6 +180,13 @@ fun GymDetailScreen(id: String) {
                 info.split(";").map { it.trim() }.filter { it.isNotEmpty() }.forEachIndexed { i, line ->
                     RowItem(divider = i > 0) { LinkedText(line) }
                 }
+            }
+        }
+
+        val events = gym.events.filter { it.isUpcoming(Moment.now().ymd) }
+        if (events.isNotEmpty()) {
+            section("Coming up") {
+                events.forEachIndexed { i, e -> RowItem(divider = i > 0) { EventItem(e) } }
             }
         }
 
@@ -328,3 +338,24 @@ fun StarPicker(value: Int, size: Int = 32, onChange: (Int) -> Unit) {
 }
 
 fun toast(ctx: Context, text: String) = Toast.makeText(ctx, text, Toast.LENGTH_SHORT).show()
+
+/** Whether the women+ / local prices here count for you, and where to change that; null if the gym has none. */
+private fun restrictedNote(gym: Gym, e: Eligibility): String? {
+    if (gym.restrictedSlots.isEmpty()) return null
+    val mine = gym.restrictedSlots.filter { e.allows(it) }.map { it.label }
+    if (mine.size == gym.restrictedSlots.size) return "You qualify for all of these, so they count in your price."
+    return (if (mine.isEmpty()) "" else "You qualify for " + mine.joinToString(", ") + ". ") +
+        "Women+ and local-resident prices count in your price once your settings in More → Prices for you match."
+}
+
+/** A one-off event: what, when, details and a link. */
+@Composable
+fun EventItem(e: GymEvent) {
+    val ctx = LocalContext.current
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(e.title, fontWeight = FontWeight.SemiBold)
+        Text(e.whenText + (e.price?.let { " · $it" } ?: ""), style = MaterialTheme.typography.bodySmall, color = secondaryText)
+        e.details?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+        e.url?.let { u -> Text("Details", color = MaterialTheme.colorScheme.primary, modifier = Modifier.clickable { openUrl(ctx, u) }) }
+    }
+}

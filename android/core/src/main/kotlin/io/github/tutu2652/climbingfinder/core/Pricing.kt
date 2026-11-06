@@ -62,8 +62,34 @@ data class DealOption(val price: Double, val label: String, val `when`: String)
 private val boardOnly = Regex("board[- ]?only", RegexOption.IGNORE_CASE)
 private val offPeakLabel = Regex("off[- ]?peak", RegexOption.IGNORE_CASE)
 
-/** Holds the bank-holiday set the pricing consults (England & Wales, "YYYY-MM-DD"). */
-data class Pricer(val bankHolidays: Set<String> = emptySet()) {
+/**
+ * Who the climber is, for the cheap slots only some people can get. Set in More → Prices for
+ * you and kept on the phone. Nobody qualifies by default, which matches the website and the
+ * command line (they never price restricted slots).
+ */
+data class Eligibility(val women: Boolean = false, val postcode: String = "") {
+    /** The postcode district ("SE16" from "se16 4dg" or "SE16"), or null if too short. */
+    val district: String? get() {
+        val c = postcode.uppercase().filter { it.isLetterOrDigit() }
+        if (c.length < 2) return null
+        return if (c.length >= 5) c.dropLast(3) else c
+    }
+
+    fun allows(s: MagicSlot): Boolean {
+        if (s.womenOnly && !women) return false
+        if (s.postcodes.isNotEmpty()) {
+            val d = district ?: return false
+            if (d !in s.postcodes) return false
+        }
+        return true
+    }
+}
+
+/** Every cheap slot this climber can get: the open ones plus restricted ones they qualify for. */
+fun Gym.slots(e: Eligibility): List<MagicSlot> = magicSlots + restrictedSlots.filter { e.allows(it) }
+
+/** Holds the bank-holiday set and the climber's eligibility the pricing consults. */
+data class Pricer(val bankHolidays: Set<String> = emptySet(), val eligibility: Eligibility = Eligibility()) {
 
     fun isBankHoliday(m: Moment) = m.ymd in bankHolidays
 
@@ -73,7 +99,7 @@ data class Pricer(val bankHolidays: Set<String> = emptySet()) {
         val p = gym.payg
         val bh = isBankHoliday(`when`)
         var bestMagic: Pair<Double, String>? = null
-        for (s in gym.magicSlots) {
+        for (s in gym.slots(eligibility)) {
             if (!inWindow(day, mins, s.days, s.start, s.end)) continue
             if (s.months != null && `when`.month !in s.months) continue
             if (s.exceptBankHolidays && bh) continue
@@ -128,7 +154,7 @@ data class Pricer(val bankHolidays: Set<String> = emptySet()) {
         val bh = isBankHoliday(`when`)
         val p = gym.payg
         val opts = mutableListOf<DealOption>()
-        for (s in gym.magicSlots) {
+        for (s in gym.slots(eligibility)) {
             if (day !in s.days) continue
             if (s.months != null && `when`.month !in s.months) continue
             if (s.exceptBankHolidays && bh) continue
@@ -234,10 +260,10 @@ val Gym.hoursSummary: String
 fun Gym.peakPrice(conc: Boolean): Double? = if (conc) payg.concessionPeak else payg.adultPeak
 
 /** Cheapest off-peak / deal price the selected climber can actually use. */
-fun Gym.bestOffpeak(conc: Boolean): Double? {
+fun Gym.bestOffpeak(conc: Boolean, eligibility: Eligibility = Eligibility()): Double? {
     val ps = mutableListOf<Double>()
     (if (conc) (payg.concessionOffpeak ?: payg.adultOffpeak) else payg.adultOffpeak)?.let { ps.add(it) }
-    for (s in magicSlots) if (conc || !s.isConcession) ps.add(s.price)
+    for (s in slots(eligibility)) if (conc || !s.isConcession) ps.add(s.price)
     return ps.minOrNull()
 }
 
@@ -250,7 +276,10 @@ data class DealLine(
     val magic: Boolean,
 )
 
-/** Off-peak plus every special cheap slot, one line each, cheapest first. */
+/**
+ * Off-peak plus every special cheap slot, one line each, cheapest first. Restricted slots are
+ * always listed, with who can get them, so you can see them before you qualify.
+ */
 fun Gym.dealLines(conc: Boolean): List<DealLine> {
     val items = mutableListOf<DealLine>()
     val ao = payg.adultOffpeak
@@ -271,18 +300,22 @@ fun Gym.dealLines(conc: Boolean): List<DealLine> {
             items.add(DealLine(main, "off-peak", whens.joinToString(", "), extra, offpeakAssumed, false))
         }
     }
-    data class Group(val price: Double, val label: String, val prebook: Boolean, val conc: Boolean, val whens: MutableList<String>)
+    data class Group(val price: Double, val label: String, val prebook: Boolean, val conc: Boolean,
+                     val condition: String, val whens: MutableList<String>)
     val groups = mutableListOf<Group>()
-    for (s in magicSlots) {
+    for (s in magicSlots + restrictedSlots) {
         var w = formatDays(s.days) + if (s.isAllDay) " all day" else " " + s.start + "-" + s.end
         if (s.exceptBankHolidays) w += " (not bank hols)"
         val label = s.label.replaceFirst(" (concession)", "")
-        val g = groups.firstOrNull { it.label == label && it.price == s.price && it.prebook == s.prebook && it.conc == s.isConcession }
-        if (g != null) g.whens.add(w) else groups.add(Group(s.price, label, s.prebook, s.isConcession, mutableListOf(w)))
+        val g = groups.firstOrNull {
+            it.label == label && it.price == s.price && it.prebook == s.prebook && it.conc == s.isConcession && it.condition == s.condition
+        }
+        if (g != null) g.whens.add(w) else groups.add(Group(s.price, label, s.prebook, s.isConcession, s.condition, mutableListOf(w)))
     }
     for (g in groups) {
         items.add(DealLine(g.price, g.label, g.whens.joinToString(", "),
-            (if (g.prebook) " (pre-book)" else "") + (if (g.conc) " conc" else ""), approx = false, magic = true))
+            (if (g.prebook) " (pre-book)" else "") + (if (g.conc) " conc" else "")
+                + (if (g.condition.isEmpty()) "" else " · ${g.condition} only"), approx = false, magic = true))
     }
     return items.sortedBy { it.price }
 }

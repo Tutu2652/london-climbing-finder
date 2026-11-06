@@ -44,7 +44,11 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Person
 import io.github.tutu2652.climbingfinder.AppModel
+import io.github.tutu2652.climbingfinder.Gender
+import io.github.tutu2652.climbingfinder.core.Moment
 import io.github.tutu2652.climbingfinder.DataSource
 import io.github.tutu2652.climbingfinder.LocationService
 import io.github.tutu2652.climbingfinder.Origin
@@ -65,6 +69,11 @@ fun MoreScreen() {
     Screen("More", back = false) {
         section(footer = "Used for public-transport travel times and sorting by distance.") {
             ActionRow(Icons.Filled.LocationOn, "Your location", divider = false, value = model.origin?.label ?: "Not set") { nav.navigate("origin") }
+        }
+        section(footer = "Shows women+ session and local-resident prices you can get.") {
+            val summary = listOfNotNull(model.gender.takeIf { it != Gender.UNSET }?.title, model.eligibility.district)
+                .joinToString(" · ").ifEmpty { "Not set" }
+            ActionRow(Icons.Filled.Person, "Prices for you", divider = false, value = summary) { nav.navigate("pricesForYou") }
         }
         section {
             ActionRow(Icons.Filled.LocalOffer, "Deals & offers", divider = false) { nav.navigate("deals") }
@@ -118,6 +127,36 @@ private fun ago(t: Instant): String {
         m < 60 -> "$m min ago"
         m < 48 * 60 -> "${m / 60} h ago"
         else -> "${m / (24 * 60)} days ago"
+    }
+}
+
+/** Gender (for women+ sessions) and home postcode (for local-resident days). */
+@Composable
+fun PricesForYouScreen() {
+    val model = LocalModel.current
+    val focus = LocalFocusManager.current
+    var postcode by remember { mutableStateOf(model.homePostcode) }
+    Screen("Prices for you") {
+        section("Gender", footer = "Woman or non-binary adds women+ session prices, such as Sister Sessions, to your prices.") {
+            Gender.entries.forEachIndexed { i, g ->
+                RowItem(onClick = { model.chooseGender(g) }, divider = i > 0, chevron = false) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(g.title, modifier = Modifier.weight(1f))
+                        if (model.gender == g) Icon(Icons.Filled.Check, "Selected", tint = Brand)
+                    }
+                }
+            }
+        }
+        section("Home postcode", footer = "Adds local-resident days for your postcode district" +
+            (model.eligibility.district?.let { " ($it)" } ?: "") + ". Separate from your travel start. Both settings stay on this phone.") {
+            RowItem(divider = false) {
+                OutlinedTextField(postcode, { postcode = it; model.chooseHomePostcode(it) }, singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("e.g. SE16 4DG or SE16") },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }))
+            }
+        }
     }
 }
 
@@ -255,7 +294,24 @@ fun ClassesScreen() {
 fun EventsScreen() {
     val model = LocalModel.current
     val ctx = LocalContext.current
+    val nav = LocalNav.current
+    val today = Moment.now().ymd
+    val upcoming = model.data.gyms
+        .flatMap { g -> g.events.filter { it.isUpcoming(today) }.map { g to it } }
+        .sortedWith(compareBy({ it.second.date }, { it.second.start ?: "" }))
     Screen("Socials & events") {
+        if (upcoming.isNotEmpty()) {
+            section("Coming up") {
+                upcoming.forEachIndexed { i, (g, e) ->
+                    RowItem(onClick = { nav.navigate("gym/${g.id}") }, divider = i > 0) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            EventItem(e)
+                            Text(g.name, style = MaterialTheme.typography.bodySmall, color = secondaryText)
+                        }
+                    }
+                }
+            }
+        }
         for ((brand, sites) in brandGroups(model.data.gyms)) {
             section(brand) {
                 sites.forEachIndexed { i, g ->

@@ -177,6 +177,18 @@ Each `limited_promotions` entry has an `expires` date (`YYYY-MM-DD`) or `null`.
   its prices stop counting as known. If a gym is still advertising it after the end date,
   the weekly check flags it again.
 
+### Prices only some climbers get, and one-off events
+
+- **`restricted_slots`** holds cheap slots that need something the site can't check, such
+  as women+ sessions (`"women_only": true`) or local-resident days
+  (`"postcodes": ["SE16"]`, by postcode district). They look like `magic_slots` plus a
+  `source`. The website and the command line list them on the gym but never price them.
+  The phone apps price them only for climbers whose More → Prices for you settings match.
+  They stay out of `magic_slots` so older app versions never offer them to everyone.
+- **`events`** holds one-off events at a gym: `date` (`YYYY-MM-DD`), optional `end_date`,
+  `start`, `end`, `details`, `url` and `price`, plus a required `title` and `source`.
+  Every copy hides an event the day after it ends, so past ones can stay in the file.
+
 ## Repository layout
 
 | Path | What it is |

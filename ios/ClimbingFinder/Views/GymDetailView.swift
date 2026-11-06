@@ -6,6 +6,14 @@ struct GymDetailView: View {
     @State private var editing = false
     let gym: Gym
 
+    /// Whether the women+ / local prices here count for you, and where to change that.
+    private var restrictedNote: String {
+        let mine = gym.restrictedSlots.filter(model.eligibility.allows).map(\.label)
+        if mine.count == gym.restrictedSlots.count { return "You qualify for all of these, so they count in your price." }
+        return (mine.isEmpty ? "" : "You qualify for " + mine.joined(separator: ", ") + ". ")
+            + "Women+ and local-resident prices count in your price once your settings in More → Prices for you match."
+    }
+
     var body: some View {
         let conc = model.concession
         let now = model.pricer.applicable(gym, model.moment, conc: conc)
@@ -72,7 +80,7 @@ struct GymDetailView: View {
 
             let deals = gym.dealLines(conc: conc)
             if !deals.isEmpty {
-                Section("Off-peak & cheap slots") {
+                Section {
                     ForEach(deals) { d in
                         HStack(alignment: .firstTextBaseline) {
                             Pill(text: formatPrice(d.price), color: d.magic ? .amber : .brand)
@@ -83,6 +91,17 @@ struct GymDetailView: View {
                             }
                         }
                     }
+                } header: {
+                    Text("Off-peak & cheap slots")
+                } footer: {
+                    if !gym.restrictedSlots.isEmpty { Text(restrictedNote) }
+                }
+            }
+
+            let events = gym.events.filter { $0.isUpcoming(today: Moment(.now).ymd) }
+            if !events.isEmpty {
+                Section("Coming up") {
+                    ForEach(events) { EventRow(event: $0) }
                 }
             }
 
@@ -286,5 +305,20 @@ struct AddToGoogleListButton: View {
         c.queryItems = (api ? [URLQueryItem(name: "api", value: "1")] : [])
             + [URLQueryItem(name: key, value: gym.name + ", " + (gym.postcode ?? "London"))]
         return c.url
+    }
+}
+
+/// A one-off event: what, when, details and a link.
+struct EventRow: View {
+    let event: GymEvent
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(event.title).font(.callout.weight(.semibold))
+            Text(event.whenText + (event.price.map { " · " + $0 } ?? ""))
+                .font(.caption).foregroundStyle(.secondary)
+            if let d = event.details { Text(d).font(.callout) }
+            if let s = event.url, let u = URL(string: s) { Link("Details", destination: u).font(.callout) }
+        }
+        .padding(.vertical, 2)
     }
 }

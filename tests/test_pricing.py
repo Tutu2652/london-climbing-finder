@@ -91,6 +91,12 @@ class GoldenTests(unittest.TestCase):
         self.assertEqual(p_conc, 5.0)
         self.assertGreater(p_adult, 5.0)
 
+    def test_restricted_slots_are_never_priced_here(self):
+        # Bermondsey's SE16 Local Day (£8) and women+ Sister Sessions (£10) live in
+        # restricted_slots: only the phone apps price them, for climbers who qualify.
+        self.assertEqual(self.price("arch_bermondsey", "2026-07-08", "12:00")[0], 15.0)
+        self.assertEqual(self.price("arch_bermondsey", "2026-07-08", "19:30")[0], 15.0)
+
     def test_best_on_day_reports_window(self):
         best = LCP.best_on_day(GYM["mileend"], dt.date(2026, 7, 8))
         self.assertEqual(best["price"], 5.0)
@@ -216,6 +222,50 @@ class SwiftPythonParity(unittest.TestCase):
                          "Swift/Python pricing diverged")
 
 
+SWIFT_ELIGIBILITY = r"""
+import Foundation
+let data = try JSONDecoder().decode(ClimbingData.self, from: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])))
+let g = data.gyms.first { $0.id == "arch_bermondsey" }!
+func price(_ minutes: Int, _ e: Eligibility) -> Double {
+  Pricer(eligibility: e).applicable(g, Moment(year: 2026, month: 7, day: 8, minutes: minutes), conc: false).price ?? -1
+}
+let out: [Any] = [
+  price(720, Eligibility()), price(1170, Eligibility()), price(1170, Eligibility(women: true)),
+  price(720, Eligibility(women: true)), price(720, Eligibility(postcode: "se16 2aa")),
+  price(1170, Eligibility(women: true, postcode: "SE16")), price(720, Eligibility(postcode: "SE1 7PB")),
+  Eligibility(postcode: "E149ZZ").district ?? "", Eligibility(postcode: "SW1A 1AA").district ?? "",
+  Eligibility(postcode: "SE165DJ").district ?? "", Eligibility(postcode: "SE16 5DJ").district ?? "",
+  g.events.count, data.gyms.first { $0.id == "climbingdistrict_londonfields" }!.events.first?.whenText ?? "",
+]
+print(String(data: try JSONSerialization.data(withJSONObject: out), encoding: .utf8)!)
+"""
+
+
+@unittest.skipUnless(shutil.which("swiftc"), "swiftc not installed")
+class SwiftEligibility(unittest.TestCase):
+    """Women+ and local-resident prices in the iOS app (the Kotlin copy is in PricingTest.kt)."""
+
+    def test_restricted_slots(self):
+        import tempfile
+        core = os.path.join(ROOT, "ios", "ClimbingFinder", "Core")
+        with tempfile.TemporaryDirectory() as tmp:
+            main = os.path.join(tmp, "main.swift")
+            with open(main, "w", encoding="utf-8") as fh:
+                fh.write(SWIFT_ELIGIBILITY)
+            exe = os.path.join(tmp, "elig")
+            build = subprocess.run(
+                ["swiftc", "-o", exe, os.path.join(core, "Models.swift"),
+                 os.path.join(core, "Pricing.swift"), os.path.join(core, "ColourGrades.swift"), main],
+                capture_output=True, text=True, timeout=600)
+            if build.returncode != 0:
+                self.fail("swift harness failed to build:\n" + build.stderr[:2000])
+            res = subprocess.run([exe, os.path.join(ROOT, "gyms.json")],
+                                 capture_output=True, text=True, timeout=120, check=True)
+        self.assertEqual(json.loads(res.stdout),
+                         [15.0, 15.0, 10.0, 15.0, 8.0, 8.0, 15.0, "E14", "SW1A", "SE16", "SE16", 0,
+                          "Sat 14 Nov · from 18:00"])
+
+
 def python_mismatches(rows, name):
     """Rows of [iso, conc, gym id, best, at 10:00, at 19:00] from another
     implementation, compared with the Python CLI. Returns the differences."""
@@ -297,6 +347,35 @@ class DataValidation(unittest.TestCase):
             fac = (g.get("facilities") or "").lower()
             self.assertNotIn("ac available", fac,
                              "%s: move AC info to ac/ac_note" % g["id"])
+
+    def test_restricted_slots_shape(self):
+        # Each restricted slot says who it is for, so no app ever offers it to everyone.
+        for g in DATA["gyms"]:
+            for s in g.get("restricted_slots", []):
+                where = "%s restricted slot %r" % (g["id"], s.get("label"))
+                self.assertTrue(s.get("women_only") is True or s.get("postcodes"),
+                                where + ": set women_only or postcodes")
+                for pc in s.get("postcodes", []):
+                    self.assertRegex(pc, r"^[A-Z]{1,2}[0-9][0-9A-Z]?$",
+                                     where + ": postcodes are districts like SE16")
+                for field in ("days", "start", "end", "price", "label", "source"):
+                    self.assertIn(field, s, where + ": missing " + field)
+                self.assertLessEqual(set(s["days"]), set(LCP.WEEKDAYS), where + ": bad day")
+                for t in (s["start"], s["end"]):
+                    self.assertRegex(t, r"^\d\d:\d\d$", where)
+
+    def test_events_shape(self):
+        for g in DATA["gyms"]:
+            for e in g.get("events", []):
+                where = "%s event %r" % (g["id"], e.get("title"))
+                self.assertTrue(e.get("title"), where + ": missing title")
+                self.assertTrue(e.get("source"), where + ": say where it came from")
+                start = dt.date.fromisoformat(e["date"])
+                if e.get("end_date"):
+                    self.assertGreaterEqual(dt.date.fromisoformat(e["end_date"]), start, where)
+                for t in (e.get("start"), e.get("end")):
+                    if t is not None:
+                        self.assertRegex(t, r"^\d\d:\d\d$", where)
 
     def test_every_gym_has_a_short_calendar_name(self):
         # Calendar apps cut event titles short, so the gym part has to be brief.

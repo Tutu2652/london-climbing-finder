@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.tutu2652.climbingfinder.core.ClimbingData
 import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.DealOption
+import io.github.tutu2652.climbingfinder.core.Eligibility
 import io.github.tutu2652.climbingfinder.core.Gym
 import io.github.tutu2652.climbingfinder.core.Moment
 import io.github.tutu2652.climbingfinder.core.PriceKind
@@ -70,6 +71,22 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     var acFilter by mutableStateOf("")        // "" | "ac" | "full"
     var favouritesOnly by mutableStateOf(prefs.getBoolean("favouritesOnly", false)); private set
 
+    /** For women+ session prices. Kept on this phone only. */
+    var gender by mutableStateOf(Gender.from(prefs.getString("gender", "") ?: "")); private set
+    /** Where you live, for local-resident prices. Separate from the travel start; kept on this phone only. */
+    var homePostcode by mutableStateOf(prefs.getString("homePostcode", "") ?: ""); private set
+    val eligibility: Eligibility get() = Eligibility(women = gender.womenPlus, postcode = homePostcode)
+
+    fun chooseGender(g: Gender) {
+        gender = g; prefs.edit().putString("gender", g.raw).apply()
+        pricer = pricer.copy(eligibility = eligibility)
+    }
+
+    fun chooseHomePostcode(p: String) {
+        homePostcode = p; prefs.edit().putString("homePostcode", p).apply()
+        pricer = pricer.copy(eligibility = eligibility)
+    }
+
     // Personal favourites, notes & 1-5 ratings, kept on this phone.
     var favourites: Set<String> by mutableStateOf(prefs.getStringSet("favourites", emptySet())!!.toSet()); private set
     var notes: Map<String, String> by mutableStateOf(loadMap("gymNotes") { it.jsonPrimitive.content }); private set
@@ -95,7 +112,7 @@ class AppModel(app: Application) : AndroidViewModel(app) {
         }
         var bh = prefs.getStringSet("bankHolidays", emptySet())!!.toSet()
         if (bh.isEmpty()) bh = parseBankHolidays(app.assets.open("bank_holidays.json").bufferedReader().use { it.readText() })
-        pricer = Pricer(bh)
+        pricer = Pricer(bh, eligibility)
     }
 
     val moment: Moment get() = Moment.of(whenAt)
@@ -310,7 +327,7 @@ class AppModel(app: Application) : AndroidViewModel(app) {
             val text = httpGet("https://www.gov.uk/bank-holidays.json") ?: return@launch
             val set = parseBankHolidays(text)
             if (set.isNotEmpty()) {
-                pricer = Pricer(set)
+                pricer = pricer.copy(bankHolidays = set)
                 prefs.edit().putStringSet("bankHolidays", set).apply()
             }
         }
@@ -324,5 +341,16 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     companion object {
         const val SITE = "https://london-climbing-finder.pages.dev"
         private const val REMOTE_URL = "$SITE/gyms.json"
+    }
+}
+
+enum class Gender(val raw: String, val title: String) {
+    UNSET("", "Not set"), WOMAN("woman", "Woman"), MAN("man", "Man"), NON_BINARY("non-binary", "Non-binary");
+
+    /** Women+ sessions are for women, and usually trans and non-binary climbers too. */
+    val womenPlus: Boolean get() = this == WOMAN || this == NON_BINARY
+
+    companion object {
+        fun from(raw: String) = entries.firstOrNull { it.raw == raw } ?: UNSET
     }
 }

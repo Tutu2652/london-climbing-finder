@@ -122,7 +122,7 @@ private fun sorted(model: AppModel, gyms: List<Gym>, sort: GymSort): List<Gym> {
     val conc = model.concession
     val key: (Gym) -> Double = when (sort) {
         GymSort.PEAK -> { g -> g.peakPrice(conc) ?: Double.MAX_VALUE }
-        GymSort.OFFPEAK -> { g -> g.bestOffpeak(conc) ?: Double.MAX_VALUE }
+        GymSort.OFFPEAK -> { g -> g.bestOffpeak(conc, model.eligibility) ?: Double.MAX_VALUE }
         else -> { g -> model.distanceKm(g) ?: Double.MAX_VALUE }
     }
     return gyms.sortedWith(compareBy(key, { it.name }))
@@ -147,7 +147,7 @@ private fun GymRow(gym: Gym, divider: Boolean) {
                     style = MaterialTheme.typography.bodySmall, color = secondaryText)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Pill("peak " + formatPrice(gym.peakPrice(conc)), PeakPurple)
-                    gym.bestOffpeak(conc)?.let { Pill("from " + formatPrice(it), Amber) }
+                    gym.bestOffpeak(conc, model.eligibility)?.let { Pill("from " + formatPrice(it), Amber) }
                     model.distanceKm(gym)?.let {
                         Text(String.format(Locale.UK, "%.1f km", it), style = MaterialTheme.typography.bodySmall, color = secondaryText)
                     }

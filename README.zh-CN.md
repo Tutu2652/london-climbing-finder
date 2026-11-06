@@ -159,6 +159,17 @@ python3 tools/weekly_offer_check.py                 # 检查，然后用 --draft
 - **过了 `expires` 的优惠在所有地方都会隐藏**（`promos --all` 仍能看到），它的价格也不再算"已知"。
   如果岩馆过了截止日期还在宣传，每周检查会再次报告它。
 
+### 只有部分人能用的价格，以及一次性活动
+
+- **`restricted_slots`** 放需要网站无法核实的条件才能用的便宜时段，比如 women+ 活动
+  （`"women_only": true`）或本地居民日（`"postcodes": ["SE16"]`，按邮编区）。格式和
+  `magic_slots` 一样，另加 `source`。网站和命令行会在岩馆信息里列出它们，但不计入价格。
+  手机 App 只在 More → Prices for you 的设置符合时才计入价格。它们不放进 `magic_slots`，
+  这样旧版 App 不会把它们当成人人可用的价格。
+- **`events`** 放岩馆的一次性活动：`date`（`YYYY-MM-DD`），可选的 `end_date`、`start`、
+  `end`、`details`、`url` 和 `price`，以及必填的 `title` 和 `source`。活动结束后第二天
+  所有版本都会自动隐藏它，所以过期的活动可以留在文件里。
+
 ## 仓库结构
 
 | 路径 | 说明 |

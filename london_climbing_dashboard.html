@@ -339,7 +339,7 @@ const DATA = {
         "concession_monthly": 62
       },
       "address": "Building One, Tower Bridge Business Complex, Drummond Road, London SE16 4DG",
-      "passes": "10 punches £125 (£110 conc). Local Day: £8 on Wednesdays with an SE16 postcode (in-gym board, seen 6 Nov 2026).",
+      "passes": "10 punches £125 (£110 conc)",
       "hours": {
         "Mon": [
           "06:30",
@@ -380,6 +380,32 @@ const DATA = {
       "socials": [
         "[Sister Sessions](https://climbingdistrict.uk/activities/sister-sessions/) (Women+) — Wednesdays 19:00, £10 entry",
         "Running District — free run club, Saturdays 09:00, all abilities"
+      ],
+      "restricted_slots": [
+        {
+          "days": [
+            "Wed"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "price": 8.0,
+          "label": "Local Day",
+          "postcodes": [
+            "SE16"
+          ],
+          "source": "in-gym board, seen 2026-11-06"
+        },
+        {
+          "days": [
+            "Wed"
+          ],
+          "start": "19:00",
+          "end": "22:30",
+          "price": 10.0,
+          "label": "Sister Sessions",
+          "women_only": true,
+          "source": "in-gym board, seen 2026-11-06"
+        }
       ],
       "colour_grades": [
         {
@@ -648,6 +674,16 @@ const DATA = {
       "socials": [
         "[Climb With Us](https://climbingdistrict.uk/activities/workshops-socials/) — 1.5hr coached social, £5 (excl. entry), V1-3 & V3-5",
         "[Sister Sessions](https://climbingdistrict.uk/activities/sister-sessions/) (Women+)"
+      ],
+      "events": [
+        {
+          "date": "2026-11-14",
+          "start": "18:00",
+          "title": "Team Boulder Arena final watch party",
+          "details": "TBA5 from Paris, shown live. Arrive from 18:00; timings may change. Book with the QR code on the gym's poster. Also streamed on YouTube.",
+          "url": "https://climbingdistrict.uk/activities/workshops-socials/",
+          "source": "in-gym board and poster at Bermondsey, seen 2026-11-06"
+        }
       ],
       "ac": "full",
       "ac_note": "air conditioned",
@@ -4098,14 +4134,14 @@ const DATA = {
       "id": "gantry-founding-30",
       "brand": "Independent",
       "title": "Gantry: founding member 30% off for life",
-      "details": "First 50 members on a rolling monthly membership get 30% off for as long as it keeps renewing (pausing allowed). First come, first served; conditions apply.",
+      "details": "First 50 members on a rolling monthly membership get 30% off for as long as it keeps renewing (pausing allowed). First come, first served; conditions apply. No longer offered (reported 2026-11-06).",
       "price": "£46/mo (£39 concession, £28 under-18; standard £65 / £55 / £40)",
       "valid": "First 50 members",
       "expires": null,
       "expires_source": null,
       "source": "https://gantryclimbing.com/",
       "first_seen": "2026-10-25",
-      "status": "active"
+      "status": "expired"
     },
     {
       "id": "cd-new-member-10",

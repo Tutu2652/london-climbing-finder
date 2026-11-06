@@ -40,6 +40,8 @@ private struct OffersList: View {
             Section {
                 if live.isEmpty { Text("No limited-time offers running right now.").foregroundStyle(.secondary) }
                 ForEach(live) { p in
+                    HStack(alignment: .top, spacing: 12) {
+                    if let g = logoGym(p) { GymLogo(gym: g, size: 36) }
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(alignment: .firstTextBaseline) {
                             Text(p.title).font(.headline)
@@ -58,6 +60,7 @@ private struct OffersList: View {
                             Link("View offer", destination: u).font(.callout)
                         }
                     }
+                    }
                     .padding(.vertical, 2)
                 }
             } footer: {
@@ -66,6 +69,17 @@ private struct OffersList: View {
                           + " Most gyms don't publish an end date, so check the link before you buy.")
             }
         }
+    }
+}
+
+extension OffersList {
+    /// The gym whose logo stands for an offer: any site of its chain, or for an
+    /// independent, the gym the title starts with ("Substation: …" → Substation Brixton).
+    func logoGym(_ p: Promotion) -> Gym? {
+        let gyms = model.data.gyms
+        if p.brand != "Independent", let g = gyms.first(where: { $0.brand == p.brand }) { return g }
+        guard let key = p.title.split(separator: ":").first.map(String.init), key != p.title else { return nil }
+        return gyms.first { $0.brand == "Independent" && ($0.name.hasPrefix(key) || key.hasPrefix($0.name)) }
     }
 }
 
@@ -108,6 +122,8 @@ private struct StudentsList: View {
                         "\($0.payg.concessionPeak ?? -1)|\($0.payg.concessionOffpeak ?? -1)|\($0.studentNote ?? "")"
                     }), id: \.rep.id) { row in
                         NavigationLink(value: row.rep) {
+                            HStack(alignment: .top, spacing: 12) {
+                            GymLogo(gym: row.rep, size: 36)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(row.label).font(.headline)
                                 HStack(spacing: 6) {
@@ -117,6 +133,7 @@ private struct StudentsList: View {
                                     }
                                 }
                                 if let n = row.rep.studentNote { Text(n).font(.caption).foregroundStyle(.secondary) }
+                            }
                             }
                         }
                     }
@@ -171,12 +188,14 @@ private struct WeeklyDeals: View {
                     if items.isEmpty { Text("—").foregroundStyle(.secondary) }
                     ForEach(items) { it in
                         NavigationLink(value: it.gym) {
-                            HStack(alignment: .firstTextBaseline) {
-                                Pill(text: formatPrice(it.slot.price), color: .amber)
-                                VStack(alignment: .leading) {
+                            HStack(spacing: 12) {
+                                GymLogo(gym: it.gym, size: 36)
+                                VStack(alignment: .leading, spacing: 2) {
                                     Text(it.slot.label.replacingFirst(" (concession)", with: "") + " · " + it.gym.shortName)
                                     Text(detail(it.slot)).font(.caption).foregroundStyle(.secondary)
                                 }
+                                Spacer(minLength: 4)
+                                Pill(text: formatPrice(it.slot.price), color: .amber)
                             }
                         }
                     }
@@ -186,7 +205,8 @@ private struct WeeklyDeals: View {
     }
 
     private func items(on day: String) -> [Item] {
-        model.data.gyms.flatMap { g in g.magicSlots.filter { $0.days.contains(day) }.map { Item(gym: g, slot: $0) } }
+        // Women+ and local-resident slots appear here once your settings qualify for them.
+        model.data.gyms.flatMap { g in g.slots(model.eligibility).filter { $0.days.contains(day) }.map { Item(gym: g, slot: $0) } }
             .enumerated().sorted { ($0.element.slot.price, $0.offset) < ($1.element.slot.price, $1.offset) }.map(\.element)
     }
 
@@ -194,6 +214,7 @@ private struct WeeklyDeals: View {
         (s.isAllDay ? "all day" : s.start + "–" + s.end)
             + (s.prebook ? " (pre-book)" : "") + (s.isConcession ? " · conc only" : "")
             + (s.exceptBankHolidays ? " · not bank hols" : "")
+            + (s.condition.isEmpty ? "" : " · " + s.condition + " only")
     }
 
     private func subscribe(_ title: String, _ file: String) -> some View {
