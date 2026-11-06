@@ -236,4 +236,32 @@ class LogbookTest {
         assertEquals(Climb.UNGRADED, comp.grade)
         LogbookBackup(sessions = listOf(past, live)).validate()
     }
+
+    @Test fun feltGradeAtTheBottomOfTheRangeStillShows() {
+        val start = Instant.parse("2026-11-06T17:00:00Z")
+        val purple = ColourGrade("Purple", 3, 5)
+        var c = Climb.of(purple, ClimbResult.SEND, start)
+        assertEquals(null, c.feltGrade); assertEquals("V3–V5", c.colourDetail)
+        c = c.withFeltGrade(3)
+        assertEquals(3, c.feltGrade); assertEquals("V3–V5 · felt V3", c.colourDetail)
+        assertEquals("V3", c.listGrade); assertTrue(c.listGradeIsFelt)
+        assertEquals("V3–V5", c.withFeltGrade(null).listGrade)
+        assertEquals("V4", Climb.of(Discipline.BOULDER, 4, ClimbResult.FLASH, start, false).listGrade)
+        c = c.withFeltGrade(null)
+        assertEquals(3, c.grade); assertFalse(c.hasFeltGrade)
+        c = c.withFeltGrade(4).withColour(ColourGrade("White", 4, 6))
+        assertFalse(c.hasFeltGrade, "A new colour starts from its own range")
+        var ranked = Climb.of(ColourGrade("Yellow"), ClimbResult.SEND, start).withFeltGrade(2)
+        assertEquals("felt V2", ranked.colourDetail)
+        ranked = ranked.withFeltGrade(null)
+        assertEquals(Climb.UNGRADED, ranked.grade); assertEquals(null, ranked.colourDetail)
+        assertEquals(5, Climb.of(purple, ClimbResult.SEND, start).copy(grade = 5).feltGrade, "Old climbs: a moved grade is felt")
+
+        val s = ClimbSession(gymID = "g", start = start, climbs = listOf(c.withFeltGrade(4), ranked))
+        val text = LogbookBackup(sessions = listOf(s)).encode()
+        assertEquals(1, Regex("feltGradeSet").findAll(text).count(), "Only written when set")
+        assertEquals(listOf(s), LogbookBackup.decode(text).sessions)
+        val bad = s.copy(climbs = listOf(Climb.of(Discipline.BOULDER, 2, ClimbResult.SEND, start, false).copy(feltGradeSet = true)))
+        assertFailsWith<RestoreError> { LogbookBackup(sessions = listOf(bad)).validate() }
+    }
 }

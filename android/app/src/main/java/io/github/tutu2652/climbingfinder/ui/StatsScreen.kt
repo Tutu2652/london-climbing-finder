@@ -1,6 +1,10 @@
 package io.github.tutu2652.climbingfinder.ui
 
 import android.content.Context
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -131,23 +135,31 @@ private fun Pyramid(sends: List<Climb>, d: Discipline) {
     val top = sends.maxOf { it.grade }
     val low = maxOf(0, sends.minOf { it.grade })
     val most = (low..top).maxOf { g -> sends.count { it.grade == g } }.coerceAtLeast(1)
-    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    // One row per grade, hardest at the top: a rounded bar of flashes (amber) then sends
+    // (green) on a faint track, scaled to the busiest grade, with the count after it.
+    val track = secondaryText.copy(alpha = 0.12f)
+    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         for (g in (low..top).reversed()) {
             val flash = sends.count { it.grade == g && it.result == ClimbResult.FLASH }
             val send = sends.count { it.grade == g && it.result == ClimbResult.SEND }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(d.grades[g], Modifier.width(40.dp), style = MaterialTheme.typography.bodySmall)
-                Row(Modifier.weight(1f).height(18.dp)) {
-                    if (flash > 0) Box(Modifier.weight(flash.toFloat()).fillMaxHeight().background(Amber, RoundedCornerShape(3.dp)))
-                    if (send > 0) Box(Modifier.weight(send.toFloat()).fillMaxHeight().background(Brand, RoundedCornerShape(3.dp)))
-                    val rest = most - flash - send
-                    if (rest > 0) Spacer(Modifier.weight(rest.toFloat()))
+            Row(Modifier.clearAndSetSemantics { contentDescription = "${d.grades[g]}: $flash flashed, $send sent" },
+                verticalAlignment = Alignment.CenterVertically) {
+                Text(d.grades[g], Modifier.width(44.dp), fontWeight = FontWeight.SemiBold)
+                Box(Modifier.weight(1f).height(14.dp).clip(RoundedCornerShape(50)).background(track)) {
+                    if (flash + send > 0) {
+                        Row(Modifier.fillMaxWidth((flash + send).toFloat() / most).fillMaxHeight().clip(RoundedCornerShape(50))) {
+                            if (flash > 0) Box(Modifier.weight(flash.toFloat()).fillMaxHeight().background(Amber))
+                            if (send > 0) Box(Modifier.weight(send.toFloat()).fillMaxHeight().background(Brand))
+                        }
+                    }
                 }
-                Text("${flash + send}", Modifier.width(28.dp).padding(start = 6.dp), style = MaterialTheme.typography.bodySmall, color = secondaryText)
+                Text("${flash + send}", Modifier.width(34.dp), textAlign = TextAlign.End,
+                    color = if (flash + send > 0) MaterialTheme.colorScheme.onSurface else secondaryText)
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Legend("Flash", Amber); Legend("Send", Brand)
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Legend("Flash ${sends.count { it.result == ClimbResult.FLASH }}", Amber)
+            Legend("Send ${sends.count { it.result == ClimbResult.SEND }}", Brand)
         }
     }
 }
@@ -155,8 +167,8 @@ private fun Pyramid(sends: List<Climb>, d: Discipline) {
 @Composable
 private fun Legend(label: String, color: androidx.compose.ui.graphics.Color) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Box(Modifier.size(10.dp).background(color, RoundedCornerShape(2.dp)))
-        Text(label, style = MaterialTheme.typography.bodySmall, color = secondaryText)
+        Box(Modifier.size(10.dp).background(color, RoundedCornerShape(50)))
+        Text(label, style = MaterialTheme.typography.bodySmall, color = color, fontWeight = FontWeight.Medium)
     }
 }
 

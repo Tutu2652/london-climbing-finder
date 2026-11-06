@@ -397,8 +397,8 @@ fun ClimbRow(climb: Climb) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Icon(climb.result.icon, null, tint = if (climb.result == ClimbResult.FLASH) Amber else if (climb.result == ClimbResult.SEND) Brand else secondaryText,
             modifier = Modifier.size(20.dp))
-        if (climb.colour != null) ColourLabel(climb) else Text(climb.gradeLabel, fontWeight = FontWeight.SemiBold)
-        Text(climb.result.title, color = secondaryText)
+        ClimbGradeLabel(climb)
+        Text(climb.result.title, color = secondaryText, maxLines = 1)
         if (climb.comp) Pill("Comp", Amber)
         Spacer(Modifier.weight(1f))
         Text(timeFormat.format(climb.loggedAt), style = MaterialTheme.typography.bodySmall, color = secondaryText)
@@ -413,13 +413,13 @@ fun SessionTally(session: ClimbSession) {
     val flashes = climbs.count { it.result == ClimbResult.FLASH }
     val attempts = climbs.size - sends.size
     val comps = climbs.count { it.comp }
-    data class TallyRow(val label: String, val colour: String?, val comp: Boolean, val flash: Int, val send: Int, val attempt: Int)
+    data class TallyRow(val label: String, val sample: Climb, val comp: Boolean, val flash: Int, val send: Int, val attempt: Int)
     // Regular climbs first, then comp problems; hardest first within each, ungraded last.
     // Colour climbs group by colour and, if you set one, the grade they felt.
-    val rows = climbs.groupBy { listOf(it.disciplineRaw, it.grade, it.comp, it.colour) }.map { (_, cs) ->
+    val rows = climbs.groupBy { listOf(it.disciplineRaw, it.grade, it.comp, it.colour, it.listGradeIsFelt) }.map { (_, cs) ->
         val c = cs.first()
-        val label = c.colour?.let { if (c.hasFeltGrade) "$it (felt ${c.gradeLabel})" else it } ?: c.gradeLabel
-        Triple(c, c.grade, TallyRow(label, c.colour, c.comp, cs.count { it.result == ClimbResult.FLASH },
+        val label = (c.colour ?: "") + c.listGrade
+        Triple(c, c.grade, TallyRow(label, c, c.comp, cs.count { it.result == ClimbResult.FLASH },
             cs.count { it.result == ClimbResult.SEND }, cs.count { it.result == ClimbResult.ATTEMPT }))
     }.sortedWith(compareBy({ if (it.first.discipline == Discipline.ROPE) 1 else 0 }, { if (it.third.comp) 1 else 0 }, { -it.second }, { it.third.label }))
         .map { it.third }
@@ -429,13 +429,9 @@ fun SessionTally(session: ClimbSession) {
             (if (comps > 0) " · $comps comp" else ""), fontWeight = FontWeight.SemiBold)
         for (r in rows) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (r.colour != null) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                        ColourSwatch(r.colour)
-                        Text(r.label, fontWeight = FontWeight.SemiBold)
-                    }
-                } else {
-                    Text(r.label, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(44.dp))
+                // A fixed-width label column keeps the counts lined up.
+                Box(Modifier.width(if (climbs.any { it.colour != null }) 112.dp else 44.dp)) {
+                    if (r.sample.colour != null) ClimbGradeLabel(r.sample) else Text(r.label, fontWeight = FontWeight.SemiBold)
                 }
                 if (r.comp) Icon(Icons.Filled.EmojiEvents, "Comp", tint = secondaryText, modifier = Modifier.size(16.dp))
                 if (r.flash > 0) IconText(Icons.Filled.Bolt, "${r.flash}", MaterialTheme.typography.bodyMedium, Amber)
@@ -540,9 +536,8 @@ fun ClimbScreen(sessionID: String, climbID: String) {
             "This gym's colours have no V grades. Stats count this climb as ${climb.gradeLabel}, the grade you said it felt."
         colourGrade != null && low == null ->
             "This gym's colours have no V grades, so this climb counts as a send but not in grade stats. Set a felt grade to count it."
-        low != null && climb.hasFeltGrade ->
-            "Stats count this climb as ${climb.gradeLabel}. Set it back to ${gradeRange(low, low)} to count it as the bottom of the range."
-        colourGrade != null -> "Stats count this climb as ${climb.gradeLabel}, the bottom of the range. Change it if it felt harder."
+        low != null && climb.feltGrade != null -> "Stats count this climb as ${climb.gradeLabel}, the grade you said it felt."
+        colourGrade != null -> "Stats count this climb as ${climb.gradeLabel}, the bottom of the range. Set a felt grade if it felt different."
         climb.comp && !climb.isGraded -> "Add a grade to count this climb in grade stats, or to untag it as comp."
         else -> null
     }
@@ -585,10 +580,18 @@ fun ClimbScreen(sessionID: String, climbID: String) {
                     Switch(climb.comp, { on -> change { it.copy(isComp = on) } }, enabled = !(climb.comp && !climb.isGraded))
                 }
             }
-            Box {
-                LabeledRow(if (climb.comp || colourGrade != null) "Felt grade" else "Grade", climb.gradeLabel.let { if (it == "–") "No grade" else it }) { gradeMenu = true }
+            if (colourGrade != null) Box {
+                LabeledRow("Felt grade", climb.feltGrade?.let { climb.gradeLabel } ?: "Not set") { gradeMenu = true }
                 DropdownMenu(gradeMenu, { gradeMenu = false }) {
-                    if ((climb.comp && colourGrade == null) || colourGrade?.hasRange == false) DropdownMenuItem({ Text("No grade") }, { gradeMenu = false; change { it.copy(grade = Climb.UNGRADED) } })
+                    DropdownMenuItem({ Text("Not set") }, { gradeMenu = false; change { it.withFeltGrade(null) } })
+                    climb.discipline.grades.forEachIndexed { i, g ->
+                        DropdownMenuItem({ Text(g) }, { gradeMenu = false; change { it.withFeltGrade(i) } })
+                    }
+                }
+            } else Box {
+                LabeledRow(if (climb.comp) "Felt grade" else "Grade", climb.gradeLabel.let { if (it == "–") "No grade" else it }) { gradeMenu = true }
+                DropdownMenu(gradeMenu, { gradeMenu = false }) {
+                    if (climb.comp) DropdownMenuItem({ Text("No grade") }, { gradeMenu = false; change { it.copy(grade = Climb.UNGRADED) } })
                     climb.discipline.grades.forEachIndexed { i, g ->
                         DropdownMenuItem({ Text(g) }, { gradeMenu = false; change { it.copy(grade = i) } })
                     }

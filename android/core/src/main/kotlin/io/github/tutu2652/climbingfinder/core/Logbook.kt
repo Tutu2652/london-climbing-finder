@@ -94,6 +94,8 @@ data class Climb(
     val colour: String? = null,
     val colourLow: Int? = null,
     val colourHigh: Int? = null,
+    /** Present (true) only when you picked how a colour climb felt, even the bottom of its range. */
+    val feltGradeSet: Boolean? = null,
 ) {
     val discipline: Discipline get() = Discipline.of(disciplineRaw) ?: Discipline.BOULDER
     val result: ClimbResult get() = ClimbResult.of(resultRaw) ?: ClimbResult.SEND
@@ -102,8 +104,28 @@ data class Climb(
     val gradeLabel: String get() = if (isGraded) discipline.grades[grade] else if (grade == UNGRADED) "–" else "?"
     /** The colour and range this climb was logged with, if it was logged by colour. */
     val colourGrade: ColourGrade? get() = colour?.let { ColourGrade(it, colourLow, colourHigh) }
-    /** A felt grade has been set on a colour climb (it no longer counts as the bottom of the range). */
-    val hasFeltGrade: Boolean get() = colourGrade?.let { c -> c.low?.let { grade != it } ?: isGraded } ?: false
+    /**
+     * A felt grade has been set on a colour climb, rather than it counting as the bottom of
+     * its range. Climbs from before felt grades were remembered count if the grade moved.
+     */
+    val hasFeltGrade: Boolean get() = colourGrade?.let { c -> feltGradeSet == true || grade != (c.low ?: UNGRADED) } ?: false
+
+    /** How a colour climb felt, or null when it counts as the bottom of its range (or, with no range, isn't graded). */
+    val feltGrade: Int? get() = if (hasFeltGrade && isGraded) grade else null
+
+    /**
+     * The grade a list shows next to a colour dot: the felt grade if you set one, else the
+     * colour's range ("" for a colour with no V grades). Plain climbs show their grade.
+     */
+    val listGrade: String get() = colourGrade?.let { c -> if (hasFeltGrade && isGraded) gradeLabel else c.range } ?: gradeLabel
+    /** Show "felt" after `listGrade`. */
+    val listGradeIsFelt: Boolean get() = colourGrade != null && hasFeltGrade && isGraded
+
+    /** With this felt grade, or (null) counting as the bottom of the range again. */
+    fun withFeltGrade(g: Int?): Climb {
+        val c = colourGrade ?: return this
+        return if (g != null) copy(grade = g, feltGradeSet = true) else copy(grade = c.low ?: UNGRADED, feltGradeSet = null)
+    }
     /** "V2–V3", "V2–V3 · felt V3" or "felt V3" for a colour climb; null otherwise or when there's nothing to say. */
     val colourDetail: String?
         get() = colourGrade?.let { c ->
@@ -117,9 +139,9 @@ data class Climb(
     fun withColour(c: ColourGrade?): Climb = when {
         c != null && c == colourGrade -> this
         c != null -> copy(colour = c.name, colourLow = c.low, colourHigh = c.high, disciplineRaw = Discipline.BOULDER.raw,
-            isComp = false, grade = c.low ?: UNGRADED)
+            isComp = false, grade = c.low ?: UNGRADED, feltGradeSet = null)
         colour == null -> this
-        else -> copy(colour = null, colourLow = null, colourHigh = null).let { if (it.isGraded) it else it.copy(grade = 0) }
+        else -> copy(colour = null, colourLow = null, colourHigh = null, feltGradeSet = null).let { if (it.isGraded) it else it.copy(grade = 0) }
     }
 
     /** Moved to boulders or ropes, keeping the grade where it can. Ropes have no colours. */
@@ -295,7 +317,7 @@ data class LogbookBackup(
                 val cg = c.colourGrade
                 if (cg != null) {
                     if (d != Discipline.BOULDER || !cg.isValid) throw invalid
-                } else if (c.colourLow != null || c.colourHigh != null) throw invalid
+                } else if (c.colourLow != null || c.colourHigh != null || c.feltGradeSet == true) throw invalid
             }
         }
     }
