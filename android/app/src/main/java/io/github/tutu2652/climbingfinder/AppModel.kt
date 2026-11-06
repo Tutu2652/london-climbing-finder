@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.tutu2652.climbingfinder.core.AppRelease
 import io.github.tutu2652.climbingfinder.core.ClimbingData
 import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.DealOption
@@ -85,6 +86,19 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     fun chooseHomePostcode(p: String) {
         homePostcode = p; prefs.edit().putString("homePostcode", p).apply()
         pricer = pricer.copy(eligibility = eligibility)
+    }
+
+    // --- App updates. The website's gyms.json names the newest release; there is no store.
+
+    val appVersion: String get() = BuildConfig.VERSION_NAME
+    /** A newer release than this copy, if the latest data announces one. */
+    val update: AppRelease? get() = data.androidApp?.takeIf { it.isNewerThan(BuildConfig.VERSION_CODE) }
+    private var dismissedUpdate by mutableStateOf(prefs.getInt("dismissedUpdate", 0))
+    /** The banner hides after "Later" until an even newer release appears; More keeps the row. */
+    val showUpdateBanner: Boolean get() = update?.let { it.versionCode > dismissedUpdate } ?: false
+    fun dismissUpdate() {
+        val u = update ?: return
+        dismissedUpdate = u.versionCode; prefs.edit().putInt("dismissedUpdate", u.versionCode).apply()
     }
 
     // Personal favourites, notes & 1-5 ratings, kept on this phone.

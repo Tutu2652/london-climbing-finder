@@ -70,6 +70,17 @@ class PricingTest {
         assertEquals(8.0, gym("arch_bermondsey").bestOffpeak(false, Eligibility(postcode = "SE16")))
     }
 
+    @Test fun releaseNoticeOnlyOffersNewerVersions() {
+        val r = assertNotNull(data.androidApp, "gyms.json _meta.android_app")
+        assertTrue(r.url.startsWith("https://"))
+        assertTrue(r.isNewerThan(r.versionCode - 1))
+        assertFalse(r.isNewerThan(r.versionCode))
+        fun notice(meta: String) = ClimbingData.parse("""{"_meta": $meta, "gyms": []}""").androidApp
+        assertEquals(null, notice("""{}"""))
+        assertEquals(null, notice("""{"android_app": {"version_code": 3, "url": "http://example.com/a.apk"}}"""))
+        assertEquals(3, notice("""{"android_app": {"version_code": 3, "url": "https://example.com/a.apk"}}""")?.versionCode)
+    }
+
     @Test fun eventsHideAfterTheirDay() {
         val e = GymEvent(date = "2026-11-14", start = "18:00", title = "Watch party")
         assertTrue(e.isUpcoming("2026-11-14"))

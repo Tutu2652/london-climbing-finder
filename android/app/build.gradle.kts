@@ -19,8 +19,10 @@ android {
         applicationId = "io.github.tutu2652.climbingfinder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // Raise both for every shared release, and set gyms.json _meta.android_app to
+        // match once the release is published: that is what tells older copies to update.
+        versionCode = 2
+        versionName = "0.2"
     }
 
     signingConfigs {
@@ -40,7 +42,7 @@ android {
         }
     }
 
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

@@ -11,6 +11,20 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 
+/** A published Android release. Older copies of the app offer it as an update. */
+data class AppRelease(val versionCode: Int, val versionName: String?, val url: String) {
+    /** True when this release is newer than the running app (whose version code is `installed`). */
+    fun isNewerThan(installed: Int): Boolean = versionCode > installed
+
+    companion object {
+        fun from(o: JsonObject): AppRelease? {
+            val code = (o["version_code"] as? JsonPrimitive)?.intOrNull ?: return null
+            val url = o.str("url")?.takeIf { it.startsWith("https://") } ?: return null
+            return AppRelease(code, o.str("version_name"), url)
+        }
+    }
+}
+
 // Read straight from gyms.json (the repo's single source of truth, bundled
 // into the app at build time). Field names mirror the JSON; see README.md.
 // Mirrors ios/ClimbingFinder/Core/Models.swift.
@@ -20,12 +34,15 @@ data class ClimbingData(
     val gyms: List<Gym>,
     val studentPromotions: List<StudentPromotion>,
     val limitedPromotions: List<Promotion>,
+    /** The newest shared Android release, from `_meta.android_app`. */
+    val androidApp: AppRelease? = null,
 ) {
     companion object {
         fun parse(text: String): ClimbingData {
             val root = Json.parseToJsonElement(text).jsonObject
             return ClimbingData(
                 lastResearchDate = root.obj("_meta")?.str("last_research_date"),
+                androidApp = root.obj("_meta")?.obj("android_app")?.let { AppRelease.from(it) },
                 gyms = root.getValue("gyms").jsonArray.map { Gym.from(it.jsonObject) },
                 studentPromotions = root.objects("student_promotions").map {
                     StudentPromotion(it.req("scope"), it.req("offer"), it.str("source"))

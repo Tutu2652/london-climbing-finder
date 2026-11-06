@@ -377,6 +377,18 @@ class DataValidation(unittest.TestCase):
                     if t is not None:
                         self.assertRegex(t, r"^\d\d:\d\d$", where)
 
+    def test_android_release_notice(self):
+        # Older Android copies offer this release as an update. It must exist, so it
+        # can never be newer than the version the app is built as.
+        r = DATA["_meta"]["android_app"]
+        gradle = open(os.path.join(ROOT, "android", "app", "build.gradle.kts")).read()
+        code = int(re.search(r"versionCode = (\d+)", gradle).group(1))
+        name = re.search(r'versionName = "([^"]+)"', gradle).group(1)
+        self.assertLessEqual(r["version_code"], code, "announce a release only once it is published")
+        if r["version_code"] == code:
+            self.assertEqual(r["version_name"], name)
+        self.assertTrue(r["url"].startswith("https://"))
+
     def test_every_gym_has_a_short_calendar_name(self):
         # Calendar apps cut event titles short, so the gym part has to be brief.
         for g in DATA["gyms"]:

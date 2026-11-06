@@ -40,7 +40,8 @@ every version.
 
 The install doesn't expire, unlike the free iPhone install.
 
-**Updates.** Install the newer APK over the top; your logbook and notes stay. This works
+**Updates.** When a new version is out, the app shows an **Update** banner; tap it to
+download the new file. Install it over the top; your logbook and notes stay. This works
 for any APK from Releases, CI or the maintainer, because they are all signed with the same key
 (see [Signing key](#signing-key)). An APK someone built on their own computer has a
 different key: Android then says "App not installed". To switch to it, back up your
@@ -72,9 +73,20 @@ An AI coding agent can do this for you: ask it to "install the Android app on my
 ([AGENTS.md](../AGENTS.md#installing-on-android) has the steps).
 
 CI builds the same APK on every push and keeps it with the run for 90 days (Actions tab →
-a green **CI** run → **climbing-finder-android**; needs a GitHub account). To publish a
-new version, attach that APK to a new GitHub release, renamed to
-`london-climbing-finder.apk` so the download link above keeps working.
+a green **CI** run → **climbing-finder-android**; needs a GitHub account).
+
+### Publishing a new version
+
+1. Raise `versionCode` and `versionName` in `app/build.gradle.kts`, commit and push.
+2. When CI passes, download that run's APK and attach it to a new GitHub release, renamed
+   to `london-climbing-finder.apk` so the download link above keeps working.
+3. In `gyms.json`, set `_meta.android_app` (`version_code`, `version_name`) to the new
+   version, run `python3 tools/sync_data.py`, commit and push. Once the website redeploys,
+   copies of the app with an older version show an **Update** banner (and a row in More)
+   that opens the download. "Later" hides the banner until the next version.
+
+Do step 3 only after the release exists; a test stops `version_code` going above the
+version in `build.gradle.kts`.
 
 ### Signing key
 

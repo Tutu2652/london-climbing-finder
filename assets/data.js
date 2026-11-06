@@ -2,6 +2,11 @@ window.CLIMBING_DATA = {
   "_meta": {
     "currency": "GBP",
     "last_research_date": "2026-11-06",
+    "android_app": {
+      "version_code": 2,
+      "version_name": "0.2",
+      "url": "https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.apk"
+    },
     "sources": [
       "Climbing District Bermondsey in-gym 'What's on' board, seen 2026-11-06 (student days, SE16 local day, Sister Sessions, Running District)",
       "The Font price pages (Wandsworth, Borough, Hounslow) and Substation offers re-checked 2026-11-02",

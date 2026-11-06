@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Share
@@ -67,6 +68,13 @@ fun MoreScreen() {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     Screen("More", back = false) {
+        model.update?.let { u ->
+            section(footer = "Opens the download. Install it over this copy; your logbook and notes stay.") {
+                ActionRow(Icons.Filled.SystemUpdate, "Update the app", divider = false, value = u.versionName?.let { "Version $it" }, chevron = false) {
+                    openUrl(ctx, u.url)
+                }
+            }
+        }
         section(footer = "Used for public-transport travel times and sorting by distance.") {
             ActionRow(Icons.Filled.LocationOn, "Your location", divider = false, value = model.origin?.label ?: "Not set") { nav.navigate("origin") }
         }
@@ -90,6 +98,7 @@ fun MoreScreen() {
             model.data.lastResearchDate?.let { LabeledRow("Prices researched", it) }
             ActionRow(Icons.Filled.Refresh, "Check for new prices", chevron = false) { scope.launch { model.refreshData(force = true) } }
             LabeledRow("Gyms", "${model.data.gyms.size}")
+            LabeledRow("App version", model.appVersion)
             ActionRow(Icons.Filled.Language, "Open the website", chevron = false) { openUrl(ctx, AppModel.SITE + "/") }
         }
         section {

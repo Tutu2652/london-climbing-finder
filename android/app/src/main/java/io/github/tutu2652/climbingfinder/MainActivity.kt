@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -57,6 +58,7 @@ import io.github.tutu2652.climbingfinder.ui.NearbyScreen
 import io.github.tutu2652.climbingfinder.ui.OriginScreen
 import io.github.tutu2652.climbingfinder.ui.SessionLogScreen
 import io.github.tutu2652.climbingfinder.ui.SessionScreen
+import io.github.tutu2652.climbingfinder.ui.UpdateBanner
 import io.github.tutu2652.climbingfinder.ui.StartSessionScreen
 import io.github.tutu2652.climbingfinder.ui.StatsScreen
 import io.github.tutu2652.climbingfinder.ui.VisitsByGymScreen
@@ -95,6 +97,8 @@ class MainActivity : ComponentActivity() {
                 }
                 CompositionLocalProvider(LocalModel provides model, LocalNav provides nav) {
                     Scaffold(bottomBar = {
+                        Column {
+                        UpdateBanner()
                         NavigationBar {
                             for (t in tabs) {
                                 NavigationBarItem(
@@ -111,6 +115,7 @@ class MainActivity : ComponentActivity() {
                                     label = { Text(t.title) },
                                 )
                             }
+                        }
                         }
                     }) { padding ->
                         NavHost(nav, startDestination = "cheapest", modifier = Modifier.padding(bottom = padding.calculateBottomPadding())) {
