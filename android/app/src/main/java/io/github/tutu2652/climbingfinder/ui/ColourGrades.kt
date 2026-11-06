@@ -32,6 +32,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -169,7 +171,22 @@ fun LazyListScope.colourSendsSection(gymID: String, sends: List<Climb>, scale: L
     }
 }
 
-/** The colour name, swatch and range of a colour climb, for lists of climbs. */
+/** A colour dot (for colour climbs) and the grade that counts: "● V1–V3", "● V2 felt" or "V4". */
+@Composable
+fun ClimbGradeLabel(climb: Climb) {
+    val spoken = listOfNotNull(climb.colour, climb.listGrade, if (climb.listGradeIsFelt) "felt" else null)
+        .filter { it.isNotEmpty() }.joinToString(" ")
+    Row(
+        Modifier.clearAndSetSemantics { contentDescription = spoken },
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        climb.colour?.let { ColourSwatch(it, 14.dp) }
+        if (climb.listGrade.isNotEmpty()) Text(climb.listGrade, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        if (climb.listGradeIsFelt) Text("felt", style = MaterialTheme.typography.bodySmall, color = secondaryText)
+    }
+}
+
+/** The colour name, swatch and range of a colour climb. */
 @Composable
 fun ColourLabel(climb: Climb, detail: Boolean = true) {
     val colour = climb.colour ?: return
