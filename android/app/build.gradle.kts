@@ -4,6 +4,13 @@ plugins {
     kotlin("plugin.compose")
 }
 
+// One signing key for every shared build, so a newer APK installs over an older one
+// whichever computer or CI run built it. The key is never in git: the maintainer's
+// ~/.gradle/gradle.properties points to it, and CI gets it from secrets. Without
+// it, builds use Android's per-computer debug key.
+val sharedKeystore = providers.gradleProperty("climbingFinderKeystore").orNull
+val sharedKeystorePassword = providers.gradleProperty("climbingFinderKeystorePassword").orNull
+
 android {
     namespace = "io.github.tutu2652.climbingfinder"
     compileSdk = 35
@@ -14,6 +21,23 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+    }
+
+    signingConfigs {
+        if (sharedKeystore != null) {
+            create("shared") {
+                storeFile = file(sharedKeystore)
+                storePassword = sharedKeystorePassword
+                keyAlias = "climbing-finder"
+                keyPassword = sharedKeystorePassword
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("debug") {
+            if (sharedKeystore != null) signingConfig = signingConfigs.getByName("shared")
+        }
     }
 
     buildFeatures { compose = true }

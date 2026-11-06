@@ -37,12 +37,11 @@ account; the download is a zip with the APK inside).
 
 The install doesn't expire, unlike the free iPhone install.
 
-**Updates.** Install the newer APK over the top; your logbook and notes stay. Android
-only allows this when both files were built on the same computer, because each computer
-signs debug builds with its own key (and so does each CI run). If it says "App not
-installed" or the package conflicts, back up your logbook (More → Back up logbook),
-uninstall, install the new file, then restore the backup. Get your updates from one place
-to avoid this.
+**Updates.** Install the newer APK over the top; your logbook and notes stay. This works
+for any APK from CI or from the maintainer, because they are all signed with the same key
+(see [Signing key](#signing-key)). An APK someone built on their own computer has a
+different key: Android then says "App not installed". To switch to it, back up your
+logbook (More → Back up logbook), uninstall, install the new file and restore the backup.
 
 **Google developer verification.** Google is starting to require that apps installed
 from outside the Play Store come from a verified developer. It began in a few countries
@@ -70,6 +69,24 @@ An AI coding agent can do this for you: ask it to "install the Android app on my
 ([AGENTS.md](../AGENTS.md#installing-on-android) has the steps).
 
 CI builds the same APK on every push and keeps it with the run.
+
+### Signing key
+
+Shared APKs are signed with one key, so each new one installs over the last. The key is
+not in git. On the maintainer's Mac it is `~/.android/climbing-finder.jks`, and
+`~/.gradle/gradle.properties` points to it:
+
+```
+climbingFinderKeystore=/Users/<you>/.android/climbing-finder.jks
+climbingFinderKeystorePassword=<password>
+```
+
+CI reads the same key from two repository secrets: `ANDROID_KEYSTORE_BASE64` (the file,
+base64-encoded) and `ANDROID_KEYSTORE_PASSWORD`. Builds without the key (a fork, or
+someone else's computer) use Android's own debug key, which is different on every machine.
+
+Keep a backup of the `.jks` file and its password, for example in a password manager. If
+the key is lost, every friend has to uninstall and reinstall once.
 
 ## Tests
 
