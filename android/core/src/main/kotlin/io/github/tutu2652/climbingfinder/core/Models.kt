@@ -87,6 +87,8 @@ data class Gym(
     /** A temporary note such as reduced hours, with the hours that apply meanwhile. */
     val notice: String?,
     val temporaryHours: Map<String, List<String>>?,
+    /** The gym's bouldering colours, easiest first, from its grade chart; empty if it doesn't grade by colour. */
+    val colourGrades: List<ColourGrade> = emptyList(),
 ) {
     companion object {
         fun from(o: JsonObject): Gym {
@@ -138,6 +140,12 @@ data class Gym(
                 socials = o.strings("socials") ?: emptyList(),
                 ac = o.str("ac"),
                 acNote = o.str("ac_note"),
+                // A colour whose range can't be read is still offered, without a range.
+                colourGrades = o.objects("colour_grades").mapNotNull { e ->
+                    val name = e.str("colour") ?: return@mapNotNull null
+                    val r = e.str("grades")?.let { ColourGrade.parseRange(it) }
+                    ColourGrade(name, r?.first, r?.second)
+                },
                 logo = o.str("logo"),
                 logoBackground = o.str("logo_background"),
                 about = o.str("about"),

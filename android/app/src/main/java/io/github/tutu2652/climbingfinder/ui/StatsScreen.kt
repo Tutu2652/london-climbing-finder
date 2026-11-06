@@ -336,6 +336,7 @@ fun GymVisitsScreen(id: String) {
             }
             ActionRow(Icons.Filled.Info, "Gym details & prices") { nav.navigate("gym/${gym.id}") }
         }
+        colourSendsSection(gym.id, sends, model.colourScale(gym.id)) { nav.navigate("colours/${gym.id}") }
         for ((title, group) in monthGroups(visits)) {
             section(title) {
                 group.forEachIndexed { i, s -> RowItem(onClick = { nav.navigate("session/${s.id}") }, divider = i > 0) { VisitRow(s) } }

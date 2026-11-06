@@ -15,7 +15,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 // Your climbing log: sessions at a gym, and the climbs in each. The app keeps
-// it as one JSON file in the iPhone app's backup format (version 3), so a
+// it as one JSON file in the iPhone app's backup format (version 4), so a
 // backup from either app can be restored on the other. Mirrors
 // ios/ClimbingFinder/Core/Logbook.swift.
 
@@ -84,14 +84,55 @@ data class Climb(
     val routePhotoAssetID: String? = null,
     /** A competition problem. Its grade is how it felt, and may be left out. Missing in version 1 and 2 backups. */
     val isComp: Boolean? = null,
+    /**
+     * Set when logged by hold colour at a colour-graded gym: the colour and the V range
+     * it stood for that day, kept even if the gym changes its colours later. `grade` is
+     * what counts in stats: the bottom of the range, unless you've said how it felt.
+     * Colours with no V range (a gym that only ranks its colours) start ungraded.
+     * Missing before version 4.
+     */
+    val colour: String? = null,
+    val colourLow: Int? = null,
+    val colourHigh: Int? = null,
 ) {
     val discipline: Discipline get() = Discipline.of(disciplineRaw) ?: Discipline.BOULDER
     val result: ClimbResult get() = ClimbResult.of(resultRaw) ?: ClimbResult.SEND
     val comp: Boolean get() = isComp == true
     val isGraded: Boolean get() = grade in discipline.grades.indices
     val gradeLabel: String get() = if (isGraded) discipline.grades[grade] else if (grade == UNGRADED) "–" else "?"
-    /** "V4", "Comp V4" or "Comp". */
-    val label: String get() = if (comp) (if (isGraded) "Comp $gradeLabel" else "Comp") else gradeLabel
+    /** The colour and range this climb was logged with, if it was logged by colour. */
+    val colourGrade: ColourGrade? get() = colour?.let { ColourGrade(it, colourLow, colourHigh) }
+    /** A felt grade has been set on a colour climb (it no longer counts as the bottom of the range). */
+    val hasFeltGrade: Boolean get() = colourGrade?.let { c -> c.low?.let { grade != it } ?: isGraded } ?: false
+    /** "V2–V3", "V2–V3 · felt V3" or "felt V3" for a colour climb; null otherwise or when there's nothing to say. */
+    val colourDetail: String?
+        get() = colourGrade?.let { c ->
+            listOf(c.range, if (hasFeltGrade) "felt $gradeLabel" else "").filter { it.isNotEmpty() }
+                .takeIf { it.isNotEmpty() }?.joinToString(" · ")
+        }
+    /**
+     * Graded by a colour from the gym's chart (counting as the bottom of its range), or,
+     * with null, by V grade again (keeping the grade it counts as).
+     */
+    fun withColour(c: ColourGrade?): Climb = when {
+        c != null && c == colourGrade -> this
+        c != null -> copy(colour = c.name, colourLow = c.low, colourHigh = c.high, disciplineRaw = Discipline.BOULDER.raw,
+            isComp = false, grade = c.low ?: UNGRADED)
+        colour == null -> this
+        else -> copy(colour = null, colourLow = null, colourHigh = null).let { if (it.isGraded) it else it.copy(grade = 0) }
+    }
+
+    /** Moved to boulders or ropes, keeping the grade where it can. Ropes have no colours. */
+    fun withDiscipline(d: Discipline): Climb {
+        if (d == discipline) return this
+        val base = if (d == Discipline.ROPE) withColour(null) else this
+        val g = if (base.grade >= 0) base.grade.coerceIn(0, d.grades.size - 1) else base.grade
+        return base.copy(disciplineRaw = d.raw, grade = g)
+    }
+
+    /** "V4", "Comp V4", "Comp" or, for a colour climb, "Blue". */
+    val label: String
+        get() = colour ?: if (comp) (if (isGraded) "Comp $gradeLabel" else "Comp") else gradeLabel
 
     companion object {
         /** Grade value for a comp problem logged without a grade. */
@@ -99,7 +140,82 @@ data class Climb(
 
         fun of(discipline: Discipline, grade: Int, result: ClimbResult, at: Instant, comp: Boolean) =
             Climb(disciplineRaw = discipline.raw, grade = grade, resultRaw = result.raw, loggedAt = at, isComp = comp)
+
+        /** A boulder logged by its colour; counts as the bottom of the colour's range, if it has one. */
+        fun of(colour: ColourGrade, result: ClimbResult, at: Instant) =
+            Climb(grade = colour.low ?: UNGRADED, resultRaw = result.raw, loggedAt = at, isComp = false,
+                colour = colour.name, colourLow = colour.low, colourHigh = colour.high)
     }
+}
+
+/** Hold colours offered when setting up a gym's colour grades, with a swatch for each. */
+object HoldColour {
+    val all: List<Pair<String, String>> = listOf(
+        "White" to "F2F2F2", "Yellow" to "F5C518", "Orange" to "F28C28", "Green" to "2EA043",
+        "Teal" to "22B8C8", "Blue" to "2F6FDB", "Purple" to "8250DF", "Pink" to "E85AAD",
+        "Red" to "D93636", "Grey" to "8C8C8C", "Brown" to "8B5A2B", "Black" to "1F1F1F",
+    )
+    fun hex(name: String): String = all.firstOrNull { it.first == name }?.second ?: "8C8C8C"
+}
+
+/**
+ * One colour on a gym's circuit and the V grades it covers, as indexes into
+ * `Discipline.BOULDER.grades`; no range for a gym that only ranks its colours.
+ * A gym's scale is a list of these, easiest first.
+ */
+@Serializable
+data class ColourGrade(val name: String, val low: Int? = null, val high: Int? = null) {
+    /** "V2–V3", "V9+", or "" when the colour has no V range. */
+    val range: String get() = if (low != null && high != null) gradeRange(low, high) else ""
+    val hasRange: Boolean get() = low != null
+    val isValid: Boolean
+        get() {
+            val g = Discipline.BOULDER.grades.indices
+            if (name.isEmpty()) return false
+            if (low == null && high == null) return true
+            return low != null && high != null && low in g && high in g && low <= high
+        }
+
+    companion object {
+        /** A gym's scale is usable if every colour is valid and appears once. */
+        fun isValidScale(scale: List<ColourGrade>) = scale.all { it.isValid } && scale.map { it.name }.toSet().size == scale.size
+
+        /** The range a newly added colour starts with: just above the hardest one so far. */
+        fun nextRange(after: List<ColourGrade>): Pair<Int, Int> {
+            val top = Discipline.BOULDER.grades.size - 1
+            val last = after.mapNotNull { it.high }.maxOrNull() ?: return 0 to 1
+            val low = minOf(top, last + 1)
+            return low to minOf(top, low + 1)
+        }
+
+        /**
+         * Reads a range as gyms.json writes it: "VB", "V3", "V2-V5" or "V9+". VB counts as V0,
+         * the easiest grade the logbook has; "+" runs to the top. null when unreadable.
+         */
+        fun parseRange(text: String): Pair<Int, Int>? {
+            val top = Discipline.BOULDER.grades.size - 1
+            fun v(s: String): Int? {
+                val t = s.trim().uppercase()
+                if (t == "VB") return 0
+                return t.removePrefix("V").takeIf { t.startsWith("V") }?.toIntOrNull()?.takeIf { it in 0..top }
+            }
+            val t = text.trim()
+            if (t.endsWith("+")) return v(t.dropLast(1))?.let { it to top }
+            val parts = t.split("-")
+            if (parts.size !in 1..2) return null
+            val l = v(parts.first()) ?: return null
+            val h = v(parts.last()) ?: return null
+            return if (l <= h) l to h else null
+        }
+    }
+}
+
+/** "V3", "V2–V3", or "V9+" for a range that runs to the top grade. */
+fun gradeRange(low: Int, high: Int): String {
+    val g = Discipline.BOULDER.grades
+    if (low !in g.indices || high !in g.indices) return "?"
+    if (low == high) return g[low]
+    return if (high == g.size - 1) "${g[low]}+" else "${g[low]}–${g[high]}"
 }
 
 @Serializable
@@ -120,6 +236,20 @@ data class ClimbSession(
     fun durationSeconds(now: Instant = Instant.now()): Long = maxOf(0, Duration.between(start, end ?: now).seconds)
     val sends: List<Climb> get() = climbs.filter { it.result.isSend }
 
+    /** The climb logged last, which Undo removes. */
+    val lastClimb: Climb? get() = climbs.maxByOrNull { it.loggedAt }
+
+    /**
+     * When a climb tapped now is logged: now in a live session, else the session's end.
+     * Always at least a second after the last climb, so the order (and Undo) stays clear
+     * even for quick taps or a past session, and survives a backup's whole-second times.
+     */
+    fun nextLogTime(now: Instant = nowSecond()): Instant {
+        val base = if (isActive) now else minOf(end ?: start, now)
+        val latest = climbs.maxOfOrNull { it.loggedAt } ?: return base
+        return if (latest.plusSeconds(1) > base) latest.plusSeconds(1) else base
+    }
+
     /** Hardest graded send in the session (grade index). */
     fun hardest(d: Discipline): Int? = sends.filter { it.discipline == d && it.isGraded }.maxOfOrNull { it.grade }
 }
@@ -134,22 +264,38 @@ class RestoreError(message: String) : Exception(message)
 /** The backup file, and the app's own store. */
 @Serializable
 data class LogbookBackup(
-    val version: Int = 3,
+    val version: Int = 4,
     @Serializable(IsoInstant::class) val exported: Instant = nowSecond(),
     val sessions: List<ClimbSession>,
+    /** Each gym's colour grades, by gym id. Missing before version 4. */
+    val colourScales: Map<String, List<ColourGrade>>? = null,
 ) {
+    /** Colour scales from the file for gyms that don't have one yet; existing scales are kept. */
+    fun mergedColourScales(existing: Map<String, List<ColourGrade>>): Map<String, List<ColourGrade>> =
+        (colourScales ?: emptyMap()) + existing
+
     /** Validate the whole file before changing the logbook. */
     fun validate() {
-        if (version !in 1..3) throw RestoreError("This backup version isn't supported.")
+        if (version !in 1..4) throw RestoreError("This backup version isn't supported.")
         val invalid = RestoreError("This backup contains invalid dates, prices or climbs. Nothing was imported.")
+        for ((gymID, scale) in colourScales ?: emptyMap()) {
+            if (gymID.isEmpty() || !ColourGrade.isValidScale(scale)) throw invalid
+        }
         for (s in sessions) {
             if (s.gymID.isEmpty() || s.feeling !in 0..5) throw invalid
             if (s.end != null && s.end < s.start) throw invalid
             if (s.price != null && (!s.price.isFinite() || s.price < 0)) throw invalid
             for (c in s.climbs) {
                 val d = Discipline.of(c.disciplineRaw) ?: throw invalid
-                if (!(c.grade in d.grades.indices || (c.isComp == true && c.grade == Climb.UNGRADED))) throw invalid
+                // Only comp climbs and colours without a V range may be ungraded.
+                val mayBeUngraded = c.isComp == true || (c.colour != null && c.colourLow == null)
+                if (!(c.grade in d.grades.indices || (mayBeUngraded && c.grade == Climb.UNGRADED))) throw invalid
                 ClimbResult.of(c.resultRaw) ?: throw invalid
+                // A colour climb is a boulder with a valid colour; a range needs a colour.
+                val cg = c.colourGrade
+                if (cg != null) {
+                    if (d != Discipline.BOULDER || !cg.isValid) throw invalid
+                } else if (c.colourLow != null || c.colourHigh != null) throw invalid
             }
         }
     }

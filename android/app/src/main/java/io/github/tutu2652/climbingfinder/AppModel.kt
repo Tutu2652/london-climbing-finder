@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.tutu2652.climbingfinder.core.ClimbingData
+import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.DealOption
 import io.github.tutu2652.climbingfinder.core.Gym
 import io.github.tutu2652.climbingfinder.core.Moment
@@ -53,6 +54,8 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     private var lastDataCheck: Instant? = null
     /** Logos from the copy built into the app, used when a downloaded copy lacks them. */
     private val bundledLogos: Map<String, Pair<String, String?>>
+    /** Colour charts from the copy built into the app, used when a downloaded copy lacks them. */
+    private val bundledColourGrades: Map<String, List<ColourGrade>>
 
     val logbook = LogbookStore(File(app.filesDir, "logbook.json"), viewModelScope)
 
@@ -81,6 +84,7 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     init {
         val bundled = ClimbingData.parse(app.assets.open("gyms.json").bufferedReader().use { it.readText() })
         bundledLogos = bundled.gyms.mapNotNull { g -> g.logo?.let { g.id to (it to g.logoBackground) } }.toMap()
+        bundledColourGrades = bundled.gyms.filter { it.colourGrades.isNotEmpty() }.associate { it.id to it.colourGrades }
         // Start from the last website download unless this build carries newer research.
         val cached = runCatching { ClimbingData.parse(cacheFile.readText()) }.getOrNull()
         if (cached != null && cached.gyms.isNotEmpty() && (cached.lastResearchDate ?: "") >= (bundled.lastResearchDate ?: "")) {
@@ -117,6 +121,22 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     fun gym(id: String): Gym? = data.gyms.firstOrNull { it.id == id }
 
     fun logo(g: Gym): Pair<String, String?>? = g.logo?.let { it to g.logoBackground } ?: bundledLogos[g.id]
+
+    /** The gym's own colour chart from gyms.json, falling back to the copy built into the app. */
+    fun gymColourChart(gymID: String): List<ColourGrade> =
+        gym(gymID)?.colourGrades?.takeIf { it.isNotEmpty() } ?: bundledColourGrades[gymID].orEmpty()
+
+    /** The colours to log by at a gym: yours if you've set them, else the gym's chart. */
+    fun colourScale(gymID: String): List<ColourGrade> = logbook.colourScales[gymID] ?: gymColourChart(gymID)
+
+    /** You've changed this gym's colours from its chart (or it has no chart). */
+    fun hasOwnColourScale(gymID: String): Boolean = gymID in logbook.colourScales
+
+    fun setColourScale(gymID: String, scale: List<ColourGrade>) =
+        logbook.setColourScale(gymID, scale.takeUnless { it == gymColourChart(gymID) })
+
+    /** Go back to the gym's own chart. */
+    fun resetColourScale(gymID: String) = logbook.setColourScale(gymID, null)
 
     // --- Date & time
 
