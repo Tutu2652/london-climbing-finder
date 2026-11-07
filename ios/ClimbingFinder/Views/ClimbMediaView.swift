@@ -33,12 +33,13 @@ struct ClimbMediaRow: View {
 /// A colour dot (for colour climbs) and the grade that counts: "● V1–V3", "● V2 felt" or "V4".
 struct ClimbGradeLabel: View {
     let climb: Climb
+    var font: Font = .body
 
     var body: some View {
         HStack(spacing: 6) {
             if let colour = climb.colour { ColourSwatch(name: colour, size: 14) }
             if !climb.listGrade.isEmpty {
-                Text(climb.listGrade).font(.body.weight(.semibold).monospacedDigit())
+                Text(climb.listGrade).font(font.weight(.semibold).monospacedDigit())
             }
             if climb.listGradeIsFelt {
                 Text("felt").font(.caption).foregroundStyle(.secondary)
@@ -197,7 +198,7 @@ private final class MediaLinkState {
     }
 }
 
-private final class LibraryWatcher: NSObject, PHPhotoLibraryChangeObserver {
+final class LibraryWatcher: NSObject, PHPhotoLibraryChangeObserver {
     private let changed: @MainActor () -> Void
     init(changed: @escaping @MainActor () -> Void) {
         self.changed = changed
@@ -600,7 +601,7 @@ private final class LinkedMediaLoader {
 }
 
 /// Uses a real presenting controller so limited access can be updated in-app.
-private struct LimitedPhotosAccessPicker: UIViewControllerRepresentable {
+struct LimitedPhotosAccessPicker: UIViewControllerRepresentable {
     let finished: () -> Void
     func makeUIViewController(context: Context) -> Controller {
         let controller = Controller()

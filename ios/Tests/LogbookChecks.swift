@@ -21,6 +21,17 @@ struct LogbookChecks {
         try context.save()
         assert(session.sends.count == 2)
         assert(session.hardest(.boulder) == 3)
+        // Highlights: a climb with a photo and a video gives two items, newest climb first.
+        let later = Climb(discipline: .boulder, grade: 1, result: .send, at: start.addingTimeInterval(1200))
+        context.insert(later)
+        later.session = session
+        later.videoAssetID = "later-video"
+        let media = climbMediaItems(session.climbs)
+        assert(media.map(\.assetID) == ["later-video", "test-route-reference", "test-video-reference"])
+        assert(media.map(\.kind) == [.video, .photo, .video])
+        assert(media[1].climb === media[2].climb && media[1].id != media[2].id)
+        context.delete(later)
+        try context.save()
         assert(formatDuration(session.duration) == "1h 00m")
         var backup = try LogbookBackup.decoder.decode(LogbookBackup.self, from: LogbookBackup.encoder.encode(LogbookBackup([session])))
         assert(backup.version == 4)

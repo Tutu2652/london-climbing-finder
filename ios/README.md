@@ -108,6 +108,14 @@ finished visit. Link one route photo and one video from Photos. Both flashes/sen
 and attempts support media. Each link can be replaced or removed; unlinking never
 deletes the original from Photos.
 
+**Highlights** at the top of the Log tab shows the ten newest linked photos and videos;
+**See all** opens a grid of every one, filterable by photos or videos, gym, and sends
+only. Tapping an item opens its climb. A climb with both a photo and a video shows twice.
+An original that is deleted or outside limited access shows as a placeholder; tap it to
+relink or remove the link. The grid asks for Photos access when it opens if the app
+hasn't asked yet; the strip never asks. Only thumbnails are loaded. Android keeps the
+links in backups but can't show them, so it has no highlights.
+
 Grant Photos access when first linking an item. Limited access works: use **Manage
 allowed photos & videos** to allow the item, then select it with **Link from Photos**.
 The app stores only Photos asset identifiers. Photos handles display/playback and

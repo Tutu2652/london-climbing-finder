@@ -56,8 +56,9 @@ The iPhone and Android apps have a logbook. Start a session when you get to the 
 tap a hold colour or V grade each time you finish a problem, as a flash, send or attempt.
 At gyms that grade by colour, each colour shows its V range. The session keeps a running
 tally, hardest first. Open any climb to set the grade it felt or link a route photo or
-video. The Log and Stats tabs add it all up: sends, top grades, a grade pyramid and what
-you spent.
+video. On iPhone, **Highlights** at the top of the Log tab shows those photos and videos,
+newest first; tap one to open its climb. The Log and Stats tabs add it all up: sends, top
+grades, a grade pyramid and what you spent.
 
 ### Command line
 

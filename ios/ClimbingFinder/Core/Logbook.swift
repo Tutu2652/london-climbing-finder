@@ -216,6 +216,27 @@ func tallyGroups(_ climbs: [Climb], scale: [ColourGrade]) -> [[Climb]] {
     return groups.sorted { key($0[0]) < key($1[0]) }
 }
 
+/// One linked photo or video, as the logbook's highlights show it. A climb with both
+/// a route photo and a video gives two items, both pointing at the same climb.
+struct ClimbMediaItem: Identifiable {
+    enum Kind: String { case photo, video }
+    struct ID: Hashable { let climb: PersistentIdentifier; let kind: Kind }
+
+    let climb: Climb
+    let kind: Kind
+    /// The Photos local identifier the climb links to.
+    let assetID: String
+    var id: ID { ID(climb: climb.persistentModelID, kind: kind) }
+}
+
+/// Every linked photo and video, newest climb first; a climb's photo comes before its video.
+func climbMediaItems(_ climbs: [Climb]) -> [ClimbMediaItem] {
+    climbs.sorted { $0.loggedAt > $1.loggedAt }.flatMap { c -> [ClimbMediaItem] in
+        [c.routePhotoAssetID.map { ClimbMediaItem(climb: c, kind: .photo, assetID: $0) },
+         c.videoAssetID.map { ClimbMediaItem(climb: c, kind: .video, assetID: $0) }].compactMap { $0 }
+    }
+}
+
 // MARK: - Backup (JSON)
 
 struct LogbookBackup: Codable {

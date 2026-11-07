@@ -9,6 +9,7 @@ struct LogView: View {
     @Query(sort: \ClimbSession.start, order: .reverse) private var sessions: [ClimbSession]
     @State private var starting: StartMode?
     @State private var opened: ClimbSession?
+    @State private var openedClimb: Climb?
 
     enum StartMode: String, Identifiable { case live, past; var id: String { rawValue } }
 
@@ -29,6 +30,8 @@ struct LogView: View {
                     }
                 }
             }
+
+            HighlightsSection(open: { openedClimb = $0 })
 
             if !sessions.isEmpty {
                 Section {
@@ -60,6 +63,8 @@ struct LogView: View {
         }
         .navigationTitle("Logbook")
         .navigationDestination(item: $opened) { SessionScreen(session: $0) }
+        .navigationDestination(item: $openedClimb) { ClimbMediaView(climb: $0) }
+        .navigationDestination(for: HighlightsRoute.self) { _ in ClimbGalleryView() }
         .sheet(item: $starting) { mode in
             StartSessionSheet(past: mode == .past) { opened = $0 }
         }
