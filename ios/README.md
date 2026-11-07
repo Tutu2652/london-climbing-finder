@@ -113,8 +113,7 @@ deletes the original from Photos.
 only. Tapping an item opens its climb. A climb with both a photo and a video shows twice.
 An original that is deleted or outside limited access shows as a placeholder; tap it to
 relink or remove the link. The grid asks for Photos access when it opens if the app
-hasn't asked yet; the strip never asks. Only thumbnails are loaded. Android keeps the
-links in backups but can't show them, so it has no highlights.
+hasn't asked yet; the strip never asks. Only thumbnails are loaded.
 
 Grant Photos access when first linking an item. Limited access works: use **Manage
 allowed photos & videos** to allow the item, then select it with **Link from Photos**.
