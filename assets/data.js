@@ -8,6 +8,7 @@ window.CLIMBING_DATA = {
       "url": "https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.apk"
     },
     "sources": [
+      "Opening hours re-checked on every gym's website 2026-11-06; LCC hours and off-peak times read from each centre page's timetable image",
       "Climbing District Bermondsey in-gym 'What's on' board, seen 2026-11-06 (student days, SE16 local day, Sister Sessions, Running District)",
       "The Font price pages (Wandsworth, Borough, Hounslow) and Substation offers re-checked 2026-11-02",
       "Offer and price re-check across all gym websites 2026-10-25 (Substation day-pass prices from the user)",
@@ -511,23 +512,23 @@ window.CLIMBING_DATA = {
       "passes": "10 punches £125 (£110 conc)",
       "hours": {
         "Mon": [
-          "06:30",
+          "07:00",
           "22:30"
         ],
         "Tue": [
-          "06:30",
+          "07:00",
           "22:30"
         ],
         "Wed": [
-          "06:30",
+          "07:00",
           "22:30"
         ],
         "Thu": [
-          "06:30",
+          "07:00",
           "22:30"
         ],
         "Fri": [
-          "06:30",
+          "07:00",
           "22:30"
         ],
         "Sat": [
@@ -539,7 +540,7 @@ window.CLIMBING_DATA = {
           "21:00"
         ]
       },
-      "hours_assumed": true,
+      "hours_assumed": false,
       "events_url": "https://climbingdistrict.uk/activities/workshops-socials/",
       "instagram": "stronghold_ldnf",
       "classes_url": "https://climbingdistrict.uk/activities/introduction-lessons/",
@@ -1229,23 +1230,23 @@ window.CLIMBING_DATA = {
       "passes": "Ropes & bouldering single entry £23 peak / £20 off-peak (£20 / £17 conc). Bouldering: 5 passes £90 (£78 conc); 10 passes £168 (£150 conc). Ropes & bouldering: 5 passes £100 (£90 conc); 10 passes £193 (£170 conc)",
       "hours": {
         "Mon": [
-          "06:15",
+          "06:00",
           "22:00"
         ],
         "Tue": [
-          "06:15",
+          "06:00",
           "22:00"
         ],
         "Wed": [
-          "06:15",
+          "06:00",
           "22:00"
         ],
         "Thu": [
-          "06:15",
+          "06:00",
           "22:00"
         ],
         "Fri": [
-          "06:15",
+          "06:00",
           "22:00"
         ],
         "Sat": [
@@ -2243,7 +2244,7 @@ window.CLIMBING_DATA = {
       "passes": "10 climbs £99",
       "hours": {
         "Mon": [
-          "10:00",
+          "07:00",
           "22:00"
         ],
         "Tue": [
@@ -3024,18 +3025,51 @@ window.CLIMBING_DATA = {
         "concession_peak": 15.0,
         "concession_offpeak": 11.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": false
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "21:00",
+          "end": "23:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Sat"
+          ],
+          "start": "08:00",
+          "end": "09:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sat",
+            "Sun"
+          ],
+          "start": "17:00",
+          "end": "22:00",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
         {
@@ -3068,34 +3102,34 @@ window.CLIMBING_DATA = {
       "hours": {
         "Mon": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Tue": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Wed": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Thu": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Fri": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Sat": [
           "08:00",
-          "20:00"
+          "22:00"
         ],
         "Sun": [
           "08:00",
-          "20:00"
+          "22:00"
         ]
       },
-      "hours_assumed": true,
+      "hours_assumed": false,
       "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
       "instagram": "londonclimbingcentres",
       "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
@@ -3127,18 +3161,43 @@ window.CLIMBING_DATA = {
         "concession_peak": 15.0,
         "concession_offpeak": 11.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": false
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "09:00",
+          "end": "16:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "20:00",
+          "end": "22:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Sat",
+            "Sun"
+          ],
+          "start": "17:00",
+          "end": "19:00",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
         {
@@ -3170,35 +3229,35 @@ window.CLIMBING_DATA = {
       "passes": "10 punches £139 (£119 conc)",
       "hours": {
         "Mon": [
-          "06:00",
+          "09:00",
           "22:00"
         ],
         "Tue": [
-          "06:00",
+          "09:00",
           "22:00"
         ],
         "Wed": [
-          "06:00",
+          "09:00",
           "22:00"
         ],
         "Thu": [
-          "06:00",
+          "09:00",
           "22:00"
         ],
         "Fri": [
-          "06:00",
+          "09:00",
           "22:00"
         ],
         "Sat": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "19:00"
         ],
         "Sun": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "19:00"
         ]
       },
-      "hours_assumed": true,
+      "hours_assumed": false,
       "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
       "instagram": "londonclimbingcentres",
       "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
@@ -3230,18 +3289,51 @@ window.CLIMBING_DATA = {
         "concession_peak": 15.0,
         "concession_offpeak": 11.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": false
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu"
+          ],
+          "start": "21:00",
+          "end": "23:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Sat",
+            "Sun"
+          ],
+          "start": "08:00",
+          "end": "10:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sat",
+            "Sun"
+          ],
+          "start": "17:00",
+          "end": "20:00",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
         {
@@ -3273,24 +3365,24 @@ window.CLIMBING_DATA = {
       "passes": "10 punches £139 (£119 conc)",
       "hours": {
         "Mon": [
-          "06:00",
-          "22:00"
+          "10:00",
+          "23:00"
         ],
         "Tue": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Wed": [
-          "06:00",
-          "22:00"
+          "10:00",
+          "23:00"
         ],
         "Thu": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Fri": [
-          "06:00",
-          "22:00"
+          "10:00",
+          "23:00"
         ],
         "Sat": [
           "08:00",
@@ -3301,7 +3393,7 @@ window.CLIMBING_DATA = {
           "20:00"
         ]
       },
-      "hours_assumed": true,
+      "hours_assumed": false,
       "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
       "instagram": "londonclimbingcentres",
       "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
@@ -3331,18 +3423,58 @@ window.CLIMBING_DATA = {
         "concession_peak": 13.5,
         "concession_offpeak": 10.5
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": false
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Fri"
+          ],
+          "start": "00:00",
+          "end": "23:59",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Tue",
+            "Wed",
+            "Thu"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Tue",
+            "Wed",
+            "Thu"
+          ],
+          "start": "20:00",
+          "end": "22:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Sat",
+            "Sun"
+          ],
+          "start": "09:00",
+          "end": "12:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sat",
+            "Sun"
+          ],
+          "start": "17:00",
+          "end": "21:00",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
         {
@@ -3383,7 +3515,7 @@ window.CLIMBING_DATA = {
       "passes": "10 punches £139 (£119 conc)",
       "hours": {
         "Mon": [
-          "06:00",
+          "10:00",
           "22:00"
         ],
         "Tue": [
@@ -3391,7 +3523,7 @@ window.CLIMBING_DATA = {
           "22:00"
         ],
         "Wed": [
-          "06:00",
+          "10:00",
           "22:00"
         ],
         "Thu": [
@@ -3399,19 +3531,19 @@ window.CLIMBING_DATA = {
           "22:00"
         ],
         "Fri": [
-          "06:00",
+          "10:00",
           "22:00"
         ],
         "Sat": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "21:00"
         ],
         "Sun": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "21:00"
         ]
       },
-      "hours_assumed": true,
+      "hours_assumed": false,
       "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
       "instagram": "croywall",
       "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
@@ -3441,18 +3573,43 @@ window.CLIMBING_DATA = {
         "concession_peak": 15.0,
         "concession_offpeak": 11.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": false
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "20:00",
+          "end": "22:30",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Sat",
+            "Sun"
+          ],
+          "start": "17:00",
+          "end": "21:00",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
         {
@@ -3485,34 +3642,34 @@ window.CLIMBING_DATA = {
       "hours": {
         "Mon": [
           "06:00",
-          "22:00"
+          "22:30"
         ],
         "Tue": [
           "06:00",
-          "22:00"
+          "22:30"
         ],
         "Wed": [
           "06:00",
-          "22:00"
+          "22:30"
         ],
         "Thu": [
           "06:00",
-          "22:00"
+          "22:30"
         ],
         "Fri": [
           "06:00",
-          "22:00"
+          "22:30"
         ],
         "Sat": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "21:00"
         ],
         "Sun": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "21:00"
         ]
       },
-      "hours_assumed": true,
+      "hours_assumed": false,
       "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
       "instagram": "londonclimbingcentres",
       "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
@@ -3545,18 +3702,43 @@ window.CLIMBING_DATA = {
         "concession_peak": 15.0,
         "concession_offpeak": 11.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": false
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "21:00",
+          "end": "23:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Sat",
+            "Sun"
+          ],
+          "start": "17:00",
+          "end": "19:00",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
         {
@@ -3588,35 +3770,35 @@ window.CLIMBING_DATA = {
       "passes": "10 punches £139 (£119 conc)",
       "hours": {
         "Mon": [
-          "06:00",
-          "22:00"
+          "11:00",
+          "23:00"
         ],
         "Tue": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Wed": [
-          "06:00",
-          "22:00"
+          "11:00",
+          "23:00"
         ],
         "Thu": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Fri": [
-          "06:00",
-          "22:00"
+          "11:00",
+          "23:00"
         ],
         "Sat": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "19:00"
         ],
         "Sun": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "19:00"
         ]
       },
-      "hours_assumed": true,
+      "hours_assumed": false,
       "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
       "instagram": "canarywall",
       "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
@@ -3648,18 +3830,51 @@ window.CLIMBING_DATA = {
         "concession_peak": 15.0,
         "concession_offpeak": 11.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": false
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "21:00",
+          "end": "23:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "08:00",
+          "end": "10:00",
+          "concession_only": false
+        },
+        {
+          "days": [
+            "Sat",
+            "Sun"
+          ],
+          "start": "17:00",
+          "end": "21:00",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
         {
@@ -3692,34 +3907,34 @@ window.CLIMBING_DATA = {
       "hours": {
         "Mon": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Tue": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Wed": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Thu": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Fri": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Sat": [
           "08:00",
-          "20:00"
+          "21:00"
         ],
         "Sun": [
           "08:00",
-          "20:00"
+          "21:00"
         ]
       },
-      "hours_assumed": true,
+      "hours_assumed": false,
       "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
       "instagram": "londonclimbingcentres",
       "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
@@ -3753,18 +3968,42 @@ window.CLIMBING_DATA = {
         "concession_peak": 15.0,
         "concession_offpeak": 11.0
       },
-      "offpeak_window": {
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
-        "start": "06:00",
-        "end": "16:00",
-        "concession_only": false
-      },
+      "offpeak_window": [
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "06:00",
+          "end": "16:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "21:00",
+          "end": "23:00",
+          "concession_only": false,
+          "except_bank_holidays": true
+        },
+        {
+          "days": [
+            "Sun"
+          ],
+          "start": "17:00",
+          "end": "21:00",
+          "concession_only": false
+        }
+      ],
       "offpeak_assumed": false,
       "magic_slots": [
         {
@@ -3797,34 +4036,34 @@ window.CLIMBING_DATA = {
       "hours": {
         "Mon": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Tue": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Wed": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Thu": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Fri": [
           "06:00",
-          "22:00"
+          "23:00"
         ],
         "Sat": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "21:00"
         ],
         "Sun": [
-          "08:00",
-          "20:00"
+          "09:00",
+          "21:00"
         ]
       },
-      "hours_assumed": true,
+      "hours_assumed": false,
       "events_url": "https://londonclimbingcentres.co.uk/london-climbing-events/",
       "instagram": "eustonwall",
       "classes_url": "https://londonclimbingcentres.co.uk/classes-courses/",
