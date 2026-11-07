@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +53,7 @@ import io.github.tutu2652.climbingfinder.core.Gym
 import io.github.tutu2652.climbingfinder.core.formatPrice
 import io.github.tutu2652.climbingfinder.core.openState
 import io.github.tutu2652.climbingfinder.core.shortName
+import android.view.MotionEvent
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -83,7 +85,9 @@ fun MapScreen() {
         }
     }
     val gyms = model.data.gyms.filter { model.matchesFilters(it) }
-    val best = model.cheapest().firstOrNull()?.gym?.id
+    // Pricing every gym takes a moment, so only redo it when prices, filters or the time
+    // change, not each time a tap changes `selected`.
+    val best by remember { derivedStateOf { model.cheapest().firstOrNull()?.gym?.id } }
     val origin = model.origin
     val map = remember {
         Configuration.getInstance().apply {
@@ -132,12 +136,11 @@ fun MapScreen() {
                 }
                 // The selected and cheapest gyms go on top.
                 for (g in gyms.sortedBy { (if (it.id == selected) 2 else 0) + (if (it.id == best) 1 else 0) }) {
-                    m.overlays.add(Marker(m).apply {
+                    m.overlays.add(QuickTapMarker(m) { selected = g.id }.apply {
                         position = GeoPoint(g.lat, g.lng)
                         icon = BitmapDrawable(ctx.resources, markerBitmap(ctx, model.logo(g), g, g.id == best, g.id == selected))
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                         title = g.shortName
-                        setOnMarkerClickListener { _, _ -> selected = g.id; true }
                     })
                 }
                 m.invalidate()
@@ -185,6 +188,20 @@ private fun MapGymCard(gym: Gym, modifier: Modifier, close: () -> Unit) {
 }
 
 private val markerCache = mutableMapOf<String, Bitmap>()
+
+/**
+ * A marker that reacts on the first tap. osmdroid's own Marker only reports a tap once a
+ * double-tap has been ruled out (about a third of a second), so the gym card appeared late.
+ */
+private class QuickTapMarker(map: MapView, private val onTap: () -> Unit) : Marker(map) {
+    override fun onSingleTapUp(e: MotionEvent, mapView: MapView): Boolean {
+        if (!hitTest(e, mapView)) return false
+        onTap()
+        return true
+    }
+    // Already handled on touch-up; just stop the tap reaching the map or opening an info window.
+    override fun onSingleTapConfirmed(e: MotionEvent, mapView: MapView): Boolean = hitTest(e, mapView)
+}
 
 /** A rounded tile with the gym's logo (or initials), green-edged for the cheapest gym. */
 private fun markerBitmap(ctx: Context, logo: Pair<String, String?>?, gym: Gym, best: Boolean, selected: Boolean): Bitmap {

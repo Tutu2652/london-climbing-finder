@@ -92,7 +92,7 @@ struct PricesForYouSettings: View {
                     ForEach(Gender.allCases) { Text($0.title).tag($0) }
                 }
             } footer: {
-                Text("Woman or non-binary adds women+ session prices, such as Sister Sessions, to your prices.")
+                Text("Female or non-binary adds women+ session prices, such as Sister Sessions, to your prices.")
             }
             Section {
                 TextField("e.g. SE16 4DG or SE16", text: $model.homePostcode)

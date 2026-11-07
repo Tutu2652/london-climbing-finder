@@ -146,7 +146,7 @@ fun PricesForYouScreen() {
     val focus = LocalFocusManager.current
     var postcode by remember { mutableStateOf(model.homePostcode) }
     Screen("Prices for you") {
-        section("Gender", footer = "Woman or non-binary adds women+ session prices, such as Sister Sessions, to your prices.") {
+        section("Gender", footer = "Female or non-binary adds women+ session prices, such as Sister Sessions, to your prices.") {
             Gender.entries.forEachIndexed { i, g ->
                 RowItem(onClick = { model.chooseGender(g) }, divider = i > 0, chevron = false) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

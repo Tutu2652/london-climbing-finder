@@ -225,7 +225,28 @@ final class AppModel {
         var id: String { gym.id }
     }
 
+    /// Everything `cheapest()` depends on. Reading these in `cheapest()` also keeps SwiftUI
+    /// watching them, so a view still updates when any of them changes.
+    private struct CheapestKey: Equatable {
+        let source: DataSource, mode: CheapestMode, moment: Moment, concession: Bool
+        let typeFilter: String, zoneFilter: Int?, acFilter: String, favouritesOnly: Bool, favourites: Set<String>
+        let bankHolidays: Set<String>, eligibility: Eligibility
+    }
+    /// Pricing every gym for a day takes tens of milliseconds, so the last result is kept until
+    /// something it depends on changes. Without this, tapping a gym on the map re-priced them all.
+    @ObservationIgnored private var cheapestCache: (key: CheapestKey, rows: [Ranked])?
+
     func cheapest() -> [Ranked] {
+        let key = CheapestKey(source: dataSource, mode: mode, moment: mode == .day ? dayMoment : moment, concession: concession,
+                              typeFilter: typeFilter, zoneFilter: zoneFilter, acFilter: acFilter, favouritesOnly: favouritesOnly,
+                              favourites: favourites, bankHolidays: pricer.bankHolidays, eligibility: pricer.eligibility)
+        if let c = cheapestCache, c.key == key { return c.rows }
+        let rows = rankCheapest()
+        cheapestCache = (key, rows)
+        return rows
+    }
+
+    private func rankCheapest() -> [Ranked] {
         var rows: [Ranked] = []
         for g in data.gyms where matchesFilters(g) && g.temporarilyClosed == nil {
             switch mode {
@@ -364,13 +385,13 @@ final class AppModel {
 }
 
 enum Gender: String, CaseIterable, Identifiable {
-    case unset = "", woman, man, nonBinary = "non-binary"
+    case unset = "", man, woman, nonBinary = "non-binary"
     var id: String { rawValue }
     var title: String {
         switch self {
         case .unset: return "Not set"
-        case .woman: return "Woman"
-        case .man: return "Man"
+        case .man: return "Male"
+        case .woman: return "Female"
         case .nonBinary: return "Non-binary"
         }
     }

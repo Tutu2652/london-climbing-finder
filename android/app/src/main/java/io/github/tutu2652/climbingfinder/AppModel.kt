@@ -359,7 +359,7 @@ class AppModel(app: Application) : AndroidViewModel(app) {
 }
 
 enum class Gender(val raw: String, val title: String) {
-    UNSET("", "Not set"), WOMAN("woman", "Woman"), MAN("man", "Man"), NON_BINARY("non-binary", "Non-binary");
+    UNSET("", "Not set"), MAN("man", "Male"), WOMAN("woman", "Female"), NON_BINARY("non-binary", "Non-binary");
 
     /** Women+ sessions are for women, and usually trans and non-binary climbers too. */
     val womenPlus: Boolean get() = this == WOMAN || this == NON_BINARY

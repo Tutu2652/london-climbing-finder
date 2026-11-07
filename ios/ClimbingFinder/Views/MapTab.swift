@@ -15,10 +15,16 @@ struct MapTab: View {
         Map(position: $camera, selection: $selection) {
             ForEach(gyms) { g in
                 Annotation(g.shortName, coordinate: CLLocationCoordinate2D(latitude: g.lat, longitude: g.lng)) {
-                    GymLogo(gym: g, size: selection == g.id ? 40 : 30)
-                        .padding(2)
-                        .background(g.id == best ? Color.brand : .white, in: RoundedRectangle(cornerRadius: 10))
-                        .shadow(radius: 2)
+                    // A button responds on touch-up. Map selection alone waits to rule out a
+                    // double-tap zoom, which made the card appear a beat late.
+                    Button { selection = g.id } label: {
+                        GymLogo(gym: g, size: selection == g.id ? 40 : 30)
+                            .padding(2)
+                            .background(g.id == best ? Color.brand : .white, in: RoundedRectangle(cornerRadius: 10))
+                            .shadow(radius: 2)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(g.name)
                 }
                 .tag(g.id)
             }
