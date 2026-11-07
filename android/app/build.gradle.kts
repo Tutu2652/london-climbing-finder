@@ -21,8 +21,8 @@ android {
         targetSdk = 35
         // Raise both for every shared release, and set gyms.json _meta.android_app to
         // match once the release is published: that is what tells older copies to update.
-        versionCode = 2
-        versionName = "0.2"
+        versionCode = 3
+        versionName = "0.3"
     }
 
     signingConfigs {
