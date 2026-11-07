@@ -3,8 +3,8 @@ window.CLIMBING_DATA = {
     "currency": "GBP",
     "last_research_date": "2026-11-06",
     "android_app": {
-      "version_code": 2,
-      "version_name": "0.2",
+      "version_code": 3,
+      "version_name": "0.3",
       "url": "https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.apk"
     },
     "sources": [
