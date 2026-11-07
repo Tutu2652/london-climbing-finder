@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -23,6 +24,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -44,7 +46,11 @@ import io.github.tutu2652.climbingfinder.ui.ColourScaleScreen
 import io.github.tutu2652.climbingfinder.ui.DealsScreen
 import io.github.tutu2652.climbingfinder.ui.EventsScreen
 import io.github.tutu2652.climbingfinder.ui.ExportScreen
+import io.github.tutu2652.climbingfinder.ui.GalleryScreen
 import io.github.tutu2652.climbingfinder.ui.GymDetailScreen
+import io.github.tutu2652.climbingfinder.ui.LocalMediaViewer
+import io.github.tutu2652.climbingfinder.ui.MediaViewer
+import io.github.tutu2652.climbingfinder.ui.MediaViewerHost
 import io.github.tutu2652.climbingfinder.ui.GymVisitsScreen
 import io.github.tutu2652.climbingfinder.ui.GymsScreen
 import io.github.tutu2652.climbingfinder.ui.LocalModel
@@ -95,62 +101,68 @@ class MainActivity : ComponentActivity() {
                         nav.navigate(start) { popUpTo(nav.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true }
                     }
                 }
-                CompositionLocalProvider(LocalModel provides model, LocalNav provides nav) {
-                    Scaffold(bottomBar = {
-                        Column {
-                        UpdateBanner()
-                        NavigationBar {
-                            for (t in tabs) {
-                                NavigationBarItem(
-                                    selected = tab == t.route,
-                                    onClick = {
-                                        tab = t.route
-                                        nav.navigate(t.route) {
-                                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                    },
-                                    icon = { Icon(t.icon, null) },
-                                    label = { Text(t.title) },
-                                )
+                val viewer = remember { MediaViewerHost() }
+                CompositionLocalProvider(LocalModel provides model, LocalNav provides nav, LocalMediaViewer provides viewer) {
+                    Box {
+                        Scaffold(bottomBar = {
+                            Column {
+                            UpdateBanner()
+                            NavigationBar {
+                                for (t in tabs) {
+                                    NavigationBarItem(
+                                        selected = tab == t.route,
+                                        onClick = {
+                                            tab = t.route
+                                            nav.navigate(t.route) {
+                                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                        icon = { Icon(t.icon, null) },
+                                        label = { Text(t.title) },
+                                    )
+                                }
+                            }
+                            }
+                        }) { padding ->
+                            NavHost(nav, startDestination = "cheapest", modifier = Modifier.padding(bottom = padding.calculateBottomPadding())) {
+                                composable("cheapest") { CheapestScreen() }
+                                composable("map") { MapScreen() }
+                                composable("gyms") { GymsScreen() }
+                                composable("log") { LogScreen() }
+                                composable("more") { MoreScreen() }
+                                composable("gym/{id}") { GymDetailScreen(it.arguments?.getString("id") ?: "") }
+                                composable("nearby") { NearbyScreen() }
+                                composable("origin") { OriginScreen() }
+                                composable("pricesForYou") { PricesForYouScreen() }
+                                composable("deals") { DealsScreen() }
+                                composable("memberships") { MembershipsScreen() }
+                                composable("classes") { ClassesScreen() }
+                                composable("events") { EventsScreen() }
+                                composable("backup") { LogbookBackupScreen() }
+                                composable("export") { ExportScreen() }
+                                composable("stats") { StatsScreen() }
+                                composable("visits") { VisitsByGymScreen() }
+                                composable("gymVisits/{id}") { GymVisitsScreen(it.arguments?.getString("id") ?: "") }
+                                composable("colours/{id}") { ColourScaleScreen(it.arguments?.getString("id") ?: "") }
+                                composable(
+                                    "start?past={past}&gym={gym}",
+                                    arguments = listOf(
+                                        navArgument("past") { type = NavType.BoolType; defaultValue = false },
+                                        navArgument("gym") { type = NavType.StringType; nullable = true; defaultValue = null },
+                                    ),
+                                ) { StartSessionScreen(it.arguments?.getBoolean("past") ?: false, it.arguments?.getString("gym")) }
+                                composable("session/{id}") { SessionScreen(it.arguments?.getString("id") ?: "") }
+                                composable("session/{id}/log") { SessionLogScreen(it.arguments?.getString("id") ?: "") }
+                                composable("media") { GalleryScreen() }
+                                composable("climb/{session}/{climb}") {
+                                    ClimbScreen(it.arguments?.getString("session") ?: "", it.arguments?.getString("climb") ?: "")
+                                }
                             }
                         }
-                        }
-                    }) { padding ->
-                        NavHost(nav, startDestination = "cheapest", modifier = Modifier.padding(bottom = padding.calculateBottomPadding())) {
-                            composable("cheapest") { CheapestScreen() }
-                            composable("map") { MapScreen() }
-                            composable("gyms") { GymsScreen() }
-                            composable("log") { LogScreen() }
-                            composable("more") { MoreScreen() }
-                            composable("gym/{id}") { GymDetailScreen(it.arguments?.getString("id") ?: "") }
-                            composable("nearby") { NearbyScreen() }
-                            composable("origin") { OriginScreen() }
-                            composable("pricesForYou") { PricesForYouScreen() }
-                            composable("deals") { DealsScreen() }
-                            composable("memberships") { MembershipsScreen() }
-                            composable("classes") { ClassesScreen() }
-                            composable("events") { EventsScreen() }
-                            composable("backup") { LogbookBackupScreen() }
-                            composable("export") { ExportScreen() }
-                            composable("stats") { StatsScreen() }
-                            composable("visits") { VisitsByGymScreen() }
-                            composable("gymVisits/{id}") { GymVisitsScreen(it.arguments?.getString("id") ?: "") }
-                            composable("colours/{id}") { ColourScaleScreen(it.arguments?.getString("id") ?: "") }
-                            composable(
-                                "start?past={past}&gym={gym}",
-                                arguments = listOf(
-                                    navArgument("past") { type = NavType.BoolType; defaultValue = false },
-                                    navArgument("gym") { type = NavType.StringType; nullable = true; defaultValue = null },
-                                ),
-                            ) { StartSessionScreen(it.arguments?.getBoolean("past") ?: false, it.arguments?.getString("gym")) }
-                            composable("session/{id}") { SessionScreen(it.arguments?.getString("id") ?: "") }
-                            composable("session/{id}/log") { SessionLogScreen(it.arguments?.getString("id") ?: "") }
-                            composable("climb/{session}/{climb}") {
-                                ClimbScreen(it.arguments?.getString("session") ?: "", it.arguments?.getString("climb") ?: "")
-                            }
-                        }
+                        // A route photo or video full screen, over everything.
+                        viewer.shown?.let { MediaViewer(it) { viewer.shown = null } }
                     }
                 }
             }

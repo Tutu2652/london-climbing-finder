@@ -1,6 +1,9 @@
 package io.github.tutu2652.climbingfinder.ui
 
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +28,8 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.StopCircle
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
@@ -46,11 +51,13 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +76,8 @@ import io.github.tutu2652.climbingfinder.core.ClimbSession
 import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.Discipline
 import io.github.tutu2652.climbingfinder.core.London
+import io.github.tutu2652.climbingfinder.core.MediaFile
+import io.github.tutu2652.climbingfinder.core.MediaKind
 import io.github.tutu2652.climbingfinder.core.formatDuration
 import io.github.tutu2652.climbingfinder.core.formatPrice
 import io.github.tutu2652.climbingfinder.core.gradeRange
@@ -402,6 +411,8 @@ fun ClimbRow(climb: Climb) {
         Text(climb.result.title, color = secondaryText, maxLines = 1)
         if (climb.comp) Pill("Comp", Amber)
         Spacer(Modifier.weight(1f))
+        if (climb.androidPhotoURI != null) Icon(Icons.Outlined.Image, "Route photo linked", tint = secondaryText, modifier = Modifier.size(18.dp))
+        if (climb.androidVideoURI != null) Icon(Icons.Outlined.Videocam, "Video linked", tint = secondaryText, modifier = Modifier.size(18.dp))
         Text(timeFormat.format(climb.loggedAt), style = MaterialTheme.typography.bodySmall, color = secondaryText)
     }
 }
@@ -518,6 +529,37 @@ fun ClimbScreen(sessionID: String, climbID: String) {
     fun change(f: (Climb) -> Climb) = model.logbook.update(sessionID) { s -> s.copy(climbs = s.climbs.map { if (it.id == climbID) f(it) else it }) }
     var gradeMenu by remember { mutableStateOf(false) }
     var colourMenu by remember { mutableStateOf(false) }
+    val ctx = LocalContext.current
+    // Which kind the gallery picker is open for; kept if Android recreates the screen meanwhile.
+    var picking by rememberSaveable { mutableStateOf<MediaKind?>(null) }
+    val viewer = LocalMediaViewer.current
+    var linkMessage by remember { mutableStateOf<Pair<MediaKind, String>?>(null) }
+    fun current() = model.logbook.session(sessionID)?.climbs?.firstOrNull { it.id == climbID }
+    /** Links a picked item (or, with null, removes the link), giving back access to the old one if nothing else uses it. */
+    fun setLink(kind: MediaKind, uri: String?, file: MediaFile? = null) {
+        val old = current()?.mediaURI(kind)
+        change { it.withMedia(kind, uri, file) }
+        if (old != null && old != uri) MediaLinks.releaseIfUnused(ctx, old, model.logbook.sessions)
+    }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        val kind = picking ?: return@rememberLauncherForActivityResult
+        picking = null
+        if (uri == null) return@rememberLauncherForActivityResult
+        val kept = MediaLinks.keep(ctx, uri)
+        // The file's name and size let the app find it again after a reinstall and restore.
+        setLink(kind, uri.toString(), fileDetails(ctx, uri))
+        linkMessage = if (kept) null else kind to "Linked, but Android didn't let the app keep access, so it may not open after the app restarts."
+    }
+    fun choose(kind: MediaKind) {
+        viewer.shown = null
+        picking = kind
+        picker.launch(PickVisualMediaRequest(if (kind == MediaKind.PHOTO) ActivityResultContracts.PickVisualMedia.ImageOnly
+            else ActivityResultContracts.PickVisualMedia.VideoOnly))
+    }
+    fun view(kind: MediaKind) {
+        val uri = current()?.mediaURI(kind) ?: return
+        viewer.shown = ViewerRequest(kind, uri, current()?.mediaFile(kind), onReplace = { choose(kind) }, onRemove = { viewer.shown = null; setLink(kind, null) })
+    }
     val gymID = model.logbook.session(sessionID)?.gymID ?: ""
     // Boulders and ropes only matter where the gym has ropes, or the climb is already a rope.
     val showsDiscipline = climb.discipline == Discipline.ROPE || model.gym(gymID)?.type?.contains("ropes") == true
@@ -596,6 +638,13 @@ fun ClimbScreen(sessionID: String, climbID: String) {
                 }
             }
         }
+        for (kind in MediaKind.entries) {
+            item(key = kind.name) {
+                ClimbMediaSection(kind, climb.mediaURI(kind), climb.mediaFile(kind), linkMessage?.takeIf { it.first == kind }?.second,
+                    onView = { view(kind) }, onChoose = { choose(kind) }, onRemove = { linkMessage = null; setLink(kind, null) })
+            }
+        }
+        item { Explainer(MEDIA_FOOTER) }
         if (climb.routePhotoAssetID != null || climb.videoAssetID != null) {
             item { Explainer("This climb has a photo or video linked on an iPhone. The link is kept in backups but can't be opened on Android.") }
         }
@@ -606,4 +655,6 @@ fun ClimbScreen(sessionID: String, climbID: String) {
             }, divider = false, chevron = false) { Text("Delete climb", color = Warn) }
         }
     }
+    // Close the viewer when leaving this climb.
+    DisposableEffect(Unit) { onDispose { viewer.shown = null } }
 }

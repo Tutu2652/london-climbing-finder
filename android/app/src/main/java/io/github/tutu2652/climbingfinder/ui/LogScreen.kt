@@ -53,6 +53,7 @@ import io.github.tutu2652.climbingfinder.core.brandRank
 import io.github.tutu2652.climbingfinder.core.formatDuration
 import io.github.tutu2652.climbingfinder.core.formatPrice
 import io.github.tutu2652.climbingfinder.core.haversineKm
+import io.github.tutu2652.climbingfinder.core.linkedMedia
 import io.github.tutu2652.climbingfinder.core.nowSecond
 import io.github.tutu2652.climbingfinder.core.shortName
 import kotlinx.coroutines.delay
@@ -91,6 +92,7 @@ fun LogScreen() {
                 ActionRow(Icons.Filled.History, "Log a past session") { nav.navigate("start?past=true") }
             }
         }
+        highlights(linkedMedia(sessions).take(10)) { nav.navigate("media") }
         if (sessions.isNotEmpty()) {
             section {
                 RowItem(onClick = { nav.navigate("stats") }, divider = false) { MonthSummary(sessions) }

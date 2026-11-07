@@ -82,6 +82,19 @@ data class Climb(
     /** Photos references from the iPhone app; kept so a backup round trip doesn't drop them. */
     val videoAssetID: String? = null,
     val routePhotoAssetID: String? = null,
+    /**
+     * A route photo and video linked on Android: content:// links to files in the phone's
+     * gallery, which stay where they are. Only the link is saved, and it only opens on the
+     * phone that made it. The iPhone app doesn't read these.
+     */
+    val androidPhotoURI: String? = null,
+    val androidVideoURI: String? = null,
+    /**
+     * Details of the linked file, so the app can find the same photo or video again after
+     * it's reinstalled and the backup restored (Android forgets picked items then).
+     */
+    val androidPhotoFile: MediaFile? = null,
+    val androidVideoFile: MediaFile? = null,
     /** A competition problem. Its grade is how it felt, and may be left out. Missing in version 1 and 2 backups. */
     val isComp: Boolean? = null,
     /**
@@ -152,6 +165,21 @@ data class Climb(
         return base.copy(disciplineRaw = d.raw, grade = g)
     }
 
+    /** The photo or video linked to this climb on Android, if any. */
+    fun mediaURI(kind: MediaKind): String? = if (kind == MediaKind.PHOTO) androidPhotoURI else androidVideoURI
+
+    /** Details of the file linked on Android, if known. */
+    fun mediaFile(kind: MediaKind): MediaFile? = if (kind == MediaKind.PHOTO) androidPhotoFile else androidVideoFile
+
+    /** With this Android photo or video link and its file, or (null) without either. */
+    fun withMedia(kind: MediaKind, uri: String?, file: MediaFile? = null): Climb {
+        val f = file.takeIf { uri != null }
+        return if (kind == MediaKind.PHOTO) copy(androidPhotoURI = uri, androidPhotoFile = f)
+        else copy(androidVideoURI = uri, androidVideoFile = f)
+    }
+
+    val hasAndroidMedia: Boolean get() = androidPhotoURI != null || androidVideoURI != null
+
     /** "V4", "Comp V4", "Comp" or, for a colour climb, "Blue". */
     val label: String
         get() = colour ?: if (comp) (if (isGraded) "Comp $gradeLabel" else "Comp") else gradeLabel
@@ -181,6 +209,60 @@ fun tallyGroups(climbs: List<Climb>, scale: List<ColourGrade>): List<List<Climb>
     return climbs.groupBy { listOf(it.disciplineRaw, it.grade, it.comp, it.colour, it.listGradeIsFelt) }.values
         .sortedWith(compareBy<List<Climb>>({ if (it[0].discipline == Discipline.ROPE) 1 else 0 }, { if (it[0].comp) 1 else 0 },
             { -it[0].grade }, { -(it[0].colour?.let(rank::get) ?: -1) }, { (it[0].colour ?: "") + it[0].listGrade }))
+}
+
+/**
+ * What identifies a linked file, to find it on the phone again: its size in bytes, when it
+ * was taken (epoch milliseconds) and its file name, when known. Android's photo picker
+ * hides the real name, so it's often missing.
+ */
+@Serializable
+data class MediaFile(val size: Long, val taken: Long? = null, val name: String? = null) {
+    /** Could this file, found on the phone, be the linked one? The size must match; the date and name too where both are known. */
+    fun matches(size: Long, taken: Long?, name: String?): Boolean =
+        size == this.size && (this.taken == null || taken == null || taken == this.taken) &&
+            (this.name == null || name == null || name == this.name)
+}
+
+enum class MediaKind(val title: String) {
+    PHOTO("Route photo"),
+    VIDEO("Climb video"),
+}
+
+/** One photo or video linked to a climb on Android, for the gallery. */
+data class ClimbMedia(val session: ClimbSession, val climb: Climb, val kind: MediaKind, val uri: String) {
+    val file: MediaFile? get() = climb.mediaFile(kind)
+    /** Stable across recompositions, and unique even when a climb has both a photo and a video. */
+    val key: String get() = "${climb.id}/${kind.name}"
+}
+
+/**
+ * Every photo and video linked on Android, newest climb first; a climb's photo comes
+ * before its video. Links made on an iPhone can't be opened here, so they're left out.
+ */
+fun linkedMedia(sessions: List<ClimbSession>, kind: MediaKind? = null): List<ClimbMedia> =
+    sessions.flatMap { s ->
+        s.climbs.flatMap { c ->
+            listOfNotNull(
+                c.androidPhotoURI?.let { ClimbMedia(s, c, MediaKind.PHOTO, it) },
+                c.androidVideoURI?.let { ClimbMedia(s, c, MediaKind.VIDEO, it) },
+            )
+        }
+    }.filter { kind == null || it.kind == kind }
+        .sortedWith(compareByDescending<ClimbMedia> { it.climb.loggedAt }.thenBy { it.climb.id }.thenBy { it.kind.ordinal })
+
+/** Every Android link in the logbook, so a link still in use elsewhere isn't released. */
+fun linkedMediaURIs(sessions: List<ClimbSession>): Set<String> =
+    sessions.flatMapTo(mutableSetOf()) { s -> s.climbs.flatMap { listOfNotNull(it.androidPhotoURI, it.androidVideoURI) } }
+
+/** "3 photos and 1 video from 2 climbs", under the gallery. */
+fun mediaSummary(items: List<ClimbMedia>): String {
+    val photos = items.count { it.kind == MediaKind.PHOTO }
+    val videos = items.size - photos
+    val climbs = items.map { it.climb.id }.toSet().size
+    fun n(k: Int, word: String) = "$k $word${if (k == 1) "" else "s"}"
+    val parts = listOfNotNull(n(photos, "photo").takeIf { photos > 0 }, n(videos, "video").takeIf { videos > 0 })
+    return parts.joinToString(" and ") + " from " + n(climbs, "climb")
 }
 
 /** Hold colours offered when setting up a gym's colour grades, with a swatch for each. */

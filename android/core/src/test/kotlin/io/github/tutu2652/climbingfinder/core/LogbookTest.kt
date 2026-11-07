@@ -281,4 +281,82 @@ class LogbookTest {
         val bad = s.copy(climbs = listOf(Climb.of(Discipline.BOULDER, 2, ClimbResult.SEND, start, false).copy(feltGradeSet = true)))
         assertFailsWith<RestoreError> { LogbookBackup(sessions = listOf(bad)).validate() }
     }
+
+    @Test fun androidMediaLinksRoundTripAsText() {
+        val start = Instant.parse("2026-11-06T17:00:00Z")
+        val photo = "content://media/picker/0/com.android.providers.media.photopicker/media/1000000018"
+        val video = "content://media/external/video/media/42"
+        val c = Climb.of(Discipline.BOULDER, 3, ClimbResult.SEND, start, false)
+            .withMedia(MediaKind.PHOTO, photo, MediaFile(3_404_112, 1_762_448_712_000, "PXL_20261106_170512.jpg"))
+            .withMedia(MediaKind.VIDEO, video)
+        assertEquals(photo, c.mediaURI(MediaKind.PHOTO)); assertEquals(video, c.mediaURI(MediaKind.VIDEO))
+        assertEquals(MediaFile(3_404_112, 1_762_448_712_000, "PXL_20261106_170512.jpg"), c.mediaFile(MediaKind.PHOTO))
+        assertEquals(null, c.mediaFile(MediaKind.VIDEO), "A link may have no file details")
+        assertTrue(c.hasAndroidMedia)
+        val s = ClimbSession(gymID = "g", start = start, end = start.plusSeconds(3600), climbs = listOf(c))
+        val text = LogbookBackup(sessions = listOf(s)).encode()
+        assertTrue("\"version\": 4" in text, "Media links don't change the backup version")
+        assertTrue("\"androidPhotoURI\": \"$photo\"" in text && "\"androidVideoURI\": \"$video\"" in text)
+        assertTrue("\"name\": \"PXL_20261106_170512.jpg\"" in text && "\"size\": 3404112" in text && "\"taken\": 1762448712000" in text)
+        assertTrue("androidVideoFile" !in text, "No file details, nothing written")
+        assertEquals(listOf(s), LogbookBackup.decode(text).sessions)
+        LogbookBackup.decode(text).validate()
+
+        // Removing a link writes nothing for it, so older backups and the iPhone see no new keys.
+        val plain = c.withMedia(MediaKind.PHOTO, null).withMedia(MediaKind.VIDEO, null)
+        assertFalse(plain.hasAndroidMedia)
+        val plainText = LogbookBackup(sessions = listOf(s.copy(climbs = listOf(plain)))).encode()
+        assertTrue("android" !in plainText, "Null links and their files are left out")
+        assertEquals(null, c.withMedia(MediaKind.PHOTO, null, MediaFile(1)).androidPhotoFile, "No file without a link")
+        // A newer backup's extra file details still read (unknown keys are ignored).
+        val extra = text.replace("\"size\": 3404112", "\"size\": 3404112, \"width\": 4000")
+        assertEquals(listOf(s), LogbookBackup.decode(extra).sessions)
+
+        // iPhone backups have no Android links; reading one keeps its Photos references only.
+        val ios = LogbookBackup.decode(iosV2).sessions[0].climbs[0]
+        assertEquals(null, ios.androidPhotoURI); assertFalse(ios.hasAndroidMedia)
+    }
+
+    @Test fun linkedMediaOrderAndFilter() {
+        val t = Instant.parse("2026-11-01T18:00:00Z")
+        fun climb(min: Long) = Climb.of(Discipline.BOULDER, 2, ClimbResult.SEND, t.plusSeconds(min * 60), false)
+        val old = climb(0).withMedia(MediaKind.VIDEO, "content://v/old")
+        val both = climb(10).withMedia(MediaKind.VIDEO, "content://v/both").withMedia(MediaKind.PHOTO, "content://p/both")
+        val iphoneOnly = climb(20).copy(routePhotoAssetID = "ABC/L0/001", videoAssetID = "DEF/L0/002")
+        val none = climb(30)
+        val newer = climb(5).withMedia(MediaKind.PHOTO, "content://p/newer")
+        val s1 = ClimbSession(gymID = "a", start = t, climbs = listOf(old, both, iphoneOnly, none))
+        val s2 = ClimbSession(gymID = "b", start = t.minusSeconds(86_400), climbs = listOf(newer))
+
+        val all = linkedMedia(listOf(s2, s1))
+        // Newest climb first, whatever the session order; a climb's photo before its video.
+        assertEquals(listOf("content://p/both", "content://v/both", "content://p/newer", "content://v/old"), all.map { it.uri })
+        assertEquals(listOf(MediaKind.PHOTO, MediaKind.VIDEO), all.take(2).map { it.kind })
+        assertEquals("b", all[2].session.gymID)
+        assertEquals(all.size, all.map { it.key }.toSet().size, "Keys are unique")
+        // iPhone-only links can't be opened on Android, so they aren't in the gallery.
+        assertTrue(all.none { it.climb.id == iphoneOnly.id || it.climb.id == none.id })
+
+        assertEquals(listOf("content://p/both", "content://p/newer"), linkedMedia(listOf(s1, s2), MediaKind.PHOTO).map { it.uri })
+        assertEquals(listOf("content://v/both", "content://v/old"), linkedMedia(listOf(s1, s2), MediaKind.VIDEO).map { it.uri })
+        assertTrue(linkedMedia(listOf(s1.copy(climbs = listOf(iphoneOnly, none)))).isEmpty())
+
+        assertEquals(setOf("content://p/both", "content://v/both", "content://p/newer", "content://v/old"), linkedMediaURIs(listOf(s1, s2)))
+        assertEquals("2 photos and 2 videos from 3 climbs", mediaSummary(all))
+        assertEquals(null, all[0].file)
+        val withFile = linkedMedia(listOf(s2.copy(climbs = listOf(newer.withMedia(MediaKind.PHOTO, "content://p/newer", MediaFile(5))))))
+        assertEquals(MediaFile(5), withFile.single().file)
+        assertEquals("1 photo from 1 climb", mediaSummary(all.filter { it.uri == "content://p/newer" }))
+        assertEquals("2 videos from 2 climbs", mediaSummary(all.filter { it.kind == MediaKind.VIDEO }))
+    }
+
+    @Test fun mediaFileMatching() {
+        val f = MediaFile(3_404_112, 1_762_448_712_000, "PXL_1.jpg")
+        assertTrue(f.matches(3_404_112, 1_762_448_712_000, "PXL_1.jpg"))
+        assertTrue(f.matches(3_404_112, null, null), "Unknown date or name on the phone doesn't rule it out")
+        assertFalse(f.matches(3_404_113, 1_762_448_712_000, "PXL_1.jpg"), "Size must match")
+        assertFalse(f.matches(3_404_112, 1_762_448_712_001, "PXL_1.jpg"), "A different date rules it out")
+        assertFalse(f.matches(3_404_112, 1_762_448_712_000, "PXL_2.jpg"), "A different name rules it out")
+        assertTrue(MediaFile(10).matches(10, 99, "any.jpg"), "Only the size known: size decides")
+    }
 }

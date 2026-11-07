@@ -17,8 +17,18 @@ socials, your location, logbook backup, Google Maps export). Each gym has a page
 prices, deals, opening hours, links, directions in Google Maps, and your own note, star
 rating and favourite heart.
 
-Not ported: the Live Activity, linking Photos to climbs (links made on an iPhone are kept
-in backups but can't be opened here), and Google sign-in sync.
+Open a logged climb to link a route photo and a video from the phone's gallery.
+**Highlights** at the top of the Log tab shows them, newest first, with **See all** for a
+grid you can filter by photos or videos, gym and sends; tap one to open its climb. Only the
+link is saved: the original stays in the gallery. Backups carry each link as text, with the
+file's size and date taken. Android forgets picked items when the app is reinstalled, so
+after restoring a backup the app asks for access to your photos and videos and finds each
+file again by size and date. If it can't be sure which file it is (or you don't allow
+access), the climb asks you to link it again. That's the only time it asks for access.
+Links made on an iPhone are kept in backups but can't be opened here, and the iPhone
+doesn't open Android's.
+
+Not ported: the Live Activity and Google sign-in sync.
 
 ## Install it on your phone (no Mac needed)
 
