@@ -1,0 +1,100 @@
+name: iPhone release file
+
+# Builds the iPhone app without signing and attaches it to the GitHub release, next to
+# the APK, with a SideStore/AltStore source. People without a Mac install it from the
+# source, and SideStore then renews it every week and offers new versions.
+# See ios/README.md#install-it-without-a-mac.
+#
+# Runs by itself when a release is published. To add the file to an older release, run
+# it from the Actions tab and type that release's tag.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to add the iPhone file to, e.g. v0.3
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-release-${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      # The app as it was at the release tag...
+      - name: Check out the release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          path: app
+
+      # ...and this workflow's own tools, which older tags don't have.
+      - name: Check out the release tools
+        uses: actions/checkout@v4
+        with:
+          path: ci
+          sparse-checkout: tools
+
+      - name: Work out the version
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+            echo "::error::Tag $TAG isn't a version like v0.4, so the app can't be numbered from it."
+            exit 1
+          fi
+          OWNER="$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BUNDLE_ID_PREFIX=io.github.$OWNER" >> "$GITHUB_ENV"
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      # No signing here: SideStore, AltStore or Sideloadly signs it on the phone owner's
+      # Apple ID. The build number only has to go up between releases.
+      - name: Build for iPhone without signing
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project app/ios/ClimbingFinder.xcodeproj \
+            -scheme ClimbingFinder \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/build" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY= \
+            BUNDLE_ID_PREFIX="$BUNDLE_ID_PREFIX" \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            build
+
+      - name: Package the IPA and the source
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/build/Build/Products/Release-iphoneos/ClimbingFinder.app"
+          test -d "$APP"
+          mkdir -p "$RUNNER_TEMP/package/Payload" out
+          ditto "$APP" "$RUNNER_TEMP/package/Payload/ClimbingFinder.app"
+          (cd "$RUNNER_TEMP/package" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/out/london-climbing-finder.ipa" Payload)
+          python3 -I ci/tools/ios_altstore_source.py \
+            --app "$APP" \
+            --ipa out/london-climbing-finder.ipa \
+            --repo "$GITHUB_REPOSITORY" \
+            --tag "$TAG" \
+            --out out/altstore-source.json
+          cat out/altstore-source.json
+
+      - name: Attach to the release
+        run: gh release upload "$TAG" out/london-climbing-finder.ipa out/altstore-source.json --clobber -R "$GITHUB_REPOSITORY"

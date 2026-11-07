@@ -90,6 +90,8 @@ a green **CI** run → **climbing-finder-android**; needs a GitHub account).
 1. Raise `versionCode` and `versionName` in `app/build.gradle.kts`, commit and push.
 2. When CI passes, download that run's APK and attach it to a new GitHub release, renamed
    to `london-climbing-finder.apk` so the download link above keeps working.
+   Publishing the release also attaches the iPhone app and its SideStore source a few
+   minutes later (see [ios/README.md](../ios/README.md#release-files-for-maintainers)).
 3. In `gyms.json`, set `_meta.android_app` (`version_code`, `version_name`) to the new
    version, run `python3 tools/sync_data.py`, commit and push. Once the website redeploys,
    copies of the app with an older version show an **Update** banner (and a row in More)

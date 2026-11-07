@@ -17,7 +17,8 @@ app); notes stay on the device.
 
 ## Run it on your iPhone (free, personal use)
 
-You need a Mac. Any Apple ID works; no paid developer account is needed.
+You need a Mac. Any Apple ID works; no paid developer account is needed. No Mac? See
+[Install it without a Mac](#install-it-without-a-mac).
 
 **Using an AI coding agent** (Claude Code, Codex, Cursor…)? Open it in this repo and ask it
 to "install the iPhone app on my phone". [AGENTS.md](../AGENTS.md) walks it through every
@@ -62,6 +63,70 @@ twice a day; it does nothing when nothing is due, and retries if the phone is aw
 phone must have been paired with Xcode by cable once, and be on the same Wi-Fi as the Mac.
 `--force` reinstalls the current code straight away. Find the UDID with
 `xcrun devicectl list devices`; logs go wherever the LaunchAgent sends them.
+
+## Install it without a Mac
+
+Every [release](https://github.com/Tutu2652/london-climbing-finder/releases) has the
+iPhone app as `london-climbing-finder.ipa`. It isn't signed, so it is installed with your
+own Apple ID (any Apple ID, free is fine). Like every free install, it lasts 7 days, so
+it has to be renewed every week. SideStore does that by itself.
+
+### With SideStore (renews itself)
+
+You need a computer once (Windows, Mac or Linux), Wi-Fi, and about 15 minutes.
+
+1. Install SideStore on the iPhone with its guide at
+   [docs.sidestore.io](https://docs.sidestore.io/docs/installation/prerequisites). It uses
+   iloader on the computer and the LocalDevVPN app on the phone. After this you don't
+   need the computer again.
+2. In SideStore, go to **Sources**, tap **+** and add this link:
+   ```
+   https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/altstore-source.json
+   ```
+3. Open the source and install **Climb Finder**. Keep LocalDevVPN on while it installs.
+
+**Renewing.** SideStore renews its apps in the background before the 7 days run out. It
+needs Wi-Fi, LocalDevVPN switched on, and Background App Refresh allowed for SideStore
+(Settings → SideStore). If the app ever won't open, open SideStore, turn on LocalDevVPN
+and tap **Refresh All** in My Apps.
+
+**Is it safe?** SideStore doesn't jailbreak the phone. It is open source, and it
+installs apps the same way Xcode does, with Apple's free developer signing, so iOS
+keeps them in the usual sandbox. You do sign in with your Apple ID in iloader and
+SideStore rather than in an Apple app; if you'd rather not, use a second Apple ID made
+just for this.
+
+**Updates.** When a new version is released, SideStore shows it under My Apps. Tap
+**Update**; your logbook and notes stay.
+
+**The 3-app limit.** A free Apple ID allows 3 sideloaded apps at once, and SideStore is
+one of them. The Live Activity (the session timer on the Lock Screen) is an app
+extension and may count as another. If SideStore says you're over the limit, let it
+remove the extension: everything else still works.
+
+### With Sideloadly or another signer (renew by hand)
+
+Download
+[london-climbing-finder.ipa](https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.ipa)
+and install it with a signer such as Sideloadly, using your Apple ID. You have to do
+this again every 7 days; SideStore does it for you.
+
+### Moving from a Mac install
+
+The release file has its own bundle ID, so it installs as a second copy next to one you
+built in Xcode, with an empty logbook. Back up the logbook first (More → Back up
+logbook), install the release, restore the backup there, then delete the old copy.
+
+## Release files (for maintainers)
+
+Publishing a GitHub release runs `.github/workflows/ios-release.yml`. It builds the app
+without signing, at the release's tag, and attaches `london-climbing-finder.ipa` and the
+SideStore source `altstore-source.json` (written by `tools/ios_altstore_source.py`) to the
+release, in about 5 minutes. The app's version comes from the tag (`v0.4` → 0.4) and the
+build number from the workflow run, so SideStore sees each release as an update. Tags
+must look like `v0.4`, and releases must not be pre-releases, or the `releases/latest`
+links skip them. To add the files to an older release, run the workflow from the Actions
+tab and type its tag. Forks get their own files, under their own bundle ID.
 
 ## Exporting to Google Maps
 

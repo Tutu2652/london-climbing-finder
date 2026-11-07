@@ -24,15 +24,14 @@ London climbing gyms. Pick a date and time and it shows the cheapest gym and whe
 | | What you need | How |
 |---|---|---|
 | **Website** | A browser | Open the link above. Works on phones. |
-| **iPhone app** | A Mac with Xcode and any Apple ID | Follow [ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use), about ten minutes the first time, or ask an AI coding agent to do it ([AGENTS.md](AGENTS.md)). |
+| **iPhone app** | Any Apple ID, plus a Mac with Xcode or (no Mac) a computer once for SideStore | With a Mac: follow [ios/README.md](ios/README.md#run-it-on-your-iphone-free-personal-use), about ten minutes the first time. Without one: install the release file with SideStore, which renews it every week by itself ([ios/README.md](ios/README.md#install-it-without-a-mac)). Either way an AI coding agent can walk you through it ([AGENTS.md](AGENTS.md)). |
 | **Android app** | Any Android phone (8.0 or newer) | [Download the APK](https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.apk) on the phone and install it, no computer needed: see [android/README.md](android/README.md#install-it-on-your-phone-no-mac-needed). To build it yourself you need a JDK and the Android SDK. |
 | **Offline dashboard** | A browser | Download and double-click `london_climbing_dashboard.html`. |
 | **Command line** | Python 3 (no packages) | `python3 london_climbing_prices.py` (see below). |
 | **Deal calendars** | A calendar app | Subscribe from the website, or add `london-climbing-deals-all.ics` (or `-no-student.ics`). |
 
-No Mac (for example on Windows) but want it on an iPhone? Open the website in Safari on
-the iPhone and tap Share → **Add to Home Screen**. It gets an icon and opens full-screen,
-like an app.
+Just want a quick icon on an iPhone? Open the website in Safari on the iPhone and tap
+Share → **Add to Home Screen**. It gets an icon and opens full-screen, like an app.
 
 Would you rather install it from TestFlight or the App Store, with no Mac and no reinstalling
 every 7 days? See [Support the app](#support-the-app).

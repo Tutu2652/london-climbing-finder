@@ -16,9 +16,8 @@ Xcode's own window.
 
 ### 0. Check the machine
 
-This needs macOS. On Windows or Linux, stop: tell the user the iPhone app can't be built
-there, and suggest opening https://london-climbing-finder.pages.dev/ in Safari on the
-iPhone, then Share → **Add to Home Screen**.
+This needs macOS. On Windows or Linux, don't build: follow
+[Installing the iPhone app without a Mac](#installing-the-iphone-app-without-a-mac) instead.
 
 ```sh
 xcodebuild -version          # fails if full Xcode isn't installed
@@ -138,6 +137,32 @@ Then run the launch command again; it should open the app.
 Don't commit anything during setup. `ios/Signing.local.xcconfig` and `build/` must stay
 out of git.
 
+## Installing the iPhone app without a Mac
+
+On Windows or Linux (or a Mac without Xcode, if the user prefers), the user installs the
+release file with SideStore, which renews it every 7 days on the phone by itself. Nothing
+is built here. Most steps happen on the phone or in iloader's window, so most are
+**USER**: say exactly what to do and wait.
+
+**Never** ask for, type or store the user's Apple ID password. They type it into iloader
+and SideStore themselves. If they're uneasy about that, suggest a second Apple ID made
+just for this.
+
+1. Check a release has the iPhone file:
+   `gh release view -R Tutu2652/london-climbing-finder --json assets -q '.assets[].name'`
+   must list `london-climbing-finder.ipa` and `altstore-source.json`. If not, tell the
+   user it isn't available yet and stop.
+2. **USER** installs SideStore on the phone with the official guide,
+   https://docs.sidestore.io/docs/installation/prerequisites (iloader on the computer,
+   LocalDevVPN on the phone, Wi-Fi). On Windows, iloader also needs iTunes; on Linux,
+   `usbmuxd`. You may install those for the user if they agree. Follow the guide's current
+   steps rather than guessing; read the page if unsure.
+3. **USER**, in SideStore: **Sources** → **+** → add
+   `https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/altstore-source.json`,
+   then install **Climb Finder** from it with LocalDevVPN on.
+4. Tell the user what ios/README.md → "Install it without a Mac" says about renewing,
+   updates, the 3-app limit and moving a logbook from a Mac install.
+
 ## Installing on Android
 
 If the user asks you to build or install the Android app, follow these steps. Steps on
@@ -215,7 +240,7 @@ signing key or password stay out of git.
   commit. Keep gym names, file and field names, and commands in English in both.
   `README.md` is authoritative if the two disagree.
 
-## Releasing a new Android version
+## Releasing a new version
 
 Friends install the APK from GitHub Releases through one fixed link,
 `https://github.com/Tutu2652/london-climbing-finder/releases/latest/download/london-climbing-finder.apk`,
@@ -233,6 +258,10 @@ ask the user before publishing a release (it is public).
    - Don't mark it as a pre-release: `releases/latest` skips pre-releases, so the link
      would break.
    - Versions below 1.0 are test versions; say so in the title.
+   - Publishing the release also builds the iPhone file: the **iPhone release file**
+     workflow attaches `london-climbing-finder.ipa` and `altstore-source.json` within
+     about 5 minutes. Check it passed (`gh run list -w ios-release.yml`). The tag must
+     look like `v0.4`: the iPhone app's version is taken from it.
 4. Only after the release exists, set `_meta.android_app` in `gyms.json` (`version_code`,
    `version_name`) to the new version. Then run `python3 tools/sync_data.py` and the tests,
    commit and push. Once the website redeploys, older copies of the app show an
