@@ -57,6 +57,9 @@ struct ClimbMediaView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Bindable var climb: Climb
+    /// Opened by tapping a video in Highlights: play it full screen, muted, straight away.
+    var playVideo = false
+    @State private var playedVideo = false
     @State private var photoMedia = LinkedMediaLoader()
     @State private var videoMedia = LinkedMediaLoader()
     @State private var fullScreen: LinkedMediaKind?
@@ -159,9 +162,16 @@ struct ClimbMediaView: View {
                 media.load(kind == .photo ? climb.routePhotoAssetID : climb.videoAssetID, kind: kind)
             }
         }
+        .task {
+            guard playVideo, !playedVideo, climb.videoAssetID != nil else { return }
+            playedVideo = true
+            videoMedia.autoplayMuted = true
+            videoMedia.load(climb.videoAssetID, kind: .video)
+            fullScreen = .video
+        }
         .onDisappear {
             // Covering this screen must not tear down the viewer's media.
-            if fullScreen == nil && !photoLink.picking && !videoLink.picking && !photoLink.managingAccess && !videoLink.managingAccess {
+            if fullScreen == nil && !videoMedia.inSystemFullScreen && !photoLink.picking && !videoLink.picking && !photoLink.managingAccess && !videoLink.managingAccess {
                 photoMedia.stop()
                 videoMedia.stop()
             }
@@ -248,9 +258,10 @@ private struct LinkedMediaSection: View {
                 .accessibilityLabel("View route photo full screen")
             }
             if let player = media.player {
-                VideoPlayer(player: player).frame(height: 260)
+                // Tap it for the controls, which include iOS's own full-screen button.
+                InlineVideoPlayer(player: player, media: media).frame(height: 260)
             }
-            if media.image != nil || media.player != nil {
+            if media.image != nil {
                 Button("Full screen", systemImage: "arrow.up.left.and.arrow.down.right") {
                     showFullScreen()
                 }
@@ -306,7 +317,7 @@ private struct LinkedMediaSection: View {
             if link.pendingID != nil { linkSelection() }
         }
         .task(id: assetID) {
-            if media.image == nil && media.player == nil { reload() }
+            if media.image == nil && media.player == nil && !media.loading { reload() }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
@@ -400,14 +411,57 @@ private struct FullScreenClimbMedia: View {
             HStack {
                 Text(title).font(.headline)
                 Spacer()
-                Button("Done") { dismiss() }
-                    .font(.headline).padding(.vertical, 12)
-                    .accessibilityLabel("Close full-screen viewer")
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark").font(.headline)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("Close full-screen viewer")
             }
             .foregroundStyle(.white).padding(.horizontal)
             .background(.black)
         }
         .preferredColorScheme(.dark)
+    }
+}
+
+/// The system player, unlike SwiftUI's VideoPlayer, shows a full-screen button with its controls.
+private struct InlineVideoPlayer: UIViewControllerRepresentable {
+    let player: AVPlayer
+    let media: LinkedMediaLoader
+
+    func makeCoordinator() -> Coordinator { Coordinator(media: media) }
+
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let controller = AVPlayerViewController()
+        controller.player = player
+        controller.videoGravity = .resizeAspect
+        controller.delegate = context.coordinator
+        return controller
+    }
+
+    func updateUIViewController(_ controller: AVPlayerViewController, context: Context) {
+        if controller.player !== player { controller.player = player }
+    }
+
+    /// Notes when the system's full screen covers the climb, so leaving the climb doesn't stop the video then.
+    final class Coordinator: NSObject, AVPlayerViewControllerDelegate {
+        let media: LinkedMediaLoader
+        init(media: LinkedMediaLoader) { self.media = media }
+
+        func playerViewController(_ controller: AVPlayerViewController,
+                                  willBeginFullScreenPresentationWithAnimationCoordinator coordinator: UIViewControllerTransitionCoordinator) {
+            Task { @MainActor in media.inSystemFullScreen = true }
+        }
+
+        func playerViewController(_ controller: AVPlayerViewController,
+                                  willEndFullScreenPresentationWithAnimationCoordinator coordinator: UIViewControllerTransitionCoordinator) {
+            // A swipe to close can be called off halfway.
+            coordinator.animate(alongsideTransition: nil) { [media] context in
+                guard !context.isCancelled else { return }
+                Task { @MainActor in media.inSystemFullScreen = false }
+            }
+        }
     }
 }
 
@@ -505,7 +559,13 @@ private final class LinkedMediaLoader {
     private var requestID: PHImageRequestID = PHInvalidImageRequestID
     private var generation = UUID()
     private var playbackObservation: NSKeyValueObservation?
+    private var muteObservation: NSKeyValueObservation?
+    private var volumeObservation: NSKeyValueObservation?
     private var audioActive = false
+    /// The inline player's own full screen is showing.
+    var inSystemFullScreen = false
+    /// Start the next video playing, muted. Muted, it mixes with other audio rather than stopping it.
+    var autoplayMuted = false
 
     func stop() {
         generation = UUID()
@@ -515,6 +575,10 @@ private final class LinkedMediaLoader {
         }
         playbackObservation?.invalidate()
         playbackObservation = nil
+        muteObservation?.invalidate()
+        muteObservation = nil
+        volumeObservation?.invalidate()
+        volumeObservation = nil
         player?.pause()
         player?.replaceCurrentItem(with: nil)
         if audioActive {
@@ -527,30 +591,75 @@ private final class LinkedMediaLoader {
     }
 
     private func preparePlayer(_ item: AVPlayerItem) {
-        do {
-            // Video audio should follow media volume, including in Silent mode.
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
-        } catch {
-            self.error = "Couldn't enable video audio. Tap Reload to try again."
-        }
+        let muted = autoplayMuted
+        autoplayMuted = false
         let player = AVPlayer(playerItem: item)
-        player.isMuted = false
+        player.isMuted = muted
         player.volume = 1
+        setAudioCategory(muted: muted)
         let token = generation
-        // Activate only on playback, so opening a route photo doesn't interrupt music.
-        playbackObservation = player.observe(\.rate, options: [.new]) { [weak self] observed, _ in
-            guard observed.rate > 0 else { return }
+        // Activate only on playback with sound, so opening a route photo or a muted video doesn't interrupt music.
+        playbackObservation = player.observe(\.rate, options: [.new]) { [weak self] _, _ in
             Task { @MainActor in
-                guard let self, self.generation == token, self.player?.rate ?? 0 > 0 else { return }
-                do {
-                    try AVAudioSession.sharedInstance().setActive(true)
-                    self.audioActive = true
-                } catch {
-                    self.error = "Couldn't activate video audio. Pause other audio or calls, then tap Reload."
-                }
+                guard let self, self.generation == token else { return }
+                self.activateAudioIfPlayingWithSound()
+            }
+        }
+        // Unmuting in the player's controls switches to normal video audio.
+        muteObservation = player.observe(\.isMuted, options: [.new]) { [weak self] observed, _ in
+            Task { @MainActor in
+                guard let self, self.generation == token else { return }
+                self.setAudioCategory(muted: observed.isMuted)
+                self.activateAudioIfPlayingWithSound()
             }
         }
         self.player = player
+        if muted {
+            watchVolumeButtons(token: token)
+            player.play()
+        }
+    }
+
+    /// Pressing volume up turns the sound on, as in Photos. iOS only reports the volume
+    /// while the audio session is active, so activate it: muted, it's ambient, so music keeps playing.
+    private func watchVolumeButtons(token: UUID) {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setActive(true)
+            audioActive = true
+        } catch {
+            return
+        }
+        volumeObservation = session.observe(\.outputVolume, options: [.old, .new]) { [weak self] _, change in
+            guard let old = change.oldValue, let new = change.newValue, new > old else { return }
+            Task { @MainActor in
+                guard let self, self.generation == token, let player = self.player, player.isMuted else { return }
+                player.isMuted = false
+            }
+        }
+    }
+
+    private func setAudioCategory(muted: Bool) {
+        do {
+            // With sound, video audio should follow media volume, including in Silent mode.
+            if muted {
+                try AVAudioSession.sharedInstance().setCategory(.ambient)
+            } else {
+                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+            }
+        } catch {
+            self.error = "Couldn't enable video audio. Tap Reload to try again."
+        }
+    }
+
+    private func activateAudioIfPlayingWithSound() {
+        guard let player, player.rate > 0, !player.isMuted else { return }
+        do {
+            try AVAudioSession.sharedInstance().setActive(true)
+            audioActive = true
+        } catch {
+            self.error = "Couldn't activate video audio. Pause other audio or calls, then tap Reload."
+        }
     }
 
     func load(_ id: String?, kind: LinkedMediaKind) {

@@ -519,9 +519,9 @@ fun ordinal(n: Int): String {
     return "$n$suffix"
 }
 
-/** One climb: change its grade or comp tag, or delete it. */
+/** One climb: change its grade or comp tag, or delete it. With [playVideo] (from Highlights), its video plays full screen, muted, on opening. */
 @Composable
-fun ClimbScreen(sessionID: String, climbID: String) {
+fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false) {
     val model = LocalModel.current
     val nav = LocalNav.current
     val climb = model.logbook.session(sessionID)?.climbs?.firstOrNull { it.id == climbID }
@@ -556,9 +556,15 @@ fun ClimbScreen(sessionID: String, climbID: String) {
         picker.launch(PickVisualMediaRequest(if (kind == MediaKind.PHOTO) ActivityResultContracts.PickVisualMedia.ImageOnly
             else ActivityResultContracts.PickVisualMedia.VideoOnly))
     }
-    fun view(kind: MediaKind) {
+    fun view(kind: MediaKind, muted: Boolean = false) {
         val uri = current()?.mediaURI(kind) ?: return
-        viewer.shown = ViewerRequest(kind, uri, current()?.mediaFile(kind), onReplace = { choose(kind) }, onRemove = { viewer.shown = null; setLink(kind, null) })
+        viewer.shown = ViewerRequest(kind, uri, current()?.mediaFile(kind), onReplace = { choose(kind) }, onRemove = { viewer.shown = null; setLink(kind, null) },
+            muted = muted)
+    }
+    // Only once: not again on coming back from the gallery picker, or after rotating.
+    var playedVideo by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (playVideo && !playedVideo) { playedVideo = true; view(MediaKind.VIDEO, muted = true) }
     }
     val gymID = model.logbook.session(sessionID)?.gymID ?: ""
     // Boulders and ropes only matter where the gym has ropes, or the climb is already a rope.

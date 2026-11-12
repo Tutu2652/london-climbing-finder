@@ -78,13 +78,14 @@ import java.time.Instant
 
 // Highlights: every route photo and video linked to a logged climb, as a strip at the
 // top of the logbook and a full grid. Tapping one opens that climb's own screen, where a
-// missing original can be relinked. Matches the iPhone app's ClimbGalleryView.
+// missing original can be relinked; tapping a video also plays it full screen, muted, over
+// that screen. Matches the iPhone app's ClimbGalleryView.
 
 /** "Sat 12 Oct" this year, "12 Oct 2025" before. */
 fun mediaDate(t: Instant): String =
     if (t.atZone(London).year == Instant.now().atZone(London).year) dayFormat.format(t) else fullDateFormat.format(t)
 
-private fun climbRoute(item: ClimbMedia) = "climb/${item.session.id}/${item.climb.id}"
+private fun climbRoute(item: ClimbMedia) = "climb/${item.session.id}/${item.climb.id}?play=${item.kind == MediaKind.VIDEO}"
 
 /** The ten newest photos and videos, with See all. Nothing at all when no climb has media. */
 fun LazyListScope.highlights(items: List<ClimbMedia>, seeAll: () -> Unit) {
@@ -227,7 +228,7 @@ fun ClimbMediaCell(item: ClimbMedia, modifier: Modifier = Modifier) {
         modifier.clickable(onClick = open).clearAndSetSemantics {
             contentDescription = spoken
             role = Role.Button
-            onClick("Opens the climb") { open(); true }
+            onClick(if (item.kind == MediaKind.VIDEO) "Plays the video" else "Opens the climb") { open(); true }
         },
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {

@@ -9,8 +9,12 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.graphics.Matrix
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.ExifInterface
 import android.media.MediaMetadataRetriever
+import android.media.MediaPlayer
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -48,6 +52,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Lock
@@ -55,6 +60,8 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
@@ -62,7 +69,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -518,7 +524,8 @@ fun ClimbMediaSection(kind: MediaKind, uri: String?, file: MediaFile?, message: 
                                     VideoBadge(s.thumb.durationMs, Modifier.align(Alignment.BottomEnd).padding(4.dp))
                                 }
                             }
-                            ActionRow(Icons.Filled.Fullscreen, "Full screen", divider = true, chevron = false, onClick = onView)
+                            // A video's thumbnail, with its play button, already opens it full screen.
+                            if (kind == MediaKind.PHOTO) ActionRow(Icons.Filled.Fullscreen, "Full screen", divider = true, chevron = false, onClick = onView)
                         }
                         is MediaState.Failed -> {
                             // A link from before a reinstall, or another phone, can be found again with access to the gallery.
@@ -550,8 +557,9 @@ fun ClimbMediaSection(kind: MediaKind, uri: String?, file: MediaFile?, message: 
     }
 }
 
-/** A photo or video to show full screen, and what its Replace / Remove buttons do if it can't be opened. */
-class ViewerRequest(val kind: MediaKind, val uri: String, val file: MediaFile?, val onReplace: () -> Unit, val onRemove: () -> Unit)
+/** A photo or video to show full screen, and what its Replace / Remove buttons do if it can't be opened. A [muted] video starts with no sound. */
+class ViewerRequest(val kind: MediaKind, val uri: String, val file: MediaFile?, val onReplace: () -> Unit, val onRemove: () -> Unit,
+    val muted: Boolean = false)
 
 /**
  * The full-screen viewer is drawn by MainActivity over the whole app, tabs included. (A
@@ -563,6 +571,11 @@ class MediaViewerHost {
 }
 
 val LocalMediaViewer = staticCompositionLocalOf { MediaViewerHost() }
+
+/** What pressing volume up does right now: MainActivity calls it, a muted video sets it. */
+object VolumeUpKey {
+    var onPress: (() -> Unit)? = null
+}
 
 /** The photo or video full screen: a photo decoded at screen size and zoomable; a video in a VideoView with play controls. */
 @Composable
@@ -595,12 +608,12 @@ fun MediaViewer(request: ViewerRequest, onClose: () -> Unit) {
         } else if (kind == MediaKind.PHOTO) {
             ZoomablePhoto(uri, request.file) { error = it }
         } else {
-            VideoPlayer(uri, request.file) { error = it }
+            VideoPlayer(uri, request.file, request.muted) { error = it }
         }
         Row(Modifier.fillMaxWidth().background(Color.Black).statusBarsPadding().padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Text(kind.title, color = Color.White, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            TextButton(onClick = onClose) { Text("Done", color = Color.White, fontWeight = FontWeight.SemiBold) }
+            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, "Close", tint = Color.White) }
         }
     }
 }
@@ -650,7 +663,7 @@ private fun ZoomablePhoto(uri: String, file: MediaFile?, onError: (String) -> Un
 }
 
 @Composable
-private fun VideoPlayer(uri: String, file: MediaFile?, onError: (String) -> Unit) {
+private fun VideoPlayer(uri: String, file: MediaFile?, startMuted: Boolean, onError: (String) -> Unit) {
     val ctx = LocalContext.current
     // Find what to play first: VideoView only reports a generic error for a missing file.
     var failed by remember(uri) { mutableStateOf(false) }
@@ -669,6 +682,30 @@ private fun VideoPlayer(uri: String, file: MediaFile?, onError: (String) -> Unit
         return
     }
     var video by remember { mutableStateOf<VideoView?>(null) }
+    var player by remember { mutableStateOf<MediaPlayer?>(null) }
+    var muted by remember { mutableStateOf(startMuted) }
+    // A muted start skips audio focus so music keeps playing; turning the sound on takes it.
+    val audio = remember { ctx.getSystemService(AudioManager::class.java) }
+    var focus by remember { mutableStateOf<AudioFocusRequest?>(null) }
+    fun setSound(on: Boolean) {
+        muted = !on
+        val volume = if (on) 1f else 0f
+        player?.setVolume(volume, volume)
+        if (on && startMuted && focus == null) {
+            focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MOVIE).build())
+                .build().also { audio.requestAudioFocus(it) }
+        }
+    }
+    // Volume up turns the sound on, as in the gallery app.
+    DisposableEffect(Unit) {
+        VolumeUpKey.onPress = { if (muted) setSound(true) }
+        onDispose {
+            VolumeUpKey.onPress = null
+            focus?.let { audio.abandonAudioFocusRequest(it) }
+        }
+    }
     var playing by remember { mutableStateOf(false) }
     var position by remember { mutableIntStateOf(0) }
     var length by remember { mutableIntStateOf(0) }
@@ -690,7 +727,13 @@ private fun VideoPlayer(uri: String, file: MediaFile?, onError: (String) -> Unit
                 FrameLayout(c).apply {
                     val v = VideoView(c)
                     addView(v, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
-                    v.setOnPreparedListener { length = v.duration; v.start(); playing = true }
+                    // Muted, it plays alongside music rather than pausing it.
+                    if (startMuted) v.setAudioFocusRequest(AudioManager.AUDIOFOCUS_NONE)
+                    v.setOnPreparedListener { mp ->
+                        player = mp
+                        if (muted) mp.setVolume(0f, 0f)
+                        length = v.duration; v.start(); playing = true
+                    }
                     v.setOnCompletionListener { playing = false; controls = true; position = length }
                     v.setOnErrorListener { _, _, _ ->
                         onError("This video can't be played. The original may have been deleted or moved.")
@@ -724,6 +767,9 @@ private fun VideoPlayer(uri: String, file: MediaFile?, onError: (String) -> Unit
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                 )
                 Text(videoLength(length.toLong()), color = Color.White, style = MaterialTheme.typography.labelMedium)
+                IconButton(onClick = { setSound(muted) }) {
+                    Icon(if (muted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp, if (muted) "Unmute" else "Mute", tint = Color.White)
+                }
             }
         }
     }

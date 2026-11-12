@@ -1,6 +1,8 @@
 package io.github.tutu2652.climbingfinder
 
 import android.os.Bundle
+import android.view.KeyEvent
+import io.github.tutu2652.climbingfinder.ui.VolumeUpKey
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -83,6 +85,12 @@ private val tabs = listOf(
 class MainActivity : ComponentActivity() {
     private val model: AppModel by viewModels()
 
+    /** Volume up turns on a muted video's sound; the key still changes the volume as usual. */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP && event.action == KeyEvent.ACTION_DOWN) VolumeUpKey.onPress?.invoke()
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -156,8 +164,12 @@ class MainActivity : ComponentActivity() {
                                 composable("session/{id}") { SessionScreen(it.arguments?.getString("id") ?: "") }
                                 composable("session/{id}/log") { SessionLogScreen(it.arguments?.getString("id") ?: "") }
                                 composable("media") { GalleryScreen() }
-                                composable("climb/{session}/{climb}") {
-                                    ClimbScreen(it.arguments?.getString("session") ?: "", it.arguments?.getString("climb") ?: "")
+                                composable(
+                                    "climb/{session}/{climb}?play={play}",
+                                    arguments = listOf(navArgument("play") { type = NavType.BoolType; defaultValue = false }),
+                                ) {
+                                    ClimbScreen(it.arguments?.getString("session") ?: "", it.arguments?.getString("climb") ?: "",
+                                        playVideo = it.arguments?.getBoolean("play") ?: false)
                                 }
                             }
                         }

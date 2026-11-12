@@ -4,7 +4,8 @@ import Photos
 
 // Highlights: every route photo and video linked to a logged climb, as a strip at the
 // top of the logbook and a full grid. Tapping one opens that climb's own screen, where
-// a missing original can be relinked. Only thumbnails are loaded here.
+// a missing original can be relinked; tapping a video also plays it full screen, muted,
+// over that screen. Only thumbnails are loaded here.
 
 /// Climbs that link a route photo or a video, newest first.
 private let climbsWithMedia = FetchDescriptor<Climb>(
@@ -75,13 +76,21 @@ final class ClimbMediaLibrary {
 /// Opens the full grid; the logbook registers where it goes.
 struct HighlightsRoute: Hashable {}
 
+/// A climb opened from Highlights. `playVideo` plays its video full screen, muted, over the climb.
+struct OpenedClimb: Identifiable, Hashable {
+    let climb: Climb
+    let playVideo: Bool
+    init(_ item: ClimbMediaItem) { climb = item.climb; playVideo = item.kind == .video }
+    var id: PersistentIdentifier { climb.persistentModelID }
+}
+
 /// The ten newest photos and videos, with See all. Hidden when no climb has media.
 @MainActor
 struct HighlightsSection: View {
     @Environment(\.scenePhase) private var scenePhase
     @Query(climbsWithMedia) private var climbs: [Climb]
     @State private var library = ClimbMediaLibrary()
-    let open: (Climb) -> Void
+    let open: (OpenedClimb) -> Void
 
     var body: some View {
         let items = Array(climbMediaItems(climbs).prefix(10))
@@ -90,7 +99,7 @@ struct HighlightsSection: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 10) {
                         ForEach(items) { item in
-                            Button { open(item.climb) } label: {
+                            Button { open(OpenedClimb(item)) } label: {
                                 ClimbMediaCell(item: item, library: library).frame(width: 112)
                             }
                             .buttonStyle(.plain)
@@ -127,7 +136,7 @@ struct ClimbGalleryView: View {
     @State private var gymID: String?
     @State private var sendsOnly = false
     @State private var managingAccess = false
-    @State private var opened: Climb?
+    @State private var opened: OpenedClimb?
 
     enum KindFilter: String, CaseIterable, Identifiable {
         case all = "All", photos = "Photos", videos = "Videos"
@@ -170,7 +179,7 @@ struct ClimbGalleryView: View {
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10, alignment: .top)], spacing: 16) {
                     ForEach(shown) { item in
-                        Button { opened = item.climb } label: {
+                        Button { opened = OpenedClimb(item) } label: {
                             ClimbMediaCell(item: item, library: library)
                         }
                         .buttonStyle(.plain)
@@ -192,7 +201,7 @@ struct ClimbGalleryView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
-        .navigationDestination(item: $opened) { ClimbMediaView(climb: $0) }
+        .navigationDestination(item: $opened) { ClimbMediaView(climb: $0.climb, playVideo: $0.playVideo) }
         .navigationTitle("Highlights")
         .inlineTitle()
         .task {
@@ -314,7 +323,7 @@ struct ClimbMediaCell: View {
                              [climb.colour, climb.listGrade].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " "),
                              climb.result.title, gym?.shortName, climb.loggedAt.formatted(date: .abbreviated, time: .omitted)]
             .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", "))
-        .accessibilityHint("Opens the climb")
+        .accessibilityHint(item.kind == .video ? "Plays the video" : "Opens the climb")
         .accessibilityAddTraits(.isButton)
     }
 
