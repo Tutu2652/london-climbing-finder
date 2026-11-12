@@ -59,6 +59,9 @@ struct ClimbMediaView: View {
     @Bindable var climb: Climb
     /// Opened by tapping a video in Highlights: play it full screen, muted, straight away.
     var playVideo = false
+    /// The Highlights videos to swipe between in full screen, and how to show another one's climb.
+    var videos: [Climb] = []
+    var showClimb: ((Climb) -> Void)?
     @State private var playedVideo = false
     @State private var photoMedia = LinkedMediaLoader()
     @State private var videoMedia = LinkedMediaLoader()
@@ -158,16 +161,25 @@ struct ClimbMediaView: View {
             videoMedia.player?.pause()
         }) { kind in
             let media = kind == .photo ? photoMedia : videoMedia
-            FullScreenClimbMedia(media: media, title: kind.title) {
+            let paging = kind == .video
+            FullScreenClimbMedia(media: media, title: kind.title, subtitle: paging ? videoPosition : nil,
+                                 previous: paging ? videoNeighbour(-1).map { c in { showVideo(of: c) } } : nil,
+                                 next: paging ? videoNeighbour(1).map { c in { showVideo(of: c) } } : nil) {
                 media.load(kind == .photo ? climb.routePhotoAssetID : climb.videoAssetID, kind: kind)
             }
         }
         .task {
             guard playVideo, !playedVideo, climb.videoAssetID != nil else { return }
             playedVideo = true
-            videoMedia.autoplayMuted = true
+            videoMedia.autoplay = .muted
             videoMedia.load(climb.videoAssetID, kind: .video)
             fullScreen = .video
+        }
+        .onChange(of: climb.persistentModelID) {
+            // Swiped to another climb's video: this screen now shows that climb.
+            photoLink.message = nil
+            videoLink.message = nil
+            photoMedia.load(climb.routePhotoAssetID, kind: .photo)
         }
         .onDisappear {
             // Covering this screen must not tear down the viewer's media.
@@ -176,6 +188,36 @@ struct ClimbMediaView: View {
                 videoMedia.stop()
             }
         }
+    }
+}
+
+extension ClimbMediaView {
+    /// The swipeable videos, minus any deleted or unlinked since Highlights was opened.
+    private var swipeableVideos: [Climb] {
+        videos.filter { $0.modelContext != nil && !$0.isDeleted && $0.videoAssetID != nil }
+    }
+
+    private func videoNeighbour(_ step: Int) -> Climb? {
+        let list = swipeableVideos
+        guard let i = list.firstIndex(where: { $0.persistentModelID == climb.persistentModelID }),
+              list.indices.contains(i + step) else { return nil }
+        return list[i + step]
+    }
+
+    /// For example "V2 · Mile End · 2 of 5", while there are others to swipe to.
+    private var videoPosition: String? {
+        let list = swipeableVideos
+        guard list.count > 1, let i = list.firstIndex(where: { $0.persistentModelID == climb.persistentModelID })
+        else { return nil }
+        let gym = climb.session.flatMap { model.gym($0.gymID) }?.shortName
+        return [climb.label, gym, "\(i + 1) of \(list.count)"].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    /// Plays the other climb's video, with sound if this one had it, and shows that climb underneath.
+    private func showVideo(of other: Climb) {
+        videoMedia.autoplay = videoMedia.player?.isMuted == false ? .withSound : .muted
+        videoMedia.load(other.videoAssetID, kind: .video)
+        showClimb?(other)
     }
 }
 
@@ -387,29 +429,60 @@ private struct FullScreenClimbMedia: View {
     @Environment(\.dismiss) private var dismiss
     let media: LinkedMediaLoader
     let title: String
+    var subtitle: String?
+    /// Show the previous or next video, when there is one to swipe to.
+    var previous: (() -> Void)?
+    var next: (() -> Void)?
     let reload: () -> Void
+
+    private enum DragMode { case close, page, ignore }
+    @State private var dragMode: DragMode?
+    /// How far the video has been pulled down; past a threshold, letting go closes the viewer.
+    @State private var pull: CGFloat = 0
+    /// How far it has been pulled sideways, towards the previous or next video.
+    @State private var slide: CGFloat = 0
+    @State private var size = CGSize.zero
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.black.opacity(1 - min(pull / 600, 0.6)).ignoresSafeArea()
             if let image = media.image {
                 ZoomableRoutePhoto(image: image)
                     .accessibilityLabel("Route photo. Pinch to zoom or double-tap to zoom in and out.")
-            } else if let player = media.player {
-                VideoPlayer(player: player)
-            } else if media.loading {
-                ProgressView("Loading from Photos…").tint(.white).foregroundStyle(.white)
             } else {
-                VStack(spacing: 16) {
-                    Text(media.error ?? "Media unavailable.").multilineTextAlignment(.center)
-                    Button("Reload", action: reload).buttonStyle(.bordered)
+                Group {
+                    if let player = media.player {
+                        VideoPlayer(player: player)
+                    } else if media.loading {
+                        ProgressView("Loading from Photos…").tint(.white).foregroundStyle(.white)
+                    } else {
+                        VStack(spacing: 16) {
+                            Text(media.error ?? "Media unavailable.").multilineTextAlignment(.center)
+                            Button("Reload", action: reload).buttonStyle(.bordered)
+                        }
+                        .foregroundStyle(.white).padding()
+                    }
                 }
-                .foregroundStyle(.white).padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
+                .offset(x: slide, y: pull)
+                .scaleEffect(1 - min(pull / 2000, 0.15))
+                .simultaneousGesture(swipe)
+                .accessibilityActions {
+                    if let previous { Button("Previous video", action: previous) }
+                    if let next { Button("Next video", action: next) }
+                }
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
             HStack {
-                Text(title).font(.headline)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title).font(.headline)
+                    if let subtitle {
+                        Text(subtitle).font(.caption).foregroundStyle(.white.opacity(0.7))
+                    }
+                }
                 Spacer()
                 Button { dismiss() } label: {
                     Image(systemName: "xmark").font(.headline)
@@ -422,6 +495,60 @@ private struct FullScreenClimbMedia: View {
             .background(.black)
         }
         .preferredColorScheme(.dark)
+    }
+
+    /// Down closes the viewer, like Photos; left and right move to the next and previous
+    /// video. Sideways drags along the bottom are left to the player's timeline.
+    private var swipe: some Gesture {
+        DragGesture(minimumDistance: 20)
+            .onChanged { drag in
+                let t = drag.translation
+                if dragMode == nil {
+                    if abs(t.height) > abs(t.width) {
+                        dragMode = t.height > 0 ? .close : .ignore
+                    } else {
+                        let onTimeline = drag.startLocation.y > size.height - 120
+                        dragMode = (previous == nil && next == nil) || onTimeline ? .ignore : .page
+                    }
+                }
+                switch dragMode {
+                case .close: pull = max(t.height, 0)
+                // Resist at either end, where there's nothing to move to.
+                case .page: slide = (t.width > 0 ? previous : next) == nil ? t.width / 4 : t.width
+                default: break
+                }
+            }
+            .onEnded { drag in
+                let mode = dragMode
+                dragMode = nil
+                switch mode {
+                case .close:
+                    if pull > 120 || drag.predictedEndTranslation.height > 400 {
+                        dismiss()
+                    } else {
+                        withAnimation(.spring(duration: 0.25)) { pull = 0 }
+                    }
+                case .page:
+                    let w = drag.translation.width, flung = drag.predictedEndTranslation.width
+                    let forward = w < -80 || flung < -300, back = w > 80 || flung > 300
+                    if forward, let next { turn(to: next, leftward: true) }
+                    else if back, let previous { turn(to: previous, leftward: false) }
+                    else { withAnimation(.spring(duration: 0.25)) { slide = 0 } }
+                default: break
+                }
+            }
+    }
+
+    /// Slides the current video off one side and the new one in from the other.
+    private func turn(to show: @escaping () -> Void, leftward: Bool) {
+        let width = max(size.width, 1)
+        withAnimation(.easeIn(duration: 0.15)) {
+            slide = leftward ? -width : width
+        } completion: {
+            show()
+            slide = leftward ? width : -width
+            withAnimation(.easeOut(duration: 0.2)) { slide = 0 }
+        }
     }
 }
 
@@ -564,8 +691,9 @@ private final class LinkedMediaLoader {
     private var audioActive = false
     /// The inline player's own full screen is showing.
     var inSystemFullScreen = false
-    /// Start the next video playing, muted. Muted, it mixes with other audio rather than stopping it.
-    var autoplayMuted = false
+    /// Start the next video playing. Muted, it mixes with other audio rather than stopping it.
+    var autoplay = Autoplay.off
+    enum Autoplay { case off, muted, withSound }
 
     func stop() {
         generation = UUID()
@@ -591,8 +719,9 @@ private final class LinkedMediaLoader {
     }
 
     private func preparePlayer(_ item: AVPlayerItem) {
-        let muted = autoplayMuted
-        autoplayMuted = false
+        let autoplay = self.autoplay
+        self.autoplay = .off
+        let muted = autoplay == .muted
         let player = AVPlayer(playerItem: item)
         player.isMuted = muted
         player.volume = 1
@@ -614,10 +743,8 @@ private final class LinkedMediaLoader {
             }
         }
         self.player = player
-        if muted {
-            watchVolumeButtons(token: token)
-            player.play()
-        }
+        if muted { watchVolumeButtons(token: token) }
+        if autoplay != .off { player.play() }
     }
 
     /// Pressing volume up turns the sound on, as in Photos. iOS only reports the volume

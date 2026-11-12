@@ -5,7 +5,8 @@ import Photos
 // Highlights: every route photo and video linked to a logged climb, as a strip at the
 // top of the logbook and a full grid. Tapping one opens that climb's own screen, where
 // a missing original can be relinked; tapping a video also plays it full screen, muted,
-// over that screen. Only thumbnails are loaded here.
+// over that screen, and swiping left or right moves to the next or previous video.
+// Only thumbnails are loaded here.
 
 /// Climbs that link a route photo or a video, newest first.
 private let climbsWithMedia = FetchDescriptor<Climb>(
@@ -76,12 +77,34 @@ final class ClimbMediaLibrary {
 /// Opens the full grid; the logbook registers where it goes.
 struct HighlightsRoute: Hashable {}
 
-/// A climb opened from Highlights. `playVideo` plays its video full screen, muted, over the climb.
+/// A climb opened from Highlights. `playVideo` plays its video full screen, muted, over the climb;
+/// `videos` are the climbs whose videos a swipe left or right moves between, in the order shown.
 struct OpenedClimb: Identifiable, Hashable {
     let climb: Climb
     let playVideo: Bool
-    init(_ item: ClimbMediaItem) { climb = item.climb; playVideo = item.kind == .video }
+    let videos: [Climb]
+    init(_ item: ClimbMediaItem, in items: [ClimbMediaItem]) {
+        climb = item.climb
+        playVideo = item.kind == .video
+        videos = playVideo ? items.filter { $0.kind == .video }.map(\.climb) : []
+    }
     var id: PersistentIdentifier { climb.persistentModelID }
+}
+
+/// The screen for an opened climb. Swiping to another video in full screen switches the
+/// climb under it too, so closing the video lands on the climb you were last watching.
+struct OpenedClimbView: View {
+    let opened: OpenedClimb
+    @State private var climb: Climb
+
+    init(_ opened: OpenedClimb) {
+        self.opened = opened
+        _climb = State(initialValue: opened.climb)
+    }
+
+    var body: some View {
+        ClimbMediaView(climb: climb, playVideo: opened.playVideo, videos: opened.videos) { climb = $0 }
+    }
 }
 
 /// The ten newest photos and videos, with See all. Hidden when no climb has media.
@@ -93,13 +116,14 @@ struct HighlightsSection: View {
     let open: (OpenedClimb) -> Void
 
     var body: some View {
-        let items = Array(climbMediaItems(climbs).prefix(10))
+        let all = climbMediaItems(climbs)
+        let items = Array(all.prefix(10))
         if !items.isEmpty {
             Section {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 10) {
                         ForEach(items) { item in
-                            Button { open(OpenedClimb(item)) } label: {
+                            Button { open(OpenedClimb(item, in: all)) } label: {
                                 ClimbMediaCell(item: item, library: library).frame(width: 112)
                             }
                             .buttonStyle(.plain)
@@ -179,7 +203,7 @@ struct ClimbGalleryView: View {
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10, alignment: .top)], spacing: 16) {
                     ForEach(shown) { item in
-                        Button { opened = OpenedClimb(item) } label: {
+                        Button { opened = OpenedClimb(item, in: shown) } label: {
                             ClimbMediaCell(item: item, library: library)
                         }
                         .buttonStyle(.plain)
@@ -201,7 +225,7 @@ struct ClimbGalleryView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
-        .navigationDestination(item: $opened) { ClimbMediaView(climb: $0.climb, playVideo: $0.playVideo) }
+        .navigationDestination(item: $opened) { OpenedClimbView($0) }
         .navigationTitle("Highlights")
         .inlineTitle()
         .task {
