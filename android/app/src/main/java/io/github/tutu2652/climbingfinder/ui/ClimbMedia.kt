@@ -29,6 +29,22 @@ import android.widget.VideoView
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.key
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -557,9 +573,13 @@ fun ClimbMediaSection(kind: MediaKind, uri: String?, file: MediaFile?, message: 
     }
 }
 
-/** A photo or video to show full screen, and what its Replace / Remove buttons do if it can't be opened. A [muted] video starts with no sound. */
+/**
+ * A photo or video to show full screen, and what its Replace / Remove buttons do if it can't be opened. A [muted] video starts with no sound.
+ * Opened from Highlights, a video can be swiped to the [previous] or [next] one: [onSwipe] shows it, with sound if this one had it.
+ */
 class ViewerRequest(val kind: MediaKind, val uri: String, val file: MediaFile?, val onReplace: () -> Unit, val onRemove: () -> Unit,
-    val muted: Boolean = false)
+    val muted: Boolean = false, val subtitle: String? = null, val previous: ClimbMedia? = null, val next: ClimbMedia? = null,
+    val onSwipe: ((ClimbMedia, Boolean) -> Unit)? = null)
 
 /**
  * The full-screen viewer is drawn by MainActivity over the whole app, tabs included. (A
@@ -568,6 +588,8 @@ class ViewerRequest(val kind: MediaKind, val uri: String, val file: MediaFile?, 
  */
 class MediaViewerHost {
     var shown by mutableStateOf<ViewerRequest?>(null)
+    /** The Highlights videos a video was last opened from, in order, for swiping between them. */
+    var videos: List<ClimbMedia> = emptyList()
 }
 
 val LocalMediaViewer = staticCompositionLocalOf { MediaViewerHost() }
@@ -593,27 +615,126 @@ fun MediaViewer(request: ViewerRequest, onClose: () -> Unit) {
         onDispose { if (wasLight != null) bars.isAppearanceLightStatusBars = wasLight }
     }
     var error by remember(uri) { mutableStateOf<String?>(null) }
-    // Swallow taps so nothing underneath reacts.
-    Box(Modifier.fillMaxSize().background(Color.Black).pointerInput(Unit) { detectTapGestures { } }) {
+    val scope = rememberCoroutineScope()
+    var size by remember { mutableStateOf(IntSize.Zero) }
+    val gap = with(LocalDensity.current) { 20.dp.toPx() }
+    // How far the video is pulled down (to close) or sideways (to the next or previous video); fresh for each video.
+    val pull = remember(request) { Animatable(0f) }
+    val slide = remember(request) { Animatable(0f) }
+    var soundOn by remember(request) { mutableStateOf(!request.muted) }
+    // Swallow taps so nothing underneath reacts. Pulled down, the screen underneath shows through.
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 1f - (pull.value / 1500f).coerceAtMost(0.6f)))
+        .pointerInput(Unit) { detectTapGestures { } }) {
         val e = error
-        if (e != null) {
-            Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(e, color = Color.White, textAlign = TextAlign.Center)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = request.onReplace) { Text("Replace link", color = Color.White) }
-                    OutlinedButton(onClick = request.onRemove) { Text("Remove link", color = Warn) }
+        val failed = @Composable { message: String ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(message, color = Color.White, textAlign = TextAlign.Center)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedButton(onClick = request.onReplace) { Text("Replace link", color = Color.White) }
+                        OutlinedButton(onClick = request.onRemove) { Text("Remove link", color = Warn) }
+                    }
                 }
             }
-        } else if (kind == MediaKind.PHOTO) {
-            ZoomablePhoto(uri, request.file) { error = it }
+        }
+        if (kind == MediaKind.PHOTO) {
+            if (e != null) failed(e) else ZoomablePhoto(uri, request.file) { error = it }
         } else {
-            VideoPlayer(uri, request.file, request.muted) { error = it }
+            Box(Modifier.fillMaxSize().onSizeChanged { size = it }.semantics {
+                customActions = listOfNotNull(
+                    request.previous?.let { p -> CustomAccessibilityAction("Previous video") { request.onSwipe?.invoke(p, soundOn); true } },
+                    request.next?.let { n -> CustomAccessibilityAction("Next video") { request.onSwipe?.invoke(n, soundOn); true } },
+                )
+            }.pointerInput(request) {
+                // Down closes, like the gallery app; left and right move to the next and previous video.
+                // The seek bar handles its own drags first, so scrubbing never changes the video.
+                val tracker = VelocityTracker()
+                var mode = DragMode.UNDECIDED
+                detectDragGestures(
+                    onDragStart = { tracker.resetTracking(); mode = DragMode.UNDECIDED },
+                    onDrag = { change, amount ->
+                        tracker.addPosition(change.uptimeMillis, change.position)
+                        if (mode == DragMode.UNDECIDED) mode = when {
+                            abs(amount.y) > abs(amount.x) -> if (amount.y > 0) DragMode.CLOSE else DragMode.IGNORE
+                            request.previous == null && request.next == null -> DragMode.IGNORE
+                            else -> DragMode.PAGE
+                        }
+                        when (mode) {
+                            DragMode.CLOSE -> { change.consume(); scope.launch { pull.snapTo(max(0f, pull.value + amount.y)) } }
+                            DragMode.PAGE -> {
+                                change.consume()
+                                // Resist at either end, where there's nothing to move to.
+                                val blocked = if (slide.value + amount.x > 0) request.previous == null else request.next == null
+                                scope.launch { slide.snapTo(slide.value + amount.x * (if (blocked) 0.25f else 1f)) }
+                            }
+                            else -> {}
+                        }
+                    },
+                    onDragCancel = { scope.launch { pull.animateTo(0f) }; scope.launch { slide.animateTo(0f) } },
+                    onDragEnd = {
+                        val v = tracker.calculateVelocity()
+                        when (mode) {
+                            DragMode.CLOSE ->
+                                if (pull.value > 120.dp.toPx() || v.y > 1500f) onClose() else scope.launch { pull.animateTo(0f) }
+                            DragMode.PAGE -> {
+                                val forward = slide.value < -80.dp.toPx() || v.x < -1000f
+                                val back = slide.value > 80.dp.toPx() || v.x > 1000f
+                                val target = if (forward) request.next else if (back) request.previous else null
+                                scope.launch {
+                                    if (target == null) {
+                                        slide.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                                    } else {
+                                        // Carry on at the finger's speed until the next video's still fills the screen, then show it.
+                                        val distance = (size.width + gap) * (if (target === request.next) -1 else 1)
+                                        slide.animateTo(distance, spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 500f), v.x)
+                                        request.onSwipe?.invoke(target, soundOn)
+                                    }
+                                }
+                            }
+                            else -> {}
+                        }
+                    },
+                )
+            }) {
+                // A video that can't be opened still swipes on to the next one.
+                Box(Modifier.offset { IntOffset(slide.value.roundToInt(), pull.value.roundToInt()) }) {
+                    if (e != null) failed(e)
+                    else key(request) { VideoPlayer(uri, request.file, request.muted, onSound = { soundOn = it }) { error = it } }
+                }
+                // The neighbour's still slides in beside it, like the next page.
+                val neighbour = if (slide.value < 0) request.next else if (slide.value > 0) request.previous else null
+                if (neighbour != null) {
+                    val x = slide.value + (if (slide.value < 0) 1 else -1) * (size.width + gap)
+                    Box(Modifier.offset { IntOffset(x.roundToInt(), pull.value.roundToInt()) }.fillMaxSize().statusBarsPadding().padding(top = 56.dp)) {
+                        VideoPoster(neighbour.uri, neighbour.file)
+                    }
+                }
+            }
         }
         Row(Modifier.fillMaxWidth().background(Color.Black).statusBarsPadding().padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            Text(kind.title, color = Color.White, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Column(Modifier.weight(1f)) {
+                Text(kind.title, color = Color.White, style = MaterialTheme.typography.titleMedium)
+                request.subtitle?.let { Text(it, color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodySmall) }
+            }
             IconButton(onClick = onClose) { Icon(Icons.Filled.Close, "Close", tint = Color.White) }
+        }
+    }
+}
+
+private enum class DragMode { UNDECIDED, CLOSE, PAGE, IGNORE }
+
+/** A video's still, fitted and centred as the player shows the video: while it loads, and as it slides in. */
+@Composable
+private fun VideoPoster(uri: String, file: MediaFile?) {
+    val ctx = LocalContext.current
+    // The size a climb's screen shows its preview at, so it's usually cached already.
+    val px = ctx.resources.displayMetrics.widthPixels.coerceIn(MediaThumbnails.GRID_PX, 1440)
+    val state by rememberThumbnail(uri, MediaKind.VIDEO, file, px)
+    Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+        when (val s = state) {
+            is MediaState.Ready -> Image(s.thumb.bitmap.asImageBitmap(), null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
+            else -> CircularProgressIndicator(color = Color.White)
         }
     }
 }
@@ -663,7 +784,7 @@ private fun ZoomablePhoto(uri: String, file: MediaFile?, onError: (String) -> Un
 }
 
 @Composable
-private fun VideoPlayer(uri: String, file: MediaFile?, startMuted: Boolean, onError: (String) -> Unit) {
+private fun VideoPlayer(uri: String, file: MediaFile?, startMuted: Boolean, onSound: (Boolean) -> Unit, onError: (String) -> Unit) {
     val ctx = LocalContext.current
     // Find what to play first: VideoView only reports a generic error for a missing file.
     var failed by remember(uri) { mutableStateOf(false) }
@@ -678,7 +799,7 @@ private fun VideoPlayer(uri: String, file: MediaFile?, startMuted: Boolean, onEr
     }
     val playable = readable
     if (playable == null) {
-        if (!failed) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.White) }
+        if (!failed) Box(Modifier.fillMaxSize().statusBarsPadding().padding(top = 56.dp)) { VideoPoster(uri, file) }
         return
     }
     var video by remember { mutableStateOf<VideoView?>(null) }
@@ -689,6 +810,7 @@ private fun VideoPlayer(uri: String, file: MediaFile?, startMuted: Boolean, onEr
     var focus by remember { mutableStateOf<AudioFocusRequest?>(null) }
     fun setSound(on: Boolean) {
         muted = !on
+        onSound(on)
         val volume = if (on) 1f else 0f
         player?.setVolume(volume, volume)
         if (on && startMuted && focus == null) {
@@ -711,6 +833,9 @@ private fun VideoPlayer(uri: String, file: MediaFile?, startMuted: Boolean, onEr
     var length by remember { mutableIntStateOf(0) }
     var controls by remember { mutableStateOf(true) }
     var seeking by remember { mutableStateOf<Float?>(null) }
+    // The still stays over the video until its first frame is drawn, so it never flashes black.
+    var rendered by remember { mutableStateOf(false) }
+    LaunchedEffect(playing) { if (playing) { delay(800); rendered = true } }
     // Keep the time and seek bar up to date while it plays.
     LaunchedEffect(video, playing) {
         val v = video ?: return@LaunchedEffect
@@ -734,6 +859,7 @@ private fun VideoPlayer(uri: String, file: MediaFile?, startMuted: Boolean, onEr
                         if (muted) mp.setVolume(0f, 0f)
                         length = v.duration; v.start(); playing = true
                     }
+                    v.setOnInfoListener { _, what, _ -> if (what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) rendered = true; false }
                     v.setOnCompletionListener { playing = false; controls = true; position = length }
                     v.setOnErrorListener { _, _, _ ->
                         onError("This video can't be played. The original may have been deleted or moved.")
@@ -744,6 +870,7 @@ private fun VideoPlayer(uri: String, file: MediaFile?, startMuted: Boolean, onEr
                 }
             },
         )
+        if (!rendered) VideoPoster(uri, file)
         // Tap anywhere to show or hide the controls.
         Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { controls = !controls } })
         if (controls) {

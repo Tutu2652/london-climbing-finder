@@ -92,7 +92,7 @@ fun LogScreen() {
                 ActionRow(Icons.Filled.History, "Log a past session") { nav.navigate("start?past=true") }
             }
         }
-        highlights(linkedMedia(sessions).take(10)) { nav.navigate("media") }
+        highlights(linkedMedia(sessions)) { nav.navigate("media") }
         if (sessions.isNotEmpty()) {
             section {
                 RowItem(onClick = { nav.navigate("stats") }, divider = false) { MonthSummary(sessions) }

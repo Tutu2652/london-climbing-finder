@@ -77,6 +77,7 @@ import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.Discipline
 import io.github.tutu2652.climbingfinder.core.London
 import io.github.tutu2652.climbingfinder.core.MediaFile
+import io.github.tutu2652.climbingfinder.core.ClimbMedia
 import io.github.tutu2652.climbingfinder.core.MediaKind
 import io.github.tutu2652.climbingfinder.core.formatDuration
 import io.github.tutu2652.climbingfinder.core.formatPrice
@@ -519,9 +520,12 @@ fun ordinal(n: Int): String {
     return "$n$suffix"
 }
 
-/** One climb: change its grade or comp tag, or delete it. With [playVideo] (from Highlights), its video plays full screen, muted, on opening. */
+/**
+ * One climb: change its grade or comp tag, or delete it. With [playVideo] (from Highlights), its video plays full
+ * screen on opening, muted unless [withSound], and can be swiped to the next or previous Highlights video.
+ */
 @Composable
-fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false) {
+fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false, withSound: Boolean = false) {
     val model = LocalModel.current
     val nav = LocalNav.current
     val climb = model.logbook.session(sessionID)?.climbs?.firstOrNull { it.id == climbID }
@@ -556,15 +560,37 @@ fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false) 
         picker.launch(PickVisualMediaRequest(if (kind == MediaKind.PHOTO) ActivityResultContracts.PickVisualMedia.ImageOnly
             else ActivityResultContracts.PickVisualMedia.VideoOnly))
     }
+    // The viewer request this screen last made, so leaving it closes only its own.
+    val mine = remember { arrayOfNulls<ViewerRequest>(1) }
     fun view(kind: MediaKind, muted: Boolean = false) {
         val uri = current()?.mediaURI(kind) ?: return
-        viewer.shown = ViewerRequest(kind, uri, current()?.mediaFile(kind), onReplace = { choose(kind) }, onRemove = { viewer.shown = null; setLink(kind, null) },
-            muted = muted)
+        // From Highlights, a video can be swiped to the ones beside it there, if they're still linked.
+        val videos = if (playVideo && kind == MediaKind.VIDEO) viewer.videos.mapNotNull { m ->
+            val s = model.logbook.session(m.session.id) ?: return@mapNotNull null
+            val c = s.climbs.firstOrNull { it.id == m.climb.id } ?: return@mapNotNull null
+            c.androidVideoURI?.let { ClimbMedia(s, c, MediaKind.VIDEO, it) }
+        } else emptyList()
+        val i = videos.indexOfFirst { it.climb.id == climbID }
+        val subtitle = if (i >= 0 && videos.size > 1) {
+            listOfNotNull(current()?.label, model.gym(model.logbook.session(sessionID)?.gymID ?: "")?.shortName, "${i + 1} of ${videos.size}")
+                .joinToString(" · ")
+        } else null
+        val request = ViewerRequest(kind, uri, current()?.mediaFile(kind), onReplace = { choose(kind) }, onRemove = { viewer.shown = null; setLink(kind, null) },
+            muted = muted, subtitle = subtitle,
+            previous = videos.getOrNull(i - 1).takeIf { i >= 0 }, next = videos.getOrNull(i + 1).takeIf { i >= 0 },
+            onSwipe = { other, sound ->
+                // That climb's screen takes this one's place underneath, and plays its video over itself.
+                nav.navigate("climb/${other.session.id}/${other.climb.id}?play=true&sound=$sound") {
+                    nav.currentBackStackEntry?.destination?.route?.let { popUpTo(it) { inclusive = true } }
+                }
+            })
+        mine[0] = request
+        viewer.shown = request
     }
     // Only once: not again on coming back from the gallery picker, or after rotating.
     var playedVideo by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        if (playVideo && !playedVideo) { playedVideo = true; view(MediaKind.VIDEO, muted = true) }
+        if (playVideo && !playedVideo) { playedVideo = true; view(MediaKind.VIDEO, muted = !withSound) }
     }
     val gymID = model.logbook.session(sessionID)?.gymID ?: ""
     // Boulders and ropes only matter where the gym has ropes, or the climb is already a rope.
@@ -661,6 +687,6 @@ fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false) 
             }, divider = false, chevron = false) { Text("Delete climb", color = Warn) }
         }
     }
-    // Close the viewer when leaving this climb.
-    DisposableEffect(Unit) { onDispose { viewer.shown = null } }
+    // Close the viewer when leaving this climb, unless it's already showing the next climb's video.
+    DisposableEffect(Unit) { onDispose { if (viewer.shown === mine[0]) viewer.shown = null } }
 }

@@ -1,6 +1,11 @@
 package io.github.tutu2652.climbingfinder.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.filled.BarChart
+import io.github.tutu2652.climbingfinder.core.Climb
+import io.github.tutu2652.climbingfinder.core.Discipline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -79,7 +84,8 @@ import java.time.Instant
 // Highlights: every route photo and video linked to a logged climb, as a strip at the
 // top of the logbook and a full grid. Tapping one opens that climb's own screen, where a
 // missing original can be relinked; tapping a video also plays it full screen, muted, over
-// that screen. Matches the iPhone app's ClimbGalleryView.
+// that screen, and swiping left or right moves to the next or previous video. Matches the
+// iPhone app's ClimbGalleryView.
 
 /** "Sat 12 Oct" this year, "12 Oct 2025" before. */
 fun mediaDate(t: Instant): String =
@@ -87,9 +93,10 @@ fun mediaDate(t: Instant): String =
 
 private fun climbRoute(item: ClimbMedia) = "climb/${item.session.id}/${item.climb.id}?play=${item.kind == MediaKind.VIDEO}"
 
-/** The ten newest photos and videos, with See all. Nothing at all when no climb has media. */
-fun LazyListScope.highlights(items: List<ClimbMedia>, seeAll: () -> Unit) {
-    if (items.isEmpty()) return
+/** The ten newest of [all] the photos and videos, with See all. Nothing at all when no climb has media. */
+fun LazyListScope.highlights(all: List<ClimbMedia>, seeAll: () -> Unit) {
+    if (all.isEmpty()) return
+    val items = all.take(10)
     item(key = "highlights") {
         Column(Modifier.fillMaxWidth().padding(top = 10.dp)) {
             Row(Modifier.padding(start = 28.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -102,7 +109,8 @@ fun LazyListScope.highlights(items: List<ClimbMedia>, seeAll: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp),
             ) {
                 LazyRow(contentPadding = PaddingValues(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(items, key = { it.key }) { ClimbMediaCell(it, Modifier.width(112.dp)) }
+                    // A video swipes on through every video, not just the ten shown here.
+                    items(items, key = { it.key }) { ClimbMediaCell(it, all, Modifier.width(112.dp)) }
                 }
             }
         }
@@ -123,9 +131,18 @@ fun GalleryScreen() {
     var gymID by rememberSaveable { mutableStateOf<String?>(null) }
     var sendsOnly by rememberSaveable { mutableStateOf(false) }
     var gymMenu by remember { mutableStateOf(false) }
+    var gradeKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var gradeMenu by remember { mutableStateOf(false) }
+    // At a gym that grades by colour, filter by its colours instead of V grades.
+    val gymColours = gymID?.let { id -> model.colourScale(id).map { it.name } }?.takeIf { it.isNotEmpty() }
+    val grades = all.filter { gymID == null || it.session.gymID == gymID }
+        .flatMap { gradeOptions(it.climb, gymColours) }.distinctBy { it.key }.sortedWith(GradeOption.order)
+    // A grade from the last gym may not apply here: V3 means nothing at a colour gym.
+    LaunchedEffect(gymID) { if (gradeKey != null && grades.none { it.key == gradeKey }) gradeKey = null }
     val shown = all.filter { item ->
         (kind.kind == null || item.kind == kind.kind) &&
             (gymID == null || item.session.gymID == gymID) &&
+            (gradeKey == null || gradeOptions(item.climb, gymColours).any { it.key == gradeKey }) &&
             (!sendsOnly || item.climb.result.isSend)
     }
     val gyms = all.map { it.session.gymID }.distinct().mapNotNull { model.gym(it) }.sortedBy { it.name }
@@ -171,7 +188,8 @@ fun GalleryScreen() {
                 }
             }
             item(span = { GridItemSpan(maxLineSpan) }, key = "filters") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Scrolls sideways when the chips are wider than a small phone.
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box {
                         FilterChip(gymID?.let { model.gym(it)?.shortName ?: "Unknown gym" } ?: "All gyms", gymID != null,
                             Icons.Filled.Apartment, trailing = Icons.Filled.KeyboardArrowDown) { gymMenu = true }
@@ -184,11 +202,24 @@ fun GalleryScreen() {
                             }
                         }
                     }
+                    Box {
+                        FilterChip(grades.firstOrNull { it.key == gradeKey }?.title ?: "All grades", gradeKey != null,
+                            Icons.Filled.BarChart, trailing = Icons.Filled.KeyboardArrowDown) { gradeMenu = true }
+                        DropdownMenu(gradeMenu, { gradeMenu = false }) {
+                            DropdownMenuItem({ Text("All grades") }, { gradeKey = null; gradeMenu = false },
+                                leadingIcon = { if (gradeKey == null) Icon(Icons.Filled.Check, null) else Spacer(Modifier.size(24.dp)) })
+                            for (g in grades) {
+                                DropdownMenuItem({ Text(g.title) }, { gradeKey = g.key; gradeMenu = false },
+                                    leadingIcon = { if (gradeKey == g.key) Icon(Icons.Filled.Check, null) else Spacer(Modifier.size(24.dp)) },
+                                    trailingIcon = g.colour?.let { c -> { ColourSwatch(c, 14.dp) } })
+                            }
+                        }
+                    }
                     // Flashes count as sends; attempts are hidden.
                     FilterChip("Sends only", sendsOnly, if (sendsOnly) Icons.Filled.CheckCircle else Icons.Outlined.Circle) { sendsOnly = !sendsOnly }
                 }
             }
-            items(shown, key = { it.key }) { ClimbMediaCell(it) }
+            items(shown, key = { it.key }) { ClimbMediaCell(it, shown) }
             item(span = { GridItemSpan(maxLineSpan) }, key = "summary") {
                 if (shown.isEmpty()) {
                     Column(Modifier.fillMaxWidth().padding(vertical = 32.dp), horizontalAlignment = Alignment.CenterHorizontally,
@@ -196,7 +227,7 @@ fun GalleryScreen() {
                         Icon(Icons.Filled.PhotoLibrary, null, tint = secondaryText, modifier = Modifier.size(40.dp))
                         Text(if (all.isEmpty()) "No photos or videos yet" else "Nothing matches", style = MaterialTheme.typography.titleMedium)
                         Text(if (all.isEmpty()) "Open a climb in a session and link a route photo or video from your gallery."
-                        else "Try showing all gyms, or attempts too.",
+                        else "Try showing all gyms and grades, or attempts too.",
                             style = MaterialTheme.typography.bodyMedium, color = secondaryText, textAlign = TextAlign.Center)
                     }
                 } else {
@@ -208,11 +239,15 @@ fun GalleryScreen() {
     })
 }
 
-/** A square thumbnail with the climb under it: colour and grade, outcome, gym and date. Opens the climb. */
+/**
+ * A square thumbnail with the climb under it: colour and grade, outcome, gym and date. Opens the climb.
+ * A video can then be swiped to the other videos in [list], the list it's shown in.
+ */
 @Composable
-fun ClimbMediaCell(item: ClimbMedia, modifier: Modifier = Modifier) {
+fun ClimbMediaCell(item: ClimbMedia, list: List<ClimbMedia>, modifier: Modifier = Modifier) {
     val model = LocalModel.current
     val nav = LocalNav.current
+    val viewer = LocalMediaViewer.current
     val climb = item.climb
     val gym = model.gym(item.session.gymID)
     val state by rememberThumbnail(item.uri, item.kind, item.file)
@@ -223,7 +258,10 @@ fun ClimbMediaCell(item: ClimbMedia, modifier: Modifier = Modifier) {
         listOfNotNull(climb.colour, climb.listGrade).filter { it.isNotEmpty() }.joinToString(" "),
         climb.result.title, gym?.shortName, fullDateFormat.format(climb.loggedAt),
     ).filter { it.isNotEmpty() }.joinToString(", ")
-    val open = { nav.navigate(climbRoute(item)) }
+    val open = {
+        if (item.kind == MediaKind.VIDEO) viewer.videos = list.filter { it.kind == MediaKind.VIDEO }
+        nav.navigate(climbRoute(item))
+    }
     Column(
         modifier.clickable(onClick = open).clearAndSetSemantics {
             contentDescription = spoken
@@ -257,6 +295,39 @@ fun ClimbMediaCell(item: ClimbMedia, modifier: Modifier = Modifier) {
         Text(gym?.shortName ?: "Unknown gym", style = MaterialTheme.typography.bodySmall, maxLines = 1)
         Text(mediaDate(climb.loggedAt), style = MaterialTheme.typography.bodySmall, color = secondaryText, maxLines = 1)
     }
+}
+
+/**
+ * A grade to filter Highlights by: a colour (with a gym that grades by colour picked), a grade, or "No grade".
+ * [key] identifies it across recompositions and process death.
+ */
+private class GradeOption(val key: String, val title: String, val colour: String?, val rank: Int, val step: Int) {
+    companion object {
+        /** Easiest first: colours in the gym's order, then boulders, ropes, and no grade. */
+        val order = compareBy<GradeOption>({ it.rank }, { it.step }, { it.title })
+        val none = GradeOption("none", "No grade", null, 9, 0)
+        fun grade(d: Discipline, g: Int) = GradeOption("g:${d.raw}:$g", d.grades[g], null, 1 + d.ordinal, g)
+    }
+}
+
+/**
+ * The options a climb shows under. With [colours] (the picked gym's, easiest first), a colour climb shows under its
+ * colour. Otherwise it shows under the grade it felt if you set one, else under every grade in the colour's range
+ * (a V2–V3 under both V2 and V3).
+ */
+private fun gradeOptions(climb: Climb, colours: List<String>?): List<GradeOption> {
+    val colour = climb.colourGrade
+    if (colour != null) {
+        if (colours != null) {
+            return listOf(GradeOption("c:${colour.name}", colour.name, colour.name, 0, colours.indexOf(colour.name).let { if (it < 0) colours.size else it }))
+        }
+        if (!climb.listGradeIsFelt) {
+            val low = colour.low ?: return listOf(GradeOption.none)
+            return (low..maxOf(low, colour.high ?: low)).filter { it in Discipline.BOULDER.grades.indices }
+                .map { GradeOption.grade(Discipline.BOULDER, it) }
+        }
+    }
+    return listOf(if (climb.isGraded) GradeOption.grade(climb.discipline, climb.grade) else GradeOption.none)
 }
 
 /** A capsule filter: white when off, brand green with white text when on. */

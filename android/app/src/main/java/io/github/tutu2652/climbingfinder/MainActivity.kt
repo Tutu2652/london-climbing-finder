@@ -165,11 +165,14 @@ class MainActivity : ComponentActivity() {
                                 composable("session/{id}/log") { SessionLogScreen(it.arguments?.getString("id") ?: "") }
                                 composable("media") { GalleryScreen() }
                                 composable(
-                                    "climb/{session}/{climb}?play={play}",
-                                    arguments = listOf(navArgument("play") { type = NavType.BoolType; defaultValue = false }),
+                                    "climb/{session}/{climb}?play={play}&sound={sound}",
+                                    arguments = listOf(
+                                        navArgument("play") { type = NavType.BoolType; defaultValue = false },
+                                        navArgument("sound") { type = NavType.BoolType; defaultValue = false },
+                                    ),
                                 ) {
                                     ClimbScreen(it.arguments?.getString("session") ?: "", it.arguments?.getString("climb") ?: "",
-                                        playVideo = it.arguments?.getBoolean("play") ?: false)
+                                        playVideo = it.arguments?.getBoolean("play") ?: false, withSound = it.arguments?.getBoolean("sound") ?: false)
                                 }
                             }
                         }
