@@ -189,6 +189,45 @@ data class Pricer(val bankHolidays: Set<String> = emptySet(), val eligibility: E
     }
 }
 
+// --- Prices through the week
+
+/** A stretch of one day's opening time at one price, for the gym page's week grid. */
+data class PriceBand(val day: Moment, val start: Int, val end: Int, val price: Double, val label: String, val kind: PriceKind)
+
+/** The same time of day `n` days later (or earlier, if negative). */
+fun Moment.plusDays(n: Long): Moment {
+    val d = LocalDate.of(year, month, day).plusDays(n)
+    return Moment(d.year, d.monthValue, d.dayOfMonth, minutes)
+}
+
+/** Monday to Sunday of the week this day falls in, each at midnight. */
+val Moment.week: List<Moment> get() = (0..6).map { plusDays((it - weekdayIndex).toLong()).at(0) }
+
+/**
+ * The day's opening hours split into bands of one price each; empty if the gym is shut.
+ * Mirrors `week_bands` in london_climbing_prices.py, but for a real date.
+ */
+fun Pricer.dayBands(gym: Gym, date: Moment, conc: Boolean, step: Int = 15): List<PriceBand> {
+    val t = (gym.temporaryHours ?: gym.hours)[date.weekday]?.takeIf { it.size == 2 } ?: return emptyList()
+    val closes = toMin(t[1])
+    val bands = mutableListOf<PriceBand>()
+    var m = toMin(t[0])
+    while (m < closes) {
+        val r = applicable(gym, date.at(m), conc)
+        val end = minOf(m + step, closes)
+        val last = bands.lastOrNull()
+        if (r.price != null) {
+            if (last != null && last.end == m && last.price == r.price && last.label == r.label) bands[bands.size - 1] = last.copy(end = end)
+            else bands.add(PriceBand(date.at(0), m, end, r.price, r.label, r.kind))
+        }
+        m += step
+    }
+    return bands
+}
+
+/** £8 rather than £8.00, to fit inside a week-grid block; pence are kept (£10.50). */
+fun shortPrice(p: Double): String = if (p == Math.rint(p)) "£" + p.toInt() else formatPrice(p)
+
 // --- Display helpers (mirror the site's view code)
 
 fun formatPrice(p: Double?): String = if (p == null) "n/a" else "£" + String.format(Locale.ROOT, "%.2f", p)

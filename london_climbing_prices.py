@@ -221,17 +221,21 @@ def _offpeak_windows(gym):
     return w if isinstance(w, list) else [w]
 
 
-def applicable_price(gym, when, concession=False):
+def applicable_price(gym, when, concession=False, bank_holiday=None):
     """
     Return (price, label) for a gym at datetime `when`.
 
     label is one of: 'magic', 'off-peak', 'peak', or None if no price is known.
     `concession=True` uses student/concession rates where available.
+    `bank_holiday` overrides the bank-holiday lookup (True/False); None looks it up.
     """
     day_name = WEEKDAYS[when.weekday()]
     minutes = when.hour * 60 + when.minute
     payg = gym["payg"]
-    is_bh = is_bank_holiday(when) is True  # None (unknown) is treated as not-BH
+    if bank_holiday is None:
+        is_bh = is_bank_holiday(when) is True  # None (unknown) is treated as not-BH
+    else:
+        is_bh = bank_holiday
 
     # 1) Special cheap "magic" slots win if we are inside one.
     best_magic = None
@@ -342,6 +346,46 @@ def best_on_day(gym, date, concession=False, step=15):
     else:
         when = "; ".join("%s-%s" % (hhmm(a), hhmm(min(b + step, 24 * 60 - 1))) for a, b in ranges)
     return {"price": minp, "label": label, "when": when}
+
+
+# A Monday in a week with no bank holiday, used to price an ordinary week.
+TYPICAL_WEEK = dt.date(2024, 1, 8)
+
+
+def week_bands(gym, concession=False, step=15):
+    """
+    Prices across an ordinary week (no bank holidays), for the gym pages' price grid.
+
+    Returns {weekday: [band, ...]} with one entry per day the gym opens. Each band is
+    a stretch of opening time at one price:
+    {"start", "end" (minutes since midnight), "price", "label", "not_bank_holidays"}.
+    `not_bank_holidays` is True when the price would differ on a bank holiday.
+    """
+    hours = gym.get("temporary_hours") or gym.get("hours") or {}
+    week = {}
+    for i, day in enumerate(WEEKDAYS):
+        if not hours.get(day):
+            continue
+        opens, closes = (_to_minutes(t) for t in hours[day])
+        base = dt.datetime.combine(TYPICAL_WEEK + dt.timedelta(days=i), dt.time(0, 0))
+        bands = []
+        for m in range(opens, closes, step):
+            when = base + dt.timedelta(minutes=m)
+            price, label = applicable_price(gym, when, concession, bank_holiday=False)
+            if price is None:
+                continue
+            holiday = applicable_price(gym, when, concession, bank_holiday=True)
+            end = min(m + step, closes)
+            last = bands[-1] if bands else None
+            if last and last["end"] == m and last["price"] == price and last["label"] == label:
+                last["end"] = end
+                last["not_bank_holidays"] = last["not_bank_holidays"] or holiday != (price, label)
+            else:
+                bands.append({"start": m, "end": end, "price": price, "label": label,
+                              "not_bank_holidays": holiday != (price, label)})
+        if bands:
+            week[day] = bands
+    return week
 
 
 def closed_all_day(gym, date):

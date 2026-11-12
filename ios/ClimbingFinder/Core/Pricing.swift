@@ -195,6 +195,56 @@ struct Pricer {
     }
 }
 
+// MARK: - Prices through the week
+
+/// A stretch of one day's opening time at one price, for the gym page's week grid.
+struct PriceBand: Hashable {
+    let day: Moment
+    let start: Int, end: Int
+    let price: Double
+    let label: String
+    let kind: PriceKind
+}
+
+extension Moment {
+    /// The same time of day `n` days later (or earlier, if negative).
+    func adding(days n: Int) -> Moment {
+        var c = DateComponents(); c.year = year; c.month = month; c.day = day + n; c.hour = 12
+        let cal = Calendar.london
+        let d = cal.dateComponents([.year, .month, .day], from: cal.date(from: c)!)
+        return Moment(year: d.year!, month: d.month!, day: d.day!, minutes: minutes)
+    }
+
+    /// Monday to Sunday of the week this day falls in, each at midnight.
+    var week: [Moment] { (0..<7).map { adding(days: $0 - weekdayIndex).at(0) } }
+}
+
+extension Pricer {
+    /// The day's opening hours split into bands of one price each; empty if the gym is shut.
+    /// Mirrors `week_bands` in london_climbing_prices.py, but for a real date.
+    func dayBands(_ gym: Gym, _ date: Moment, conc: Bool, step: Int = 15) -> [PriceBand] {
+        guard let t = (gym.temporaryHours ?? gym.hours)[date.weekday], t.count == 2 else { return [] }
+        let closes = toMin(t[1])
+        var bands: [PriceBand] = []
+        for m in stride(from: toMin(t[0]), to: closes, by: step) {
+            let r = applicable(gym, date.at(m), conc: conc)
+            guard let price = r.price else { continue }
+            let end = min(m + step, closes)
+            if let last = bands.last, last.end == m, last.price == price, last.label == r.label {
+                bands[bands.count - 1] = PriceBand(day: last.day, start: last.start, end: end, price: price, label: r.label, kind: r.kind)
+            } else {
+                bands.append(PriceBand(day: date.at(0), start: m, end: end, price: price, label: r.label, kind: r.kind))
+            }
+        }
+        return bands
+    }
+}
+
+/// £8 rather than £8.00, to fit inside a week-grid block; pence are kept (£10.50).
+func shortPrice(_ p: Double) -> String {
+    p == p.rounded() ? "£" + String(Int(p)) : formatPrice(p)
+}
+
 // MARK: - Display helpers (mirror the site's view code)
 
 func formatPrice(_ p: Double?) -> String {

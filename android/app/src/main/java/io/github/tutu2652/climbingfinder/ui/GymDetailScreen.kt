@@ -121,6 +121,13 @@ fun GymDetailScreen(id: String) {
             }
         }
 
+        if ((gym.temporaryHours ?: gym.hours).isNotEmpty()) {
+            section("Prices through the week",
+                footer = "The week of the date above. Tap a block for its times." + bankHolidayNote(model)) {
+                RowItem(divider = false) { WeekPriceGrid(gym) }
+            }
+        }
+
         section("Day-pass prices") {
             LabeledRow("Adult peak", gym.payg.adultPeak.priceOrDash(), divider = false)
             LabeledRow("Adult off-peak", gym.payg.adultOffpeak.priceOrDash())

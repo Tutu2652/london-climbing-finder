@@ -70,6 +70,16 @@ struct GymDetailView: View {
                 Text(conc ? "Your price · student / concession" : "Your price · adult")
             }
 
+            if !(gym.temporaryHours ?? gym.hours).isEmpty {
+                Section {
+                    WeekPriceGrid(gym: gym)
+                } header: {
+                    Text("Prices through the week")
+                } footer: {
+                    Text("The week of the date above. Tap a block for its times." + WeekPriceGrid.bankHolidayNote(model))
+                }
+            }
+
             Section("Day-pass prices") {
                 PriceRow(name: "Adult peak", value: gym.payg.adultPeak)
                 PriceRow(name: "Adult off-peak", value: gym.payg.adultOffpeak)

@@ -107,6 +107,19 @@ class PricingTest {
         assertTrue("07:00" in b.`when`)
     }
 
+    @Test fun dayBandsSplitOpeningHoursByPrice() {
+        val bands = pricer.dayBands(gym("mileend"), Moment(2026, 7, 8), conc = false)
+        val open = gym("mileend").hours.getValue("Wed").map { toMin(it) }
+        assertEquals(open[0], bands.first().start)
+        assertEquals(open[1], bands.last().end)
+        assertEquals(5.0, bands.first().price)
+        assertEquals(toMin("09:30"), bands.first().end)
+        bands.zipWithNext { a, b -> assertTrue(a.end == b.start && (a.price != b.price || a.label != b.label)) }
+        assertEquals(listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"), Moment(2026, 7, 8, 600).week.map { it.weekday })
+        assertEquals(Moment(2026, 6, 29), Moment(2026, 7, 1).week.first())
+        assertEquals("£8" to "£10.50", shortPrice(8.0) to shortPrice(10.5))
+    }
+
     @Test fun everyGymHasAPrice() {
         for (g in data.gyms) assertNotNull(pricer.bestOnDay(g, Moment(2026, 7, 11), conc = false), g.id)
     }

@@ -102,6 +102,31 @@ class GoldenTests(unittest.TestCase):
         self.assertEqual(best["price"], 5.0)
         self.assertIn("07:00", best["when"])
 
+    def test_week_bands_follow_opening_hours_and_merge_by_price(self):
+        gym = {"payg": {"adult_peak": 16.0, "adult_offpeak": 12.0, "concession_peak": 14.0, "concession_offpeak": None},
+               "offpeak_window": {"days": ["Mon"], "start": "06:00", "end": "16:00", "except_bank_holidays": True},
+               "magic_slots": [{"days": ["Mon"], "start": "09:30", "end": "11:00", "price": 7.0, "label": "Early Bird", "prebook": True}],
+               "hours": {"Mon": ["09:00", "21:45"], "Sat": ["10:00", "18:00"]}}
+        week = LCP.week_bands(gym)
+        self.assertEqual(sorted(week), ["Mon", "Sat"])  # days it is shut are left out
+        self.assertEqual([(b["start"], b["end"], b["price"]) for b in week["Mon"]],
+                         [(540, 570, 12.0), (570, 660, 7.0), (660, 960, 12.0), (960, 1305, 16.0)])
+        self.assertEqual(week["Mon"][1]["label"], "super off-peak (Early Bird, pre-book)")
+        # Off-peak stops on bank holidays here; the deal and the peak rate do not.
+        self.assertEqual([b["not_bank_holidays"] for b in week["Mon"]], [True, False, True, False])
+        self.assertEqual([(b["start"], b["end"], b["price"]) for b in week["Sat"]], [(600, 1080, 16.0)])
+        self.assertEqual([b["price"] for b in LCP.week_bands(gym, True)["Mon"]], [14.0, 7.0, 14.0])
+
+    def test_gym_pages_show_prices_through_the_week(self):
+        for gym in DATA["gyms"]:
+            page = os.path.join(ROOT, "gyms", gym["id"].replace("_", "-"), "index.html")
+            with open(page, encoding="utf-8") as fh:
+                markup = fh.read()
+            if LCP.week_bands(gym) or LCP.week_bands(gym, True):
+                self.assertIn("Prices through the week", markup, gym["id"])
+        with open(os.path.join(ROOT, "gyms", "cb-aldgate", "index.html"), encoding="utf-8") as fh:
+            self.assertIn('class="wk wk-c"', fh.read())
+
     def test_every_gym_prices_every_test_date(self):
         for iso in TEST_DATES:
             date = dt.date.fromisoformat(iso)
