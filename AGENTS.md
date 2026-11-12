@@ -43,18 +43,18 @@ cd london-climbing-finder
 ### 2. Find the user's team ID
 
 ```sh
-security find-certificate -a -c "Apple Development" -p | awk '/BEGIN CERT/{c=""} {c=c $0 "\n"} /END CERT/{printf "%s", c | "openssl x509 -noout -subject"; close("openssl x509 -noout -subject")}'
+defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier | grep -E 'teamID|teamName|teamType'
 ```
 
-The team ID is the 10-character `OU=` value. If more than one appears, show them (with
-the `CN=` names) and ask the user which to use.
+The team ID is the 10-character `teamID`. Prefer the one marked `"Personal Team"` unless
+the user says they have a paid membership. If more than one appears, show them (with
+`teamName`) and ask the user which to use.
 
 If nothing is printed, the user hasn't signed in to Xcode yet. **USER**: Xcode →
-Settings → Accounts → **+** → Apple ID → sign in. Then select the account →
-**Manage Certificates…** → **+** → **Apple Development**. Run the command again.
+Settings → Accounts → **+** → Apple ID → sign in. Nothing is needed on the Apple
+Developer website first. Run the command again.
 
-A certificate showing up doesn't prove the user is still signed in: it stays in the
-keychain after the Apple ID is removed from Xcode. Step 5 catches that case.
+There is no need to create a certificate by hand: the build in step 5 makes one.
 
 ### 3. Write the signing config
 
@@ -104,12 +104,20 @@ xcodebuild -project ios/ClimbingFinder.xcodeproj -scheme ClimbingFinder \
   -allowProvisioningUpdates build
 ```
 
-`-allowProvisioningUpdates` lets Xcode create the signing profile with the user's Apple
-ID. Common failures:
+`-allowProvisioningUpdates` lets Xcode create the signing certificate and profile with
+the user's Apple ID. Common failures:
 
 - "No Accounts: Add a new account in Accounts settings": no Apple ID is signed in to
   Xcode. **USER**: Xcode → Settings → Accounts → **+** → Apple ID → sign in. Then rebuild.
-- "No Account for Team" / "No signing certificate": go back to step 2.
+- "No Account for Team": the team ID in step 3 isn't one of the signed-in accounts. Go
+  back to step 2.
+- "No signing certificate" even with the account signed in: **USER**: Xcode → Settings
+  → Accounts → select the account → **Manage Certificates…** → **+** →
+  **Apple Development**. Then rebuild.
+- An error about accepting an agreement: **USER** signs in once at
+  https://developer.apple.com/account with the same Apple ID and accepts the Apple
+  Developer Agreement, then removes and re-adds the account in Xcode → Settings →
+  Accounts. Then rebuild.
 - "The app identifier … cannot be registered" / "is not available": the bundle ID is
   taken. Ask the user for a different `BUNDLE_ID_PREFIX` (see the limit in step 3).
 - "Maximum number of apps" (free accounts allow 3 sideloaded apps per device): **USER**
