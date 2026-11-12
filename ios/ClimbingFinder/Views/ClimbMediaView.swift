@@ -163,8 +163,9 @@ struct ClimbMediaView: View {
             let media = kind == .photo ? photoMedia : videoMedia
             let paging = kind == .video
             FullScreenClimbMedia(media: media, title: kind.title, subtitle: paging ? videoPosition : nil,
-                                 previous: paging ? videoNeighbour(-1).map { c in { showVideo(of: c) } } : nil,
-                                 next: paging ? videoNeighbour(1).map { c in { showVideo(of: c) } } : nil) {
+                                 posterID: paging ? climb.videoAssetID : nil,
+                                 previous: paging ? swipeTarget(-1) : nil,
+                                 next: paging ? swipeTarget(1) : nil) {
                 media.load(kind == .photo ? climb.routePhotoAssetID : climb.videoAssetID, kind: kind)
             }
         }
@@ -202,6 +203,11 @@ extension ClimbMediaView {
         guard let i = list.firstIndex(where: { $0.persistentModelID == climb.persistentModelID }),
               list.indices.contains(i + step) else { return nil }
         return list[i + step]
+    }
+
+    private func swipeTarget(_ step: Int) -> SwipeTarget? {
+        guard let other = videoNeighbour(step), let id = other.videoAssetID else { return nil }
+        return SwipeTarget(assetID: id) { showVideo(of: other) }
     }
 
     /// For example "V2 · Mile End · 2 of 5", while there are others to swipe to.
@@ -430,9 +436,11 @@ private struct FullScreenClimbMedia: View {
     let media: LinkedMediaLoader
     let title: String
     var subtitle: String?
-    /// Show the previous or next video, when there is one to swipe to.
-    var previous: (() -> Void)?
-    var next: (() -> Void)?
+    /// The video's Photos ID, for a still of it while it loads and as it slides in.
+    var posterID: String?
+    /// The previous and next videos, when there are some to swipe to.
+    var previous: SwipeTarget?
+    var next: SwipeTarget?
     let reload: () -> Void
 
     private enum DragMode { case close, page, ignore }
@@ -442,6 +450,9 @@ private struct FullScreenClimbMedia: View {
     /// How far it has been pulled sideways, towards the previous or next video.
     @State private var slide: CGFloat = 0
     @State private var size = CGSize.zero
+    @State private var posters = VideoPosters()
+    /// Space between videos as they slide, as in Photos.
+    private let gap: CGFloat = 20
 
     var body: some View {
         ZStack {
@@ -450,28 +461,21 @@ private struct FullScreenClimbMedia: View {
                 ZoomableRoutePhoto(image: image)
                     .accessibilityLabel("Route photo. Pinch to zoom or double-tap to zoom in and out.")
             } else {
-                Group {
-                    if let player = media.player {
-                        VideoPlayer(player: player)
-                    } else if media.loading {
-                        ProgressView("Loading from Photos…").tint(.white).foregroundStyle(.white)
-                    } else {
-                        VStack(spacing: 16) {
-                            Text(media.error ?? "Media unavailable.").multilineTextAlignment(.center)
-                            Button("Reload", action: reload).buttonStyle(.bordered)
-                        }
-                        .foregroundStyle(.white).padding()
-                    }
+                ZStack {
+                    current.offset(x: slide)
+                    // The neighbour's still slides in beside it, like the next page.
+                    if slide < 0, let next { poster(next.assetID).offset(x: slide + size.width + gap) }
+                    if slide > 0, let previous { poster(previous.assetID).offset(x: slide - size.width - gap) }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .contentShape(Rectangle())
                 .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
-                .offset(x: slide, y: pull)
+                .offset(y: pull)
                 .scaleEffect(1 - min(pull / 2000, 0.15))
                 .simultaneousGesture(swipe)
                 .accessibilityActions {
-                    if let previous { Button("Previous video", action: previous) }
-                    if let next { Button("Next video", action: next) }
+                    if let previous { Button("Previous video", action: previous.show) }
+                    if let next { Button("Next video", action: next.show) }
                 }
             }
         }
@@ -495,6 +499,39 @@ private struct FullScreenClimbMedia: View {
             .background(.black)
         }
         .preferredColorScheme(.dark)
+        .task(id: [posterID, previous?.assetID, next?.assetID]) {
+            posters.load([posterID, previous?.assetID, next?.assetID].compactMap { $0 })
+        }
+    }
+
+    /// The video, with its still over it until it starts playing, so a swipe never shows a
+    /// spinner or a black frame.
+    @ViewBuilder private var current: some View {
+        if let player = media.player {
+            VideoPlayer(player: player)
+                .overlay {
+                    if media.awaitingFirstPlay, let posterID { poster(posterID).allowsHitTesting(false) }
+                }
+        } else if media.loading, let posterID, posters.images[posterID] != nil {
+            poster(posterID)
+        } else if media.loading {
+            ProgressView("Loading from Photos…").tint(.white).foregroundStyle(.white)
+        } else {
+            VStack(spacing: 16) {
+                Text(media.error ?? "Media unavailable.").multilineTextAlignment(.center)
+                Button("Reload", action: reload).buttonStyle(.bordered)
+            }
+            .foregroundStyle(.white).padding()
+        }
+    }
+
+    /// Laid out like the player lays out the video: fitted and centred.
+    private func poster(_ id: String) -> some View {
+        ZStack {
+            Color.black
+            if let image = posters.images[id] { Image(uiImage: image).resizable().scaledToFit() }
+        }
+        .frame(width: size.width, height: size.height)
     }
 
     /// Down closes the viewer, like Photos; left and right move to the next and previous
@@ -530,24 +567,71 @@ private struct FullScreenClimbMedia: View {
                     }
                 case .page:
                     let w = drag.translation.width, flung = drag.predictedEndTranslation.width
-                    let forward = w < -80 || flung < -300, back = w > 80 || flung > 300
-                    if forward, let next { turn(to: next, leftward: true) }
-                    else if back, let previous { turn(to: previous, leftward: false) }
-                    else { withAnimation(.spring(duration: 0.25)) { slide = 0 } }
+                    if w < -80 || flung < -300, let next {
+                        turn(to: next, by: -(size.width + gap), velocity: drag.velocity.width)
+                    } else if w > 80 || flung > 300, let previous {
+                        turn(to: previous, by: size.width + gap, velocity: drag.velocity.width)
+                    } else {
+                        withAnimation(.spring(duration: 0.3)) { slide = 0 }
+                    }
                 default: break
                 }
             }
     }
 
-    /// Slides the current video off one side and the new one in from the other.
-    private func turn(to show: @escaping () -> Void, leftward: Bool) {
-        let width = max(size.width, 1)
-        withAnimation(.easeIn(duration: 0.15)) {
-            slide = leftward ? -width : width
+    /// Carries on from the finger's speed until the neighbour's still fills the screen, then
+    /// swaps it in as the current video (showing the same still) without any visible jump.
+    private func turn(to target: SwipeTarget, by distance: CGFloat, velocity: CGFloat) {
+        let remaining = distance - slide
+        let speed = remaining == 0 ? 0 : max(velocity / remaining, 0)
+        withAnimation(.interpolatingSpring(mass: 1, stiffness: 260, damping: 33, initialVelocity: speed)) {
+            slide = distance
         } completion: {
-            show()
-            slide = leftward ? width : -width
-            withAnimation(.easeOut(duration: 0.2)) { slide = 0 }
+            var swap = Transaction()
+            swap.disablesAnimations = true
+            withTransaction(swap) {
+                target.show()
+                slide = 0
+            }
+        }
+    }
+}
+
+/// Another video to swipe to: its Photos ID, for its still, and how to show it.
+private struct SwipeTarget {
+    let assetID: String
+    let show: () -> Void
+}
+
+/// Stills of the current video and its neighbours, from Photos' cache, for swiping.
+@MainActor
+@Observable
+private final class VideoPosters {
+    private(set) var images: [String: UIImage] = [:]
+    @ObservationIgnored private var requests: [String: PHImageRequestID] = [:]
+
+    /// Keeps only these, loading any not yet asked for.
+    func load(_ ids: [String]) {
+        for (id, request) in requests where !ids.contains(id) {
+            PHImageManager.default().cancelImageRequest(request)
+            requests[id] = nil
+            images[id] = nil
+        }
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        options.resizeMode = .fast
+        options.isNetworkAccessAllowed = true
+        for id in ids where requests[id] == nil {
+            guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [id], options: nil).firstObject else { continue }
+            requests[id] = PHImageManager.default().requestImage(
+                for: asset, targetSize: CGSize(width: 1080, height: 1920), contentMode: .aspectFit, options: options
+            ) { [weak self] image, _ in
+                guard let image else { return }
+                Task { @MainActor in
+                    guard let self, self.requests[id] != nil else { return }
+                    self.images[id] = image
+                }
+            }
         }
     }
 }
@@ -686,6 +770,7 @@ private final class LinkedMediaLoader {
     private var requestID: PHImageRequestID = PHInvalidImageRequestID
     private var generation = UUID()
     private var playbackObservation: NSKeyValueObservation?
+    private var statusObservation: NSKeyValueObservation?
     private var muteObservation: NSKeyValueObservation?
     private var volumeObservation: NSKeyValueObservation?
     private var audioActive = false
@@ -694,6 +779,8 @@ private final class LinkedMediaLoader {
     /// Start the next video playing. Muted, it mixes with other audio rather than stopping it.
     var autoplay = Autoplay.off
     enum Autoplay { case off, muted, withSound }
+    /// Autoplay was asked for and the first frames aren't playing yet; the viewer shows a still until then.
+    var awaitingFirstPlay = false
 
     func stop() {
         generation = UUID()
@@ -703,6 +790,8 @@ private final class LinkedMediaLoader {
         }
         playbackObservation?.invalidate()
         playbackObservation = nil
+        statusObservation?.invalidate()
+        statusObservation = nil
         muteObservation?.invalidate()
         muteObservation = nil
         volumeObservation?.invalidate()
@@ -716,6 +805,7 @@ private final class LinkedMediaLoader {
         player = nil
         image = nil
         loading = false
+        awaitingFirstPlay = false
     }
 
     private func preparePlayer(_ item: AVPlayerItem) {
@@ -740,6 +830,16 @@ private final class LinkedMediaLoader {
                 guard let self, self.generation == token else { return }
                 self.setAudioCategory(muted: observed.isMuted)
                 self.activateAudioIfPlayingWithSound()
+            }
+        }
+        if autoplay != .off {
+            awaitingFirstPlay = true
+            statusObservation = player.observe(\.timeControlStatus, options: [.new]) { [weak self] observed, _ in
+                Task { @MainActor in
+                    guard let self, self.generation == token, self.awaitingFirstPlay,
+                          observed.timeControlStatus == .playing else { return }
+                    withAnimation(.easeOut(duration: 0.15)) { self.awaitingFirstPlay = false }
+                }
             }
         }
         self.player = player

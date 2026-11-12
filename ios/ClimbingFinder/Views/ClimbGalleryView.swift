@@ -158,6 +158,7 @@ struct ClimbGalleryView: View {
     @State private var library = ClimbMediaLibrary()
     @State private var kind = KindFilter.all
     @State private var gymID: String?
+    @State private var grade: GradeFilter?
     @State private var sendsOnly = false
     @State private var managingAccess = false
     @State private var opened: OpenedClimb?
@@ -167,11 +168,17 @@ struct ClimbGalleryView: View {
         var id: Self { self }
     }
 
+    /// The chosen gym's colours, easiest first, when it grades by colour; else empty.
+    private var gymColours: [String] { gymID.map { model.colourScale($0).map(\.name) } ?? [] }
+    /// Filter by colour rather than V grade: a gym is chosen and it grades by colour.
+    private var byColour: Bool { !gymColours.isEmpty }
+
     var body: some View {
         let all = climbMediaItems(climbs)
         let shown = all.filter { item in
             (kind == .all || (kind == .photos) == (item.kind == .photo))
                 && (gymID == nil || item.climb.session?.gymID == gymID)
+                && (grade.map { GradeFilter.of(item.climb, byColour: byColour).contains($0) } ?? true)
                 && (!sendsOnly || item.climb.result.isSend)
         }
         ScrollView {
@@ -183,23 +190,34 @@ struct ClimbGalleryView: View {
 
                 accessNote(missing: shown.contains { library.asset(for: $0) == nil })
 
-                HStack(spacing: 8) {
-                    Menu {
-                        Picker("Gym", selection: $gymID) {
-                            Text("All gyms").tag(String?.none)
-                            ForEach(gyms(all), id: \.id) { Text($0.name).tag(String?.some($0.id)) }
+                // Scrolls sideways when the chips are wider than a small phone.
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        Menu {
+                            Picker("Gym", selection: $gymID) {
+                                Text("All gyms").tag(String?.none)
+                                ForEach(gyms(all), id: \.id) { Text($0.name).tag(String?.some($0.id)) }
+                            }
+                        } label: {
+                            FilterChip(title: gymID.map { model.gym($0)?.shortName ?? "Unknown gym" } ?? "All gyms",
+                                       systemImage: "building.2", on: gymID != nil, menu: true)
                         }
-                    } label: {
-                        FilterChip(title: gymID.map { model.gym($0)?.shortName ?? "Unknown gym" } ?? "All gyms",
-                                   systemImage: "building.2", on: gymID != nil, menu: true)
+                        Menu {
+                            Picker("Grade", selection: $grade) {
+                                Text("All grades").tag(GradeFilter?.none)
+                                ForEach(grades(all), id: \.self) { Text($0.title).tag(GradeFilter?.some($0)) }
+                            }
+                        } label: {
+                            FilterChip(title: grade?.title ?? "All grades", systemImage: "chart.bar", on: grade != nil, menu: true)
+                        }
+                        Button { sendsOnly.toggle() } label: {
+                            FilterChip(title: "Sends only", systemImage: sendsOnly ? "checkmark.circle.fill" : "circle", on: sendsOnly, menu: false)
+                        }
+                        .accessibilityAddTraits(sendsOnly ? .isSelected : [])
                     }
-                    Button { sendsOnly.toggle() } label: {
-                        FilterChip(title: "Sends only", systemImage: sendsOnly ? "checkmark.circle.fill" : "circle", on: sendsOnly, menu: false)
-                    }
-                    .accessibilityAddTraits(sendsOnly ? .isSelected : [])
-                    Spacer(minLength: 0)
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+                .scrollClipDisabled()
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10, alignment: .top)], spacing: 16) {
                     ForEach(shown) { item in
@@ -215,7 +233,7 @@ struct ClimbGalleryView: View {
                                            systemImage: "photo.on.rectangle",
                                            description: Text(all.isEmpty
                                                              ? "Open a climb in a session and link a route photo or video from Photos."
-                                                             : "Try showing all gyms, or attempts too."))
+                                                             : "Try showing all gyms and grades, or attempts too."))
                 } else {
                     Text(summary(shown))
                         .font(.footnote).foregroundStyle(.secondary)
@@ -234,6 +252,10 @@ struct ClimbGalleryView: View {
         }
         // Coming back from a climb, its link (or Photos access) may have changed.
         .onAppear { library.refresh(all) }
+        // A grade from the last gym may not apply here: V3 means nothing at a colour gym.
+        .onChange(of: gymID) {
+            if let grade, !grades(all).contains(grade) { self.grade = nil }
+        }
         .onChange(of: all.map(\.assetID)) { library.refresh(all) }
         .onChange(of: scenePhase) { _, phase in if phase == .active { library.refresh(all) } }
         .sheet(isPresented: $managingAccess, onDismiss: { library.refresh(all) }) {
@@ -271,6 +293,14 @@ struct ClimbGalleryView: View {
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
     }
 
+    /// Grades (or, at a colour gym, colours) that have media at the chosen gym, easiest first.
+    private func grades(_ items: [ClimbMediaItem]) -> [GradeFilter] {
+        let colours = gymColours
+        return Set(items.filter { gymID == nil || $0.climb.session?.gymID == gymID }
+            .flatMap { GradeFilter.of($0.climb, byColour: byColour) })
+            .sorted { $0.order(colours: colours) < $1.order(colours: colours) }
+    }
+
     /// Gyms that have media, by name.
     private func gyms(_ items: [ClimbMediaItem]) -> [Gym] {
         Set(items.compactMap { $0.climb.session?.gymID }).compactMap(model.gym).sorted { $0.name < $1.name }
@@ -282,6 +312,45 @@ struct ClimbGalleryView: View {
                      videos > 0 ? "\(videos) video\(videos == 1 ? "" : "s")" : nil].compactMap { $0 }
         let climbCount = Set(items.map { $0.climb.persistentModelID }).count
         return parts.joined(separator: " and ") + " from \(climbCount) climb\(climbCount == 1 ? "" : "s")"
+    }
+}
+
+/// A grade to filter by. At a gym that grades by colour, its colours come first; climbs
+/// logged there by V grade, and ungraded climbs ("No grade"), still get options of their own.
+enum GradeFilter: Hashable {
+    case colour(String)
+    case grade(Discipline, Int)
+    case noGrade
+
+    /// The options a climb shows under. With `byColour`, a colour climb shows under its
+    /// colour. Otherwise it shows under the grade it felt if you set one, else under every
+    /// grade in the colour's range (a V2–V3 under both V2 and V3).
+    static func of(_ climb: Climb, byColour: Bool = false) -> [GradeFilter] {
+        if let colour = climb.colourGrade {
+            if byColour { return [.colour(colour.name)] }
+            if !climb.listGradeIsFelt {
+                guard let low = colour.low else { return [.noGrade] }
+                return (low...max(low, colour.high ?? low)).map { .grade(.boulder, $0) }
+            }
+        }
+        return climb.isGraded ? [.grade(climb.discipline, climb.grade)] : [.noGrade]
+    }
+
+    var title: String {
+        switch self {
+        case .colour(let name): name
+        case .grade(let discipline, let grade): discipline.grades[grade]
+        case .noGrade: "No grade"
+        }
+    }
+
+    /// Easiest first: colours in the gym's order, then boulders, ropes, and no grade.
+    fileprivate func order(colours: [String]) -> (Int, Int, String) {
+        switch self {
+        case .colour(let name): (0, colours.firstIndex(of: name) ?? colours.count, name)
+        case .grade(let discipline, let grade): (1 + (Discipline.allCases.firstIndex(of: discipline) ?? 0), grade, "")
+        case .noGrade: (9, 0, "")
+        }
     }
 }
 
