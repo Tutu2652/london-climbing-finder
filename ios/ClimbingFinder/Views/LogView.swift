@@ -283,9 +283,20 @@ private struct SessionGymPicker: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selection: String
     @State private var search = ""
+    /// Adding a gym that isn't listed (e.g. while travelling); it's chosen once saved.
+    @State private var adding = false
+    @State private var addedID: String?
 
     var body: some View {
         List {
+            Section {
+                Button { adding = true } label: {
+                    Label(search.trimmingCharacters(in: .whitespaces).isEmpty ? "Add a gym that isn't listed"
+                          : "Add \"\(search.trimmingCharacters(in: .whitespaces))\" as a gym", systemImage: "plus.circle.fill")
+                }
+            } footer: {
+                if sections.isEmpty { Text("No listed gym matches. Add it to log sessions there; it stays on this iPhone.") }
+            }
             ForEach(sections, id: \.title) { section in
                 Section(section.title) {
                     ForEach(section.gyms) { gym in
@@ -313,10 +324,10 @@ private struct SessionGymPicker: View {
                 }
             }
         }
-        .overlay {
-            if sections.isEmpty {
-                ContentUnavailableView.search(text: search)
-            }
+        .sheet(isPresented: $adding, onDismiss: {
+            if let id = addedID { selection = id; dismiss() }
+        }) {
+            AddGymView(name: search.trimmingCharacters(in: .whitespaces)) { addedID = $0 }
         }
         .navigationTitle("Choose a gym")
         .inlineTitle()

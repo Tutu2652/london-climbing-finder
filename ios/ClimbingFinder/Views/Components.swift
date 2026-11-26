@@ -65,7 +65,9 @@ struct OpenBadge: View {
 struct VerifyFlag: View {
     let gym: Gym
     var body: some View {
-        if !gym.verified {
+        if gym.isAddedByYou {
+            Text("added by you").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+        } else if !gym.verified {
             Text("verify").font(.caption2.weight(.semibold)).foregroundStyle(Color.warn)
         }
     }

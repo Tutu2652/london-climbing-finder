@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.AcUnit
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -39,6 +40,7 @@ import io.github.tutu2652.climbingfinder.core.brandRank
 import io.github.tutu2652.climbingfinder.core.formatPrice
 import io.github.tutu2652.climbingfinder.core.peakPrice
 import io.github.tutu2652.climbingfinder.core.typeLabel
+import io.github.tutu2652.climbingfinder.core.zoneLabel
 import java.util.Locale
 
 enum class GymSort(val title: String) {
@@ -69,6 +71,8 @@ fun GymsScreen() {
             )
         }
         FilterButton()
+        val nav = LocalNav.current
+        IconButton(onClick = { nav.navigate("addGym") }) { Icon(Icons.Filled.Add, "Add a gym") }
     }) {
         item {
             OutlinedTextField(search, { search = it }, singleLine = true,
@@ -143,7 +147,7 @@ private fun GymRow(gym: Gym, divider: Boolean) {
                     FavouriteMark(gym.id)
                     VerifyFlag(gym)
                 }
-                Text(listOfNotNull(gym.area, "Zone ${gym.zone}", gym.typeLabel).joinToString(" · "),
+                Text(listOfNotNull(gym.area, gym.zoneLabel, gym.typeLabel).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall, color = secondaryText)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Pill("peak " + formatPrice(gym.peakPrice(conc)), PeakPurple)

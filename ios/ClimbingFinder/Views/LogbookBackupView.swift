@@ -17,19 +17,20 @@ struct LogbookBackupView: View {
             Section {
                 LabeledContent("Sessions", value: "\(sessions.count)")
                 LabeledContent("Climbs", value: "\(sessions.reduce(0) { $0 + $1.climbs.count })")
-                if let file, !sessions.isEmpty {
+                if let file, !sessions.isEmpty || !model.addedGyms.isEmpty {
                     ShareLink(item: file) { Label("Export backup file", systemImage: "square.and.arrow.up") }
                 }
                 Button { importing = true } label: { Label("Restore from a backup file", systemImage: "square.and.arrow.down") }
                 if let message { Text(message).font(.footnote).foregroundStyle(.secondary) }
             } footer: {
-                Text("Your logbook is kept on this iPhone and survives reinstalls. Deleting the app deletes it, so save a backup to Files or iCloud Drive now and then. Restoring only adds sessions you don't already have.")
+                Text("Your logbook is kept on this iPhone and survives reinstalls. Deleting the app deletes it, so save a backup to Files or iCloud Drive now and then. Restoring only adds sessions you don't already have. Gyms you've added are saved in the backup too.")
             }
         }
         .navigationTitle("Back up logbook")
         .inlineTitle()
         .task(id: sessions.count) { write() }
         .onChange(of: model.colourScales) { write() }
+        .onChange(of: model.addedGyms) { write() }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
             do {
                 let url = try result.get()
@@ -39,8 +40,9 @@ struct LogbookBackupView: View {
                 let added = try backup.restore(into: context, existing: sessions)
                 try context.save()
                 model.replaceColourScales(backup.mergedColourScales(into: model.colourScales))
+                let gyms = model.restoreAddedGyms(backup.addedGyms)
                 write()
-                message = added == 0 ? "Nothing new in that file." : "Added \(added) session\(added == 1 ? "" : "s")."
+                message = restoredMessage(sessions: added, gyms: gyms)
             } catch {
                 message = "Couldn't read that file: \(error.localizedDescription)"
             }
@@ -50,9 +52,20 @@ struct LogbookBackupView: View {
     private func write() {
         let name = "Climbing logbook \(Moment(.now).ymd).json"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
-        guard let data = try? LogbookBackup.encoder.encode(LogbookBackup(sessions, colourScales: model.colourScales)),
+        guard let data = try? LogbookBackup.encoder.encode(LogbookBackup(sessions, colourScales: model.colourScales, addedGyms: model.addedGyms)),
               (try? data.write(to: url, options: .atomic)) != nil else { file = nil; return }
         file = url
+    }
+}
+
+/// "Added 2 sessions and 1 gym you added." for a restore.
+func restoredMessage(sessions: Int, gyms: Int) -> String {
+    func n(_ k: Int, _ word: String) -> String { "\(k) \(word)\(k == 1 ? "" : "s")" }
+    switch (sessions, gyms) {
+    case (0, 0): return "Nothing new in that file."
+    case (_, 0): return "Added \(n(sessions, "session"))."
+    case (0, _): return "Added \(n(gyms, "gym")) you'd added yourself."
+    default: return "Added \(n(sessions, "session")) and \(n(gyms, "gym")) you'd added yourself."
     }
 }
 

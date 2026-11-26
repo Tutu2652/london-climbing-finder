@@ -70,7 +70,7 @@ struct ExportView: View {
         if let n = model.notes[g.id] { lines.append("My note: " + n) }
         lines.append("Peak " + formatPrice(g.payg.adultPeak) + " (" + formatPrice(g.payg.concessionPeak) + " conc)"
                      + (g.bestOffpeak(conc: false).map { " · deals from " + formatPrice($0) } ?? ""))
-        lines.append(g.typeLabel + " · Zone \(g.zone)")
+        lines.append(g.typeLabel + " · " + g.zoneLabel)
         if let a = g.address { lines.append(a) }
         if let w = g.website { lines.append(w) }
         return """

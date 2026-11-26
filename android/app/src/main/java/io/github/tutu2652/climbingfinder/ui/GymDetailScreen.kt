@@ -64,6 +64,8 @@ import io.github.tutu2652.climbingfinder.core.PriceKind
 import io.github.tutu2652.climbingfinder.core.dealLines
 import io.github.tutu2652.climbingfinder.core.formatPrice
 import io.github.tutu2652.climbingfinder.core.instagramURL
+import io.github.tutu2652.climbingfinder.core.isAddedByYou
+import io.github.tutu2652.climbingfinder.core.zoneLabel
 import io.github.tutu2652.climbingfinder.core.openState
 import io.github.tutu2652.climbingfinder.core.shortName
 import io.github.tutu2652.climbingfinder.core.typeLabel
@@ -92,8 +94,8 @@ fun GymDetailScreen(id: String) {
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Pill(gym.typeLabel, secondaryText)
-                    Pill("Zone ${gym.zone}", secondaryText)
-                    OpenBadge(gym.openState(model.moment))
+                    Pill(gym.zoneLabel, secondaryText)
+                    OpenBadge(gym.openState(model.localMoment(gym)))
                     VerifyFlag(gym)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -105,6 +107,8 @@ fun GymDetailScreen(id: String) {
                 gym.about?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             }
         }
+
+        if (gym.isAddedByYou) addedGymSection(model, gym)
 
         gymVisitsSection(model, gym)
 

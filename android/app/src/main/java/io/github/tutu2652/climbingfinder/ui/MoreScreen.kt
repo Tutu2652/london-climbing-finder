@@ -126,7 +126,7 @@ private fun ColourRow(label: String, color: androidx.compose.ui.graphics.Color, 
 private fun sourceSummary(s: DataSource): String = when (s) {
     DataSource.Bundled -> "Built into the app"
     is DataSource.Cached -> "From the website, " + ago(s.at)
-    is DataSource.Website -> "From the website, checked " + timeFormat.format(s.at)
+    is DataSource.Website -> "From the website, checked " + timeFormat.onPhone(s.at)
 }
 
 private fun ago(t: Instant): String {

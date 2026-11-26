@@ -15,6 +15,7 @@ struct GymDetailView: View {
     }
 
     var body: some View {
+        let gym = model.gym(self.gym.id) ?? self.gym   // a gym you added may have just been edited
         let conc = model.concession
         let now = model.pricer.applicable(gym, model.moment, conc: conc)
         let best = model.pricer.bestOnDay(gym, model.dayMoment, conc: conc)
@@ -28,8 +29,8 @@ struct GymDetailView: View {
                     }
                     HStack(spacing: 8) {
                         Pill(text: gym.typeLabel, color: .secondary)
-                        Pill(text: "Zone \(gym.zone)", color: .secondary)
-                        OpenBadge(state: gym.openState(model.moment))
+                        Pill(text: gym.zoneLabel, color: .secondary)
+                        OpenBadge(state: gym.openState(model.localMoment(gym)))
                         VerifyFlag(gym: gym)
                     }
                     HStack {
@@ -52,6 +53,8 @@ struct GymDetailView: View {
                     Text(about).font(.callout)
                 }
             }
+
+            if gym.isAddedByYou { AddedGymSection(gym: gym) }
 
             GymVisitsSection(gym: gym)
 

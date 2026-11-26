@@ -101,8 +101,9 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         }
     }
 
-    func geocode(_ query: String) async throws -> Origin {
-        let marks = try? await CLGeocoder().geocodeAddressString(query + ", London, UK")
+    /// Looks in London unless `inLondon` is false (a gym you're adding may be anywhere).
+    func geocode(_ query: String, inLondon: Bool = true) async throws -> Origin {
+        let marks = try? await CLGeocoder().geocodeAddressString(inLondon ? query + ", London, UK" : query)
         guard let loc = marks?.first?.location else { throw Failure.notFound }
         return Origin(label: query, lat: loc.coordinate.latitude, lng: loc.coordinate.longitude)
     }

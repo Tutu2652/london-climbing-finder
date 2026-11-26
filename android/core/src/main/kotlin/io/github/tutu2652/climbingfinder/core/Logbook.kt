@@ -386,6 +386,8 @@ data class LogbookBackup(
     val sessions: List<ClimbSession>,
     /** Each gym's colour grades, by gym id. Missing before version 4. */
     val colourScales: Map<String, List<ColourGrade>>? = null,
+    /** Gyms you added yourself, so sessions there keep their gym. Missing in older backups. */
+    val addedGyms: List<AddedGym>? = null,
 ) {
     /** Colour scales from the file for gyms that don't have one yet; existing scales are kept. */
     fun mergedColourScales(existing: Map<String, List<ColourGrade>>): Map<String, List<ColourGrade>> =
@@ -398,6 +400,7 @@ data class LogbookBackup(
         for ((gymID, scale) in colourScales ?: emptyMap()) {
             if (gymID.isEmpty() || !ColourGrade.isValidScale(scale)) throw invalid
         }
+        if (addedGyms.orEmpty().any { !it.isValid }) throw invalid
         for (s in sessions) {
             if (s.gymID.isEmpty() || s.feeling !in 0..5) throw invalid
             if (s.end != null && s.end < s.start) throw invalid

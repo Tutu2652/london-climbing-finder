@@ -125,8 +125,11 @@ object LocationService {
 
     private val postcode = Regex("^[A-Z]{1,2}[0-9][A-Z0-9]?\\s*[0-9][A-Z]{2}$", RegexOption.IGNORE_CASE)
 
-    /** UK postcodes via postcodes.io (free, exact); anything else via the phone's geocoder. */
-    suspend fun geocode(ctx: Context, query: String): Origin {
+    /**
+     * UK postcodes via postcodes.io (free, exact); anything else via the phone's geocoder, in
+     * London unless `inLondon` is false (a gym you're adding may be anywhere).
+     */
+    suspend fun geocode(ctx: Context, query: String, inLondon: Boolean = true): Origin {
         val q = query.trim()
         if (postcode.matches(q)) {
             val body = httpGet("https://api.postcodes.io/postcodes/" + URLEncoder.encode(q, "UTF-8").replace("+", "%20"))
@@ -138,9 +141,40 @@ object LocationService {
         val hit = withContext(Dispatchers.IO) {
             runCatching {
                 @Suppress("DEPRECATION")
-                Geocoder(ctx, Locale.UK).getFromLocationName("$q, London, UK", 1)?.firstOrNull()
+                Geocoder(ctx, Locale.UK).getFromLocationName(if (inLondon) "$q, London, UK" else q, 1)?.firstOrNull()
             }.getOrNull()
         } ?: throw Failure("Couldn't find that place. Try a postcode, e.g. WC2N 5DU.")
         return Origin(q, hit.latitude, hit.longitude)
+    }
+
+    /** What's at a point, to fill in a gym you're adding. Fields the phone can't tell are null. */
+    data class Place(val area: String?, val address: String?, val postcode: String?, val country: String?, val timeZone: String?)
+
+    /** The phone's geocoder, for a gym anywhere in the world; null offline or when nothing is found. */
+    suspend fun describe(ctx: Context, lat: Double, lng: Double): Place? = withContext(Dispatchers.IO) {
+        runCatching {
+            @Suppress("DEPRECATION")
+            Geocoder(ctx, Locale.getDefault()).getFromLocation(lat, lng, 1)?.firstOrNull()
+        }.getOrNull()?.let { a ->
+            Place(
+                area = a.locality ?: a.subAdminArea ?: a.adminArea,
+                address = listOfNotNull(a.subThoroughfare, a.thoroughfare).joinToString(" ").ifEmpty { null },
+                postcode = a.postalCode,
+                country = a.countryName,
+                timeZone = timeZoneFor(a.countryCode, lng),
+            )
+        }
+    }
+
+    /**
+     * The country's time zone, e.g. "Europe/Paris". Where a country has several (the US, Australia),
+     * the one whose offset best matches the longitude: right for most places, not for all.
+     */
+    fun timeZoneFor(countryCode: String?, lng: Double): String? {
+        val code = countryCode?.uppercase(Locale.ROOT) ?: return null
+        val ids = android.icu.util.TimeZone.getAvailableIDs(code)
+            .filter { runCatching { java.time.ZoneId.of(it) }.isSuccess }
+        val now = System.currentTimeMillis()
+        return ids.minByOrNull { Math.abs(java.util.TimeZone.getTimeZone(it).getOffset(now) - lng * 240_000) }
     }
 }
