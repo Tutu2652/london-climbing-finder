@@ -189,6 +189,7 @@ struct AddGymView: View {
     private func search() async {
         let q = query.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return }
+        let nameBeforeSearch = name
         findError = nil; busy = true
         defer { busy = false }
         let request = MKLocalSearch.Request()
@@ -197,7 +198,12 @@ struct AddGymView: View {
             findError = "Couldn't find that. Try the address or city, or tap the map."
             return
         }
-        if name.trimmingCharacters(in: .whitespaces).isEmpty, let n = item.name { name = n }
+        // Use the map's name even when the session picker supplied a search label.
+        // Keep any edit made while the lookup was in flight; the field stays editable.
+        if name == nameBeforeSearch,
+           let n = item.name?.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty {
+            name = n
+        }
         if website.isEmpty, let u = item.url { website = u.absoluteString }
         fill(from: item.placemark, timeZone: item.timeZone)
         await place(item.placemark.coordinate, move: true, lookUp: false)
