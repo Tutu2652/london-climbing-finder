@@ -74,7 +74,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.tutu2652.climbingfinder.core.ClimbMedia
 import io.github.tutu2652.climbingfinder.core.ClimbResult
-import io.github.tutu2652.climbingfinder.core.London
 import io.github.tutu2652.climbingfinder.core.MediaKind
 import io.github.tutu2652.climbingfinder.core.linkedMedia
 import io.github.tutu2652.climbingfinder.core.mediaSummary
@@ -89,7 +88,7 @@ import java.time.Instant
 
 /** "Sat 12 Oct" this year, "12 Oct 2025" before. */
 fun mediaDate(t: Instant): String =
-    if (t.atZone(London).year == Instant.now().atZone(London).year) dayFormat.format(t) else fullDateFormat.format(t)
+    if (t.atZone(phoneZone()).year == Instant.now().atZone(phoneZone()).year) dayFormat.onPhone(t) else fullDateFormat.format(t)
 
 private fun climbRoute(item: ClimbMedia) = "climb/${item.session.id}/${item.climb.id}?play=${item.kind == MediaKind.VIDEO}"
 

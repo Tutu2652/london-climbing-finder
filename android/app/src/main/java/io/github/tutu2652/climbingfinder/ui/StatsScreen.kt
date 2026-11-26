@@ -58,7 +58,7 @@ private enum class Period(val title: String, val days: Long?) {
     MONTH("30 days", 30), MONTH3("3 months", 91), YEAR("Year", 365), ALL("All", null)
 }
 
-private val shortDate: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM", Locale.UK).withZone(London)
+private val shortDate: DateTimeFormatter get() = DateTimeFormatter.ofPattern("d MMM", Locale.UK).withZone(phoneZone())
 
 @Composable
 fun StatsScreen() {
@@ -363,8 +363,8 @@ fun GymVisitsScreen(id: String) {
 fun VisitRow(session: ClimbSession) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(longDayFormat.format(session.start), style = MaterialTheme.typography.titleSmall)
-            Text(timeFormat.format(session.start) + " · " + formatDuration(session.durationSeconds()) + if (session.isActive) " · now" else "",
+            Text(longDayFormat.onPhone(session.start), style = MaterialTheme.typography.titleSmall)
+            Text(timeFormat.onPhone(session.start) + " · " + formatDuration(session.durationSeconds()) + if (session.isActive) " · now" else "",
                 style = MaterialTheme.typography.bodySmall, color = secondaryText)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {

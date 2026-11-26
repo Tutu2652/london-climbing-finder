@@ -39,6 +39,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import io.github.tutu2652.climbingfinder.ui.AddGymScreen
 import io.github.tutu2652.climbingfinder.ui.CheapestScreen
 import io.github.tutu2652.climbingfinder.ui.PricesForYouScreen
 import io.github.tutu2652.climbingfinder.ui.ClassesScreen
@@ -138,6 +139,13 @@ class MainActivity : ComponentActivity() {
                                 composable("cheapest") { CheapestScreen() }
                                 composable("map") { MapScreen() }
                                 composable("gyms") { GymsScreen() }
+                                composable(
+                                    "addGym?id={id}&name={name}",
+                                    arguments = listOf(
+                                        navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null },
+                                        navArgument("name") { type = NavType.StringType; nullable = true; defaultValue = null },
+                                    ),
+                                ) { AddGymScreen(it.arguments?.getString("id"), it.arguments?.getString("name") ?: "") }
                                 composable("log") { LogScreen() }
                                 composable("more") { MoreScreen() }
                                 composable("gym/{id}") { GymDetailScreen(it.arguments?.getString("id") ?: "") }

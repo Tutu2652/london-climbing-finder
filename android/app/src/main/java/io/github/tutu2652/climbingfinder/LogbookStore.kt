@@ -3,6 +3,7 @@ package io.github.tutu2652.climbingfinder
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import io.github.tutu2652.climbingfinder.core.AddedGym
 import io.github.tutu2652.climbingfinder.core.ClimbSession
 import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.LogbookBackup
@@ -58,8 +59,10 @@ class LogbookStore(private val file: File, private val scope: CoroutineScope) {
         return added.size
     }
 
-    fun backupText(): String =
-        LogbookBackup(sessions = sessions.sortedBy { it.start }, colourScales = colourScales.ifEmpty { null }).encode()
+    /** The logbook in backup format. The file in app storage leaves out `addedGyms` (kept with the settings). */
+    fun backupText(addedGyms: List<AddedGym> = emptyList()): String =
+        LogbookBackup(sessions = sessions.sortedBy { it.start }, colourScales = colourScales.ifEmpty { null },
+            addedGyms = addedGyms.ifEmpty { null }).encode()
 
     private fun save(list: List<ClimbSession>) {
         sessions = list.sortedByDescending { it.start }

@@ -69,6 +69,7 @@ import io.github.tutu2652.climbingfinder.AppModel
 import io.github.tutu2652.climbingfinder.core.Gym
 import io.github.tutu2652.climbingfinder.core.OpenState
 import io.github.tutu2652.climbingfinder.core.PriceKind
+import io.github.tutu2652.climbingfinder.core.isAddedByYou
 import io.github.tutu2652.climbingfinder.core.shortName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -131,7 +132,8 @@ fun OpenBadge(state: OpenState?) {
 
 @Composable
 fun VerifyFlag(gym: Gym) {
-    if (!gym.verified) Text("verify", style = MaterialTheme.typography.labelSmall, color = Warn, fontWeight = FontWeight.SemiBold)
+    if (gym.isAddedByYou) Text("added by you", style = MaterialTheme.typography.labelSmall, color = secondaryText, fontWeight = FontWeight.SemiBold)
+    else if (!gym.verified) Text("verify", style = MaterialTheme.typography.labelSmall, color = Warn, fontWeight = FontWeight.SemiBold)
 }
 
 /** Small filled heart next to a favourite gym's name. */

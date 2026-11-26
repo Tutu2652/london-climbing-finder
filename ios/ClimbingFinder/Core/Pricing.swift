@@ -297,7 +297,8 @@ extension Gym {
 
     var instagramURL: URL? { instagram.flatMap { URL(string: "https://www.instagram.com/\($0)/") } }
 
-    var brandRank: Int { brand == "London Climbing Centres" ? 0 : (brand == "Independent" ? 2 : 1) }
+    /// Gyms you added yourself (ids "added-…", see AddedGyms.swift) sort last.
+    var brandRank: Int { brand == "London Climbing Centres" ? 0 : id.hasPrefix("added-") ? 3 : (brand == "Independent" ? 2 : 1) }
 
     func openState(_ when: Moment) -> OpenState? {
         if temporarilyClosed != nil { return OpenState(open: false, text: "temporarily closed") }

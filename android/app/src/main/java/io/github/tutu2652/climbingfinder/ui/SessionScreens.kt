@@ -75,7 +75,6 @@ import io.github.tutu2652.climbingfinder.core.ClimbResult
 import io.github.tutu2652.climbingfinder.core.ClimbSession
 import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.Discipline
-import io.github.tutu2652.climbingfinder.core.London
 import io.github.tutu2652.climbingfinder.core.MediaFile
 import io.github.tutu2652.climbingfinder.core.ClimbMedia
 import io.github.tutu2652.climbingfinder.core.MediaKind
@@ -152,7 +151,7 @@ fun SessionLogScreen(id: String) {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
-    Screen(if (session.isActive) "Session" else dayFormat.format(session.start), actions = {
+    Screen(if (session.isActive) "Session" else dayFormat.onPhone(session.start), actions = {
         if (session.isActive) {
             IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, "More") }
             DropdownMenu(menu, { menu = false }) {
@@ -365,7 +364,7 @@ private fun PriceRow(price: Double?, onChange: (Double?) -> Unit) {
 fun DateTimeRow(label: String, value: Instant, min: Instant? = null, max: Instant? = null, divider: Boolean = true, onChange: (Instant) -> Unit) {
     var step by remember { mutableStateOf(0) }   // 0 closed, 1 date, 2 time
     var picked by remember { mutableStateOf(value) }
-    LabeledRow(label, dayFormat.format(value) + ", " + timeFormat.format(value), divider = divider) { picked = value; step = 1 }
+    LabeledRow(label, dayFormat.onPhone(value) + ", " + timeFormat.onPhone(value), divider = divider) { picked = value; step = 1 }
     fun clamp(t: Instant): Instant {
         var r = t
         if (min != null && r < min) r = min
@@ -373,7 +372,7 @@ fun DateTimeRow(label: String, value: Instant, min: Instant? = null, max: Instan
         return r
     }
     if (step == 1) {
-        val local = picked.atZone(London)
+        val local = picked.atZone(phoneZone())
         val state = rememberDatePickerState(local.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
         DatePickerDialog(
             onDismissRequest = { step = 0 },
@@ -387,7 +386,7 @@ fun DateTimeRow(label: String, value: Instant, min: Instant? = null, max: Instan
         ) { DatePicker(state) }
     }
     if (step == 2) {
-        val local = picked.atZone(London)
+        val local = picked.atZone(phoneZone())
         val state = rememberTimePickerState(local.hour, local.minute, is24Hour = true)
         AlertDialog(
             onDismissRequest = { step = 0 },
@@ -414,7 +413,7 @@ fun ClimbRow(climb: Climb) {
         Spacer(Modifier.weight(1f))
         if (climb.androidPhotoURI != null) Icon(Icons.Outlined.Image, "Route photo linked", tint = secondaryText, modifier = Modifier.size(18.dp))
         if (climb.androidVideoURI != null) Icon(Icons.Outlined.Videocam, "Video linked", tint = secondaryText, modifier = Modifier.size(18.dp))
-        Text(timeFormat.format(climb.loggedAt), style = MaterialTheme.typography.bodySmall, color = secondaryText)
+        Text(timeFormat.onPhone(climb.loggedAt), style = MaterialTheme.typography.bodySmall, color = secondaryText)
     }
 }
 
@@ -461,7 +460,7 @@ private fun VisitDetailScreen(session: ClimbSession) {
     val climbs = session.climbs.sortedBy { it.loggedAt }
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
-    Screen(dayFormat.format(session.start), actions = {
+    Screen(dayFormat.onPhone(session.start), actions = {
         TextButton(onClick = { nav.navigate("session/${session.id}/log") }) { Text("Edit") }
         IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, "More") }
         DropdownMenu(menu, { menu = false }) {
@@ -475,12 +474,12 @@ private fun VisitDetailScreen(session: ClimbSession) {
                     gym?.let { GymLogo(it, 48.dp) }
                     Column {
                         Text(gym?.name ?: "Unknown gym", style = MaterialTheme.typography.titleMedium)
-                        Text(longDayFormat.format(session.start) + " " + session.start.atZone(London).year,
+                        Text(longDayFormat.onPhone(session.start) + " " + session.start.atZone(phoneZone()).year,
                             style = MaterialTheme.typography.bodySmall, color = secondaryText)
                     }
                 }
             }
-            LabeledRow("Time", timeFormat.format(session.start) + (session.end?.let { "–" + timeFormat.format(it) } ?: ""))
+            LabeledRow("Time", timeFormat.onPhone(session.start) + (session.end?.let { "–" + timeFormat.onPhone(it) } ?: ""))
             LabeledRow("Length", formatDuration(session.durationSeconds()))
             LabeledRow("Entry", session.price?.let { formatPrice(it) } ?: "Membership / pass")
             if (session.feeling > 0) RowItem { Row { Text("Felt", Modifier.weight(1f)); Stars(session.feeling) } }
@@ -621,7 +620,7 @@ fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false, 
                     Segmented(ClimbResult.entries, climb.result, { it.title }) { r -> change { it.copy(resultRaw = r.raw) } }
                 }
             }
-            LabeledRow("Logged", dayFormat.format(climb.loggedAt) + ", " + timeFormat.format(climb.loggedAt))
+            LabeledRow("Logged", dayFormat.onPhone(climb.loggedAt) + ", " + timeFormat.onPhone(climb.loggedAt))
             if (showsDiscipline) {
                 RowItem {
                     Segmented(Discipline.entries, climb.discipline, { it.title }) { d -> change { it.withDiscipline(d) } }

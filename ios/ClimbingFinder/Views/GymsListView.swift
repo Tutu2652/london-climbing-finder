@@ -18,6 +18,7 @@ struct GymsListView: View {
     @Environment(AppModel.self) private var model
     @AppStorage("gymSort") private var sort: GymSort = .chain
     @State private var search = ""
+    @State private var adding = false
 
     var body: some View {
         List {
@@ -57,7 +58,11 @@ struct GymsListView: View {
                 } label: { Label("Sort", systemImage: "arrow.up.arrow.down") }
             }
             ToolbarItem(placement: .primaryAction) { FilterMenu() }
+            ToolbarItem(placement: .primaryAction) {
+                Button { adding = true } label: { Label("Add a gym", systemImage: "plus") }
+            }
         }
+        .sheet(isPresented: $adding) { AddGymView() }
     }
 
     private var favouriteGyms: [Gym] {
@@ -114,7 +119,7 @@ private struct GymRow: View {
                     FavouriteMark(gymID: gym.id)
                     VerifyFlag(gym: gym)
                 }
-                Text([gym.area, "Zone \(gym.zone)", gym.typeLabel].compactMap { $0 }.joined(separator: " · "))
+                Text([gym.area, gym.zoneLabel, gym.typeLabel].compactMap { $0 }.joined(separator: " · "))
                     .font(.caption).foregroundStyle(.secondary)
                 HStack(spacing: 6) {
                     Pill(text: "peak " + formatPrice(gym.peakPrice(conc: conc)), color: .peakPurple)

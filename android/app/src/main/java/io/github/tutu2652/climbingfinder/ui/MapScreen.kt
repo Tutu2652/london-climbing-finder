@@ -175,7 +175,7 @@ private fun MapGymCard(gym: Gym, modifier: Modifier, close: () -> Unit) {
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OpenBadge(gym.openState(model.moment))
+                OpenBadge(gym.openState(model.localMoment(gym)))
                 model.travelText(gym)?.let { IconText(Icons.Filled.Train, it) }
                 model.distanceKm(gym)?.let { Text(String.format(Locale.UK, "%.1f km", it), style = MaterialTheme.typography.bodySmall, color = secondaryText) }
             }

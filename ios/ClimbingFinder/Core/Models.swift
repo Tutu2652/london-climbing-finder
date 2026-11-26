@@ -5,7 +5,7 @@ import Foundation
 
 struct ClimbingData: Decodable {
     let meta: Meta
-    let gyms: [Gym]
+    var gyms: [Gym]   // var: the app appends gyms you added yourself
     let studentPromotions: [StudentPromotion]
     let limitedPromotions: [Promotion]
 

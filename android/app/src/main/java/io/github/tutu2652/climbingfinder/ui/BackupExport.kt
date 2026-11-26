@@ -26,6 +26,7 @@ import io.github.tutu2652.climbingfinder.core.Moment
 import io.github.tutu2652.climbingfinder.core.bestOffpeak
 import io.github.tutu2652.climbingfinder.core.formatPrice
 import io.github.tutu2652.climbingfinder.core.typeLabel
+import io.github.tutu2652.climbingfinder.core.zoneLabel
 
 /** Exports the logbook as a JSON file, and adds sessions back from one (from this app or the iPhone app). */
 @Composable
@@ -35,29 +36,40 @@ fun LogbookBackupScreen() {
     val sessions = model.logbook.sessions
     var message by remember { mutableStateOf<String?>(null) }
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-        if (uri != null) message = if (write(ctx, uri, model.logbook.backupText())) "Saved." else "Couldn't save that file."
+        if (uri != null) message = if (write(ctx, uri, model.backupText())) "Saved." else "Couldn't save that file."
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         message = try {
             val text = ctx.contentResolver.openInputStream(uri)!!.bufferedReader().use { it.readText() }
-            val added = model.logbook.restore(LogbookBackup.decode(text))
-            if (added == 0) "Nothing new in that file." else "Added $added session${if (added == 1) "" else "s"}."
+            val (sessions, gyms) = model.restoreBackup(LogbookBackup.decode(text))
+            restoredMessage(sessions, gyms)
         } catch (e: Exception) {
             "Couldn't read that file: " + (e.message ?: "it isn't a logbook backup.")
         }
     }
     Screen("Back up logbook") {
         section(footer = "Your logbook is kept on this phone. Uninstalling the app deletes it, so save a backup to Google Drive or Files now and then. " +
-            "Restoring only adds sessions you don't already have, and reads backups from the iPhone app too.") {
+            "Restoring only adds sessions you don't already have, and reads backups from the iPhone app too. Gyms you've added are saved in the backup too.") {
             LabeledRow("Sessions", "${sessions.size}", divider = false)
             LabeledRow("Climbs", "${sessions.sumOf { it.climbs.size }}")
-            if (sessions.isNotEmpty()) {
+            if (sessions.isNotEmpty() || model.addedGyms.isNotEmpty()) {
                 ActionRow(Icons.Filled.Upload, "Export backup file", chevron = false) { save.launch("Climbing logbook ${Moment.now().ymd}.json") }
             }
             ActionRow(Icons.Filled.Download, "Restore from a backup file", chevron = false) { open.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) }
             message?.let { RowItem { Text(it, style = MaterialTheme.typography.bodySmall, color = secondaryText) } }
         }
+    }
+}
+
+/** "Added 2 sessions and 1 gym you'd added yourself." for a restore. */
+fun restoredMessage(sessions: Int, gyms: Int): String {
+    fun n(k: Int, word: String) = "$k $word${if (k == 1) "" else "s"}"
+    return when {
+        sessions == 0 && gyms == 0 -> "Nothing new in that file."
+        gyms == 0 -> "Added ${n(sessions, "session")}."
+        sessions == 0 -> "Added ${n(gyms, "gym")} you'd added yourself."
+        else -> "Added ${n(sessions, "session")} and ${n(gyms, "gym")} you'd added yourself."
     }
 }
 
@@ -112,7 +124,7 @@ private fun kml(model: AppModel, gyms: List<Gym>): String {
             model.notes[g.id]?.let { lines.add("My note: $it") }
             lines.add("Peak " + formatPrice(g.payg.adultPeak) + " (" + formatPrice(g.payg.concessionPeak) + " conc)" +
                 (g.bestOffpeak(false)?.let { " · deals from " + formatPrice(it) } ?: ""))
-            lines.add(g.typeLabel + " · Zone ${g.zone}")
+            lines.add(g.typeLabel + " · " + g.zoneLabel)
             g.address?.let { lines.add(it) }
             g.website?.let { lines.add(it) }
             out.append("<Placemark><name>${esc(g.name)}</name><description>${esc(lines.joinToString("\n"))}</description>")

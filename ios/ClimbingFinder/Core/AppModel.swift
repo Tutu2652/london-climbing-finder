@@ -34,7 +34,10 @@ enum DataSource: Equatable {
 @MainActor
 @Observable
 final class AppModel {
+    /// gyms.json (built in or from the website), plus the gyms you added yourself.
     private(set) var data: ClimbingData
+    /// gyms.json alone, as built in or downloaded.
+    private var listedData: ClimbingData
     private(set) var dataSource: DataSource
     private(set) var pricer: Pricer
     private var lastDataCheck: Date?
@@ -80,7 +83,11 @@ final class AppModel {
         static let favourites = "favourites", favouritesOnly = "favouritesOnly"
         static let colourScales = "colourScales"
         static let gender = "gender", homePostcode = "homePostcode"
+        static let addedGyms = "addedGyms"
     }
+
+    /// Gyms you added yourself, kept on this phone only (never uploaded or added to gyms.json).
+    private(set) var addedGyms: [AddedGym]
 
     /// For women+ session prices. Kept on this phone only.
     var gender: Gender = Gender(rawValue: UserDefaults.standard.string(forKey: Keys.gender) ?? "") ?? .unset {
@@ -152,16 +159,21 @@ final class AppModel {
             g.colourGrades.isEmpty ? nil : (g.id, g.colourGrades)
         })
         // Start from the last website download unless this build carries newer research.
+        let listed: ClimbingData
         if let d = try? Data(contentsOf: Self.cacheURL),
            let cached = try? JSONDecoder().decode(ClimbingData.self, from: d),
            (cached.meta.lastResearchDate ?? "") >= (bundled.meta.lastResearchDate ?? "") {
             let saved = (try? FileManager.default.attributesOfItem(atPath: Self.cacheURL.path))?[.modificationDate] as? Date
-            data = cached
+            listed = cached
             dataSource = .cached(saved ?? .now)
         } else {
-            data = bundled
+            listed = bundled
             dataSource = .bundled
         }
+        let added: [AddedGym] = AppModel.load(Keys.addedGyms) ?? []
+        addedGyms = added
+        listedData = listed
+        data = AppModel.withAddedGyms(listed, added)
         var bh: Set<String> = AppModel.load(Keys.bankHolidays) ?? []
         if bh.isEmpty, let u = Bundle.main.url(forResource: "bank_holidays", withExtension: "json"),
            let d = try? Data(contentsOf: u) {
@@ -171,12 +183,14 @@ final class AppModel {
     }
 
     var moment: Moment { Moment(when) }
+    /// The date and time at a gym, for whether it's open: local time for one you added abroad.
+    func localMoment(_ g: Gym) -> Moment { g.isAddedByYou ? addedGym(g.id)?.localMoment(when) ?? moment : moment }
     var dayMoment: Moment { moment.at(0) }
     var isBankHoliday: Bool { pricer.isBankHoliday(moment) }
     var climberLabel: String { concession ? "Student / concession" : "Adult" }
 
     var filtersActive: Bool { !typeFilter.isEmpty || zoneFilter != nil || !acFilter.isEmpty || favouritesOnly }
-    var zones: [Int] { Array(Set(data.gyms.map(\.zone))).sorted() }
+    var zones: [Int] { Array(Set(data.gyms.filter { !$0.isAddedByYou }.map(\.zone))).sorted() }   // added gyms have no zone
 
     func matchesFilters(_ g: Gym) -> Bool {
         if favouritesOnly && !favourites.contains(g.id) { return false }
@@ -230,7 +244,7 @@ final class AppModel {
     private struct CheapestKey: Equatable {
         let source: DataSource, mode: CheapestMode, moment: Moment, concession: Bool
         let typeFilter: String, zoneFilter: Int?, acFilter: String, favouritesOnly: Bool, favourites: Set<String>
-        let bankHolidays: Set<String>, eligibility: Eligibility
+        let bankHolidays: Set<String>, eligibility: Eligibility, addedGyms: [AddedGym]
     }
     /// Pricing every gym for a day takes tens of milliseconds, so the last result is kept until
     /// something it depends on changes. Without this, tapping a gym on the map re-priced them all.
@@ -239,7 +253,8 @@ final class AppModel {
     func cheapest() -> [Ranked] {
         let key = CheapestKey(source: dataSource, mode: mode, moment: mode == .day ? dayMoment : moment, concession: concession,
                               typeFilter: typeFilter, zoneFilter: zoneFilter, acFilter: acFilter, favouritesOnly: favouritesOnly,
-                              favourites: favourites, bankHolidays: pricer.bankHolidays, eligibility: pricer.eligibility)
+                              favourites: favourites, bankHolidays: pricer.bankHolidays, eligibility: pricer.eligibility,
+                              addedGyms: addedGyms)
         if let c = cheapestCache, c.key == key { return c.rows }
         let rows = rankCheapest()
         cheapestCache = (key, rows)
@@ -248,7 +263,8 @@ final class AppModel {
 
     private func rankCheapest() -> [Ranked] {
         var rows: [Ranked] = []
-        for g in data.gyms where matchesFilters(g) && g.temporarilyClosed == nil {
+        // Gyms you added outside London are only priced on their own page.
+        for g in data.gyms where matchesFilters(g) && g.temporarilyClosed == nil && !g.outsideLondon {
             switch mode {
             case .day:
                 if !g.hours.isEmpty && g.hours[dayMoment.weekday] == nil { continue }   // shut all day, e.g. Mount Palace on Mondays
@@ -291,6 +307,53 @@ final class AppModel {
         AppModel.save(ratings, Keys.ratings)
     }
 
+    // MARK: Gyms you added yourself
+
+    private static func withAddedGyms(_ listed: ClimbingData, _ added: [AddedGym]) -> ClimbingData {
+        var d = listed
+        d.gyms = AddedGym.merge(listed.gyms, added)
+        return d
+    }
+
+    func addedGym(_ id: String) -> AddedGym? { addedGyms.first { $0.id == id } }
+
+    /// Ids in use, so a new gym never takes one from gyms.json or one of yours.
+    var takenGymIDs: Set<String> { Set(listedData.gyms.map(\.id) + addedGyms.map(\.id)) }
+
+    /// Adds the gym, or replaces the one you're editing (same id).
+    func saveAddedGym(_ g: AddedGym) {
+        guard g.isValid else { return }
+        let moved = addedGym(g.id).map { $0.lat != g.lat || $0.lng != g.lng || $0.postcode != g.postcode } ?? false
+        if let i = addedGyms.firstIndex(where: { $0.id == g.id }) { addedGyms[i] = g } else { addedGyms.append(g) }
+        storeAddedGyms()
+        if moved { travel[g.id] = nil }
+        Task { await refreshTravel() }
+    }
+
+    /// Deletes the gym and your favourite, note and rating for it. Logged visits stay in the logbook.
+    func deleteAddedGym(_ id: String) {
+        addedGyms.removeAll { $0.id == id }
+        storeAddedGyms()
+        if favourites.remove(id) != nil { AppModel.save(favourites, Keys.favourites) }
+        setNote("", for: id)
+        setRating(0, for: id)
+        travel[id] = nil
+    }
+
+    /// Adds gyms from a logbook backup that aren't on this phone yet. Returns how many.
+    @discardableResult
+    func restoreAddedGyms(_ fromBackup: [AddedGym]?) -> Int {
+        let merged = AddedGym.mergeFromBackup(addedGyms, fromBackup)
+        let n = merged.count - addedGyms.count
+        if n > 0 { addedGyms = merged; storeAddedGyms(); Task { await refreshTravel() } }
+        return n
+    }
+
+    private func storeAddedGyms() {
+        AppModel.save(addedGyms.isEmpty ? nil : addedGyms, Keys.addedGyms)
+        data = AppModel.withAddedGyms(listedData, addedGyms)
+    }
+
     // MARK: Live prices (gyms.json from the website, cached for offline use)
 
     /// Downloads the deployed gyms.json; keeps the current copy if that fails.
@@ -306,8 +369,9 @@ final class AppModel {
         lastDataCheck = .now
         // Never swap in a website copy older than the data we already have (e.g. a
         // build carrying a new gym before the site is redeployed).
-        guard (fresh.meta.lastResearchDate ?? "") >= (data.meta.lastResearchDate ?? "") else { return }
-        data = fresh
+        guard (fresh.meta.lastResearchDate ?? "") >= (listedData.meta.lastResearchDate ?? "") else { return }
+        listedData = fresh
+        data = AppModel.withAddedGyms(fresh, addedGyms)
         dataSource = .website(.now)
         try? FileManager.default.createDirectory(at: Self.cacheURL.deletingLastPathComponent(),
                                                  withIntermediateDirectories: true)
@@ -331,7 +395,7 @@ final class AppModel {
     func refreshTravel() async {
         guard let o = origin, !travelLoading else { return }
         if travelFor != o { travel = [:]; travelFor = o }
-        let missing = data.gyms.filter { travel[$0.id] == nil }
+        let missing = data.gyms.filter { travel[$0.id] == nil && !$0.outsideLondon }   // TfL only plans London journeys
         guard !missing.isEmpty else { return }
         travelLoading = true
         let results = await TravelService.journeyMinutes(from: o, to: missing)

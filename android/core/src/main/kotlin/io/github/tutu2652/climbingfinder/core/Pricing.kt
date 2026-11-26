@@ -266,7 +266,7 @@ val Gym.typeLabel: String get() = type.replace("+", " + ")
 
 val Gym.instagramURL: String? get() = instagram?.let { "https://www.instagram.com/$it/" }
 
-val Gym.brandRank: Int get() = if (brand == "London Climbing Centres") 0 else if (brand == "Independent") 2 else 1
+val Gym.brandRank: Int get() = if (brand == "London Climbing Centres") 0 else if (isAddedByYou) 3 else if (brand == "Independent") 2 else 1
 
 fun Gym.openState(`when`: Moment): OpenState? {
     if (temporarilyClosed != null) return OpenState(false, "temporarily closed")

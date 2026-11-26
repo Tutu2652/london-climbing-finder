@@ -262,8 +262,10 @@ struct LogbookBackup: Codable {
     var sessions: [Session]
     /// Each gym's colour grades, by gym id. Missing before version 4.
     var colourScales: [String: [ColourGrade]]?
+    /// Gyms you added yourself, so sessions there keep their gym. Missing in older backups.
+    var addedGyms: [AddedGym]?
 
-    init(_ sessions: [ClimbSession], colourScales: [String: [ColourGrade]] = [:]) {
+    init(_ sessions: [ClimbSession], colourScales: [String: [ColourGrade]] = [:], addedGyms: [AddedGym] = []) {
         self.sessions = sessions.map { s in
             Session(id: s.id, gymID: s.gymID, start: s.start, end: s.end, notes: s.notes, price: s.price, feeling: s.feeling,
                     climbs: s.climbs.sorted { $0.loggedAt < $1.loggedAt }.map {
@@ -274,6 +276,7 @@ struct LogbookBackup: Codable {
                     })
         }
         self.colourScales = colourScales.isEmpty ? nil : colourScales
+        self.addedGyms = addedGyms.isEmpty ? nil : addedGyms
     }
 
     /// Colour scales from the file for gyms that don't have one yet; existing scales are kept.
@@ -302,6 +305,7 @@ struct LogbookBackup: Codable {
         for (gymID, scale) in colourScales ?? [:] {
             guard !gymID.isEmpty, ColourGrade.isValidScale(scale) else { throw RestoreError.invalidRecord }
         }
+        guard (addedGyms ?? []).allSatisfy(\.isValid) else { throw RestoreError.invalidRecord }
         for s in sessions {
             guard !s.gymID.isEmpty, (0...5).contains(s.feeling),
                   s.end.map({ $0 >= s.start }) ?? true,

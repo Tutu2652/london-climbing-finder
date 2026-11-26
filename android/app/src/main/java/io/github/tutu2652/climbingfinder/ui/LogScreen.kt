@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Apartment
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.History
@@ -32,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,13 +60,22 @@ import io.github.tutu2652.climbingfinder.core.nowSecond
 import io.github.tutu2652.climbingfinder.core.shortName
 import kotlinx.coroutines.delay
 import java.time.Instant
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-val fullDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.UK).withZone(io.github.tutu2652.climbingfinder.core.London)
-val monthFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK).withZone(io.github.tutu2652.climbingfinder.core.London)
-val dateTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM, HH:mm", Locale.UK).withZone(io.github.tutu2652.climbingfinder.core.London)
+// Logbook times (sessions, climbs, photos) are on the phone's own clock, as in the iPhone app, so
+// a session abroad shows the times you climbed there. The zone is read each time, as it changes
+// when you travel. Prices are worked out in London time; their formats are in Filters.kt.
+fun phoneZone(): ZoneId = ZoneId.systemDefault()
+
+/** A logbook time on the phone's clock, with one of the formats in Filters.kt (which are set to London). */
+fun DateTimeFormatter.onPhone(t: Instant): String = withZone(phoneZone()).format(t)
+
+val fullDateFormat: DateTimeFormatter get() = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.UK).withZone(phoneZone())
+val monthFormat: DateTimeFormatter get() = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK).withZone(phoneZone())
+val dateTimeFormat: DateTimeFormatter get() = DateTimeFormatter.ofPattern("EEEE d MMMM, HH:mm", Locale.UK).withZone(phoneZone())
 
 /** The current time, ticking every `periodMs`, for live timers. */
 @Composable
@@ -141,7 +152,7 @@ fun SessionRow(session: ClimbSession) {
         model.gym(session.gymID)?.let { GymLogo(it, 40.dp) }
         Column(Modifier.weight(1f)) {
             Text(model.gym(session.gymID)?.shortName ?: "Unknown gym", style = MaterialTheme.typography.titleSmall)
-            Text(dayFormat.format(session.start) + " · " + formatDuration(session.durationSeconds()),
+            Text(dayFormat.onPhone(session.start) + " · " + formatDuration(session.durationSeconds()),
                 style = MaterialTheme.typography.bodySmall, color = secondaryText)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -201,6 +212,15 @@ fun StartSessionScreen(past: Boolean, gymID: String?) {
     val at = if (past) startAt else Instant.now()
     var priceText by remember(chosen, at.epochSecond / 60, model.concession) {
         mutableStateOf(model.gym(chosen)?.let { model.pricer.applicable(it, Moment.of(at), model.concession).price }?.let { String.format(Locale.ROOT, "%.2f", it) } ?: "")
+    }
+
+    // A gym you just added from the gym picker is chosen.
+    val handle = nav.currentBackStackEntry?.savedStateHandle
+    val added by (handle?.getStateFlow<String?>(ADDED_GYM_RESULT, null) ?: kotlinx.coroutines.flow.MutableStateFlow(null)).collectAsState()
+    LaunchedEffect(added) {
+        val id = added ?: return@LaunchedEffect
+        if (model.gym(id) != null) { chosen = id; pickedByHand = true; nearby = false }
+        handle?.remove<String>(ADDED_GYM_RESULT)
     }
 
     // For a live session, start at the gym you're standing in, if any.
@@ -272,13 +292,16 @@ fun StartSessionScreen(past: Boolean, gymID: String?) {
             }
         }
     }
-    if (picking) GymPicker(chosen, { picking = false }) { chosen = it; pickedByHand = true; nearby = false; picking = false }
+    if (picking) GymPicker(chosen, { picking = false }, add = { name ->
+        picking = false
+        nav.navigate("addGym?name=" + android.net.Uri.encode(name))
+    }) { chosen = it; pickedByHand = true; nearby = false; picking = false }
 }
 
 /** Shared gym selection for both live and past sessions. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GymPicker(selection: String, dismiss: () -> Unit, pick: (String) -> Unit) {
+fun GymPicker(selection: String, dismiss: () -> Unit, add: ((String) -> Unit)? = null, pick: (String) -> Unit) {
     val model = LocalModel.current
     var search by remember { mutableStateOf("") }
     fun normalize(s: String) = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
@@ -293,6 +316,15 @@ fun GymPicker(selection: String, dismiss: () -> Unit, pick: (String) -> Unit) {
         OutlinedTextField(search, { search = it }, singleLine = true, leadingIcon = { Icon(Icons.Filled.Search, null) },
             placeholder = { Text("Gym, chain, area or postcode") }, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
         LazyColumn(Modifier.heightIn(max = 520.dp)) {
+            // A gym that isn't listed (e.g. while travelling) can be added, then it's chosen.
+            if (add != null) item(key = "add") {
+                val q = search.trim()
+                Row(Modifier.fillMaxWidth().clickable { add(q) }.padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Icon(Icons.Filled.AddCircle, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
+                    Text(if (q.isEmpty()) "Add a gym that isn't listed" else "Add \"$q\" as a gym", color = MaterialTheme.colorScheme.primary)
+                }
+            }
             var lastBrand = ""
             for (g in gyms) {
                 if (g.brand != lastBrand) {

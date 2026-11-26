@@ -7,21 +7,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.tutu2652.climbingfinder.core.AddedGym
 import io.github.tutu2652.climbingfinder.core.AppRelease
 import io.github.tutu2652.climbingfinder.core.ClimbingData
 import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.DealOption
 import io.github.tutu2652.climbingfinder.core.Eligibility
 import io.github.tutu2652.climbingfinder.core.Gym
+import io.github.tutu2652.climbingfinder.core.LogbookBackup
 import io.github.tutu2652.climbingfinder.core.Moment
 import io.github.tutu2652.climbingfinder.core.PriceKind
 import io.github.tutu2652.climbingfinder.core.Pricer
 import io.github.tutu2652.climbingfinder.core.haversineKm
 import io.github.tutu2652.climbingfinder.core.matchesAC
+import io.github.tutu2652.climbingfinder.core.isAddedByYou
+import io.github.tutu2652.climbingfinder.core.outsideLondon
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -50,7 +55,12 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("climbing", Context.MODE_PRIVATE)
     private val cacheFile = File(app.filesDir, "gyms.json")
 
+    /** gyms.json (built in or from the website), plus the gyms you added yourself. */
     var data: ClimbingData by mutableStateOf(ClimbingData(null, emptyList(), emptyList(), emptyList())); private set
+    /** gyms.json alone, as built in or downloaded. */
+    private var listedData: ClimbingData = data
+    /** Gyms you added yourself, kept on this phone only (never uploaded or added to gyms.json). */
+    var addedGyms: List<AddedGym> by mutableStateOf(loadAddedGyms()); private set
     var dataSource: DataSource by mutableStateOf(DataSource.Bundled); private set
     var pricer by mutableStateOf(Pricer()); private set
     private var lastDataCheck: Instant? = null
@@ -119,17 +129,20 @@ class AppModel(app: Application) : AndroidViewModel(app) {
         // Start from the last website download unless this build carries newer research.
         val cached = runCatching { ClimbingData.parse(cacheFile.readText()) }.getOrNull()
         if (cached != null && cached.gyms.isNotEmpty() && (cached.lastResearchDate ?: "") >= (bundled.lastResearchDate ?: "")) {
-            data = cached
+            listedData = cached
             dataSource = DataSource.Cached(Instant.ofEpochMilli(cacheFile.lastModified()))
         } else {
-            data = bundled
+            listedData = bundled
         }
+        data = withAddedGyms(listedData)
         var bh = prefs.getStringSet("bankHolidays", emptySet())!!.toSet()
         if (bh.isEmpty()) bh = parseBankHolidays(app.assets.open("bank_holidays.json").bufferedReader().use { it.readText() })
         pricer = Pricer(bh, eligibility)
     }
 
     val moment: Moment get() = Moment.of(whenAt)
+    /** The date and time at a gym, for whether it's open: local time for one you added abroad. */
+    fun localMoment(g: Gym): Moment = if (g.isAddedByYou) addedGym(g.id)?.localMoment(whenAt) ?: moment else moment
     val dayMoment: Moment get() = moment.at(0)
     val isBankHoliday: Boolean get() = pricer.isBankHoliday(moment)
     val climberLabel: String get() = if (concession) "Student / concession" else "Adult"
@@ -138,7 +151,7 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     fun chooseFavouritesOnly(on: Boolean) { favouritesOnly = on; prefs.edit().putBoolean("favouritesOnly", on).apply() }
 
     val filtersActive: Boolean get() = typeFilter.isNotEmpty() || zoneFilter != null || acFilter.isNotEmpty() || favouritesOnly
-    val zones: List<Int> get() = data.gyms.map { it.zone }.toSortedSet().toList()
+    val zones: List<Int> get() = data.gyms.filterNot { it.isAddedByYou }.map { it.zone }.toSortedSet().toList()   // added gyms have no zone
 
     fun matchesFilters(g: Gym): Boolean {
         if (favouritesOnly && g.id !in favourites) return false
@@ -207,7 +220,8 @@ class AppModel(app: Application) : AndroidViewModel(app) {
         val day = dayMoment
         val now = moment
         for (g in data.gyms) {
-            if (!matchesFilters(g) || g.temporarilyClosed != null) continue
+            // Gyms you added outside London are only priced on their own page.
+            if (!matchesFilters(g) || g.temporarilyClosed != null || g.outsideLondon) continue
             when (mode) {
                 CheapestMode.DAY -> {
                     if (g.hours.isNotEmpty() && g.hours[day.weekday] == null) continue   // shut all day, e.g. Mount Palace on Mondays
@@ -257,6 +271,58 @@ class AppModel(app: Application) : AndroidViewModel(app) {
         runCatching { Json.parseToJsonElement(prefs.getString(key, null)!!).jsonObject.mapValues { value(it.value) } }
             .getOrDefault(emptyMap())
 
+    // --- Gyms you added yourself
+
+    private fun withAddedGyms(listed: ClimbingData) = listed.copy(gyms = AddedGym.merge(listed.gyms, addedGyms))
+
+    fun addedGym(id: String): AddedGym? = addedGyms.firstOrNull { it.id == id }
+
+    /** Ids in use, so a new gym never takes one from gyms.json or one of yours. */
+    val takenGymIDs: Set<String> get() = (listedData.gyms.map { it.id } + addedGyms.map { it.id }).toSet()
+
+    /** Adds the gym, or replaces the one you're editing (same id). */
+    fun saveAddedGym(g: AddedGym) {
+        if (!g.isValid) return
+        val old = addedGym(g.id)
+        val moved = old != null && (old.lat != g.lat || old.lng != g.lng || old.postcode != g.postcode)
+        storeAddedGyms(if (old != null) addedGyms.map { if (it.id == g.id) g else it } else addedGyms + g)
+        if (moved) travel = travel - g.id
+        viewModelScope.launch { refreshTravel() }
+    }
+
+    /** Deletes the gym and your favourite, note and rating for it. Logged visits stay in the logbook. */
+    fun deleteAddedGym(id: String) {
+        storeAddedGyms(addedGyms.filterNot { it.id == id })
+        if (id in favourites) toggleFavourite(id)
+        setNote("", id)
+        setRating(0, id)
+        travel = travel - id
+    }
+
+    /** The logbook backup file, with the gyms you added. */
+    fun backupText(): String = logbook.backupText(addedGyms)
+
+    /** Adds sessions and gyms from a backup that aren't here yet. Returns (sessions, gyms) added. */
+    fun restoreBackup(backup: LogbookBackup): Pair<Int, Int> {
+        val sessions = logbook.restore(backup)   // validates the whole file first
+        val merged = AddedGym.mergeFromBackup(addedGyms, backup.addedGyms)
+        val gyms = merged.size - addedGyms.size
+        if (gyms > 0) { storeAddedGyms(merged); viewModelScope.launch { refreshTravel() } }
+        return sessions to gyms
+    }
+
+    private fun storeAddedGyms(list: List<AddedGym>) {
+        addedGyms = list
+        val e = prefs.edit()
+        if (list.isEmpty()) e.remove("addedGyms") else e.putString("addedGyms", LogbookBackup.json.encodeToString(addedGymsSerializer, list))
+        e.apply()
+        data = withAddedGyms(listedData)
+    }
+
+    private fun loadAddedGyms(): List<AddedGym> = runCatching {
+        LogbookBackup.json.decodeFromString(addedGymsSerializer, prefs.getString("addedGyms", null)!!)
+    }.getOrDefault(emptyList())
+
     // --- Live prices (gyms.json from the website, cached for offline use)
 
     /**
@@ -272,8 +338,9 @@ class AppModel(app: Application) : AndroidViewModel(app) {
         lastDataCheck = Instant.now()
         // Never swap in a website copy older than the data we already have (e.g. a
         // build carrying a new gym before the site is redeployed).
-        if ((fresh.lastResearchDate ?: "") < (data.lastResearchDate ?: "")) return
-        data = fresh
+        if ((fresh.lastResearchDate ?: "") < (listedData.lastResearchDate ?: "")) return
+        listedData = fresh
+        data = withAddedGyms(fresh)
         dataSource = DataSource.Website(Instant.now())
         runCatching {
             val tmp = File(cacheFile.parentFile, "gyms.json.tmp")
@@ -314,7 +381,7 @@ class AppModel(app: Application) : AndroidViewModel(app) {
         val o = origin ?: return
         if (travelLoading) return
         if (travelFor != o) { travel = emptyMap(); travelFor = o }
-        val missing = data.gyms.filter { it.id !in travel }
+        val missing = data.gyms.filter { it.id !in travel && !it.outsideLondon }   // TfL only plans London journeys
         if (missing.isEmpty()) return
         travelLoading = true
         val results = TravelService.journeyMinutes(o.lat, o.lng, missing)
@@ -353,6 +420,7 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     }.getOrDefault(emptySet())
 
     companion object {
+        private val addedGymsSerializer = ListSerializer(AddedGym.serializer())
         const val SITE = "https://london-climbing-finder.pages.dev"
         private const val REMOTE_URL = "$SITE/gyms.json"
     }

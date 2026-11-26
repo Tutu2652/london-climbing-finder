@@ -81,7 +81,7 @@ private struct MapGymCard: View {
                 }
             }
             HStack(spacing: 8) {
-                OpenBadge(state: gym.openState(model.moment))
+                OpenBadge(state: gym.openState(model.localMoment(gym)))
                 if let t = model.travelText(gym) { Label(t, systemImage: "tram.fill").labelStyle(.compact).font(.caption) }
                 if let d = model.distanceKm(gym) { Text(String(format: "%.1f km", d)).font(.caption).foregroundStyle(.secondary) }
             }
