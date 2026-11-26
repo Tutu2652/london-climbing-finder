@@ -1,7 +1,7 @@
 {
   "_meta": {
     "currency": "GBP",
-    "last_research_date": "2026-11-06",
+    "last_research_date": "2026-11-26",
     "android_app": {
       "version_code": 4,
       "version_name": "0.4",
@@ -416,7 +416,7 @@
       "classes_url": "https://climbingdistrict.uk/activities/introduction-lessons/",
       "class_info": "[Introduction Lessons](https://climbingdistrict.uk/activities/introduction-lessons/) £20 (1hr small group).",
       "socials": [
-        "[Climb With Us](https://climbingdistrict.uk/activities/workshops-socials/) — 1.5hr coached social, £5 (excl. entry), V1-3 & V3-5",
+        "[Climb With Us](https://climbingdistrict.uk/activities/workshops-socials/) — 1.5hr coached social, £5 incl. a café drink (excl. entry) — Mon V1-4, Wed V2-5",
         "[Sister Sessions](https://climbingdistrict.uk/activities/sister-sessions/) (Women+)"
       ],
       "colour_grades": [
@@ -546,7 +546,7 @@
       "classes_url": "https://climbingdistrict.uk/activities/introduction-lessons/",
       "class_info": "[Introduction Lessons](https://climbingdistrict.uk/activities/introduction-lessons/) £20 (1hr small group).",
       "socials": [
-        "[Climb With Us](https://climbingdistrict.uk/activities/workshops-socials/) — 1.5hr coached social, £5 (excl. entry), V1-3 & V3-5",
+        "[Climb With Us](https://climbingdistrict.uk/activities/workshops-socials/) — 1.5hr coached social, £5 incl. a café drink (excl. entry) — Wed V3-5, Fri V1-3",
         "[Sister Sessions](https://climbingdistrict.uk/activities/sister-sessions/) (Women+)"
       ],
       "events": [
@@ -730,7 +730,21 @@
       "class_info": "[Intro to Bouldering](https://www.citybouldering.co.uk/events/intro-to-bouldering) £36 (1hr, incl. 2 weeks free, all 4 sites); [Fundamentals V0-V1](https://www.citybouldering.co.uk/events/fundamentals) £85 (£50 members, all 4 sites); [Intermediate V2-V4](https://www.citybouldering.co.uk/events/technical-foundations) £85 (£50 members, not Fulham); [Advanced Tactics V4-V6](https://www.citybouldering.co.uk/events/elite-tactics) £90 (£60 members); 1hr [private coaching](https://www.citybouldering.co.uk/events/private-coaching) £50 member / £60",
       "socials": [
         "[Beginner's Social](https://www.citybouldering.co.uk/events/beginner) — new boulderers (see website for time)",
-        "[Monday Madness](https://www.citybouldering.co.uk/events/monday-madness-social) — Mon 19:00-20:30, coached on the new set, £17 (members free)"
+        "[Monday Madness](https://www.citybouldering.co.uk/events/monday-madness-social) — Mon 19:00-20:30, coached on the new set, £17 (members free)",
+        "[Send Sisters](https://www.citybouldering.co.uk/events/stratford-send-sisters) (Women+) — Fri 19:00-20:00, £9.50"
+      ],
+      "restricted_slots": [
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "19:00",
+          "end": "20:00",
+          "price": 9.5,
+          "label": "Send Sisters",
+          "women_only": true,
+          "source": "citybouldering.co.uk event page + user, 2026-11-26"
+        }
       ],
       "ac": "partial",
       "ac_note": "AC in annex only"
@@ -987,10 +1001,23 @@
       "socials": [
         "[Beginner's Social](https://www.citybouldering.co.uk/events/beginner) — new boulderers (see website for time)",
         "[Routes & Roots](https://www.citybouldering.co.uk/events/routes-roots) — Sun 18:00-21:00 (Black & POC climbers), £9.50 incl shoes, members free",
-        "[Send it Sisters](https://www.citybouldering.co.uk/events/stratford-send-sisters) (Womxns+) — Thu 19:00",
+        "[Send Sisters](https://www.citybouldering.co.uk/events/stratford-send-sisters) (Women+) — Thu 19:00-20:00, £9.50",
         "[Queer Climbers Social](https://www.citybouldering.co.uk/events/queer-climbers-social) — Fri 19:00-20:00, £9.50 incl shoes, members free",
         "[Geeks Who Climb](https://www.citybouldering.co.uk/events/geeks-who-climb) — 1st Sat monthly, £7.50, members free",
         "[Bend & Boulder](https://www.citybouldering.co.uk/events/bend-and-boulder-mobility-sessions) — 45min mobility/stretching, £20 incl entry (members free)"
+      ],
+      "restricted_slots": [
+        {
+          "days": [
+            "Thu"
+          ],
+          "start": "19:00",
+          "end": "20:00",
+          "price": 9.5,
+          "label": "Send Sisters",
+          "women_only": true,
+          "source": "citybouldering.co.uk event page + user, 2026-11-26"
+        }
       ]
     },
     {
@@ -2277,7 +2304,20 @@
       "classes_url": "https://www.citybouldering.co.uk/coaching",
       "class_info": "[Intro to Bouldering](https://www.citybouldering.co.uk/events/intro-to-bouldering) £36 (1hr, incl. 2 weeks free, all 4 sites); [Fundamentals V0-V1](https://www.citybouldering.co.uk/events/fundamentals) £85 (£50 members, all 4 sites); [Intermediate V2-V4](https://www.citybouldering.co.uk/events/technical-foundations) £85 (£50 members, not Fulham); [Advanced Tactics V4-V6](https://www.citybouldering.co.uk/events/elite-tactics) £90 (£60 members); 1hr [private coaching](https://www.citybouldering.co.uk/events/private-coaching) £50 member / £60",
       "socials": [
-        "No regular socials listed — see [events page](https://www.citybouldering.co.uk/climbing-events-for-adults)"
+        "[Send Sisters](https://www.citybouldering.co.uk/events/stratford-send-sisters) (Women+) — Fri 19:00-21:00, £9.50"
+      ],
+      "restricted_slots": [
+        {
+          "days": [
+            "Fri"
+          ],
+          "start": "19:00",
+          "end": "21:00",
+          "price": 9.5,
+          "label": "Send Sisters",
+          "women_only": true,
+          "source": "citybouldering.co.uk event page + user, 2026-11-26"
+        }
       ]
     },
     {
