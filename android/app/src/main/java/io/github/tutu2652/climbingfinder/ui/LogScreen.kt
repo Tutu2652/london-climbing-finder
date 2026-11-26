@@ -220,7 +220,8 @@ fun StartSessionScreen(past: Boolean, gymID: String?) {
     LaunchedEffect(added) {
         val id = added ?: return@LaunchedEffect
         if (model.gym(id) != null) { chosen = id; pickedByHand = true; nearby = false }
-        handle?.remove<String>(ADDED_GYM_RESULT)
+        // Clear the value without detaching the StateFlow used for subsequent additions.
+        handle?.set<String?>(ADDED_GYM_RESULT, null)
     }
 
     // For a live session, start at the gym you're standing in, if any.

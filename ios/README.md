@@ -162,8 +162,7 @@ in backups are restored as finished at their last logged climb (or start if empt
 Run the in-memory logbook regression checks on a Mac with Xcode:
 
 ```sh
-xcrun swiftc -parse-as-library ios/ClimbingFinder/Core/Logbook.swift ios/ClimbingFinder/Core/ColourGrades.swift ios/Tests/LogbookChecks.swift -o /tmp/climbing-logbook-checks
-/tmp/climbing-logbook-checks
+zsh ios/Tests/check-logbook.sh
 ```
 
 ### Route photos and climb videos
