@@ -37,6 +37,30 @@ struct AddedGymChecks {
         } catch LogbookBackup.RestoreError.invalidRecord { }
         let stored = try destination.mainContext.fetch(FetchDescriptor<ClimbSession>())
         assert(stored.count == 1)
-        print("Added gym conversion, local hours, cross-platform backup and restore checks passed")
+        var banana = gym
+        banana.name = "香蕉攀岩"
+        banana.boulderGrading = .banana
+        assert(banana.alternateGrades(for: .boulder) == (0...20).map(String.init))
+        banana.boulderGradeLabels = GymGrading.parseLabels("入门，G1, G2")
+        assert(banana.isValid && banana.alternateGrades(for: .boulder) == ["入门", "G1", "G2"])
+        let local = Climb(discipline: .boulder, grade: 1, result: .send, gymGrade: "G1")
+        let next = Climb(discipline: .boulder, grade: 2, result: .send, gymGrade: "G2")
+        for climb in [local, next] {
+            container.mainContext.insert(climb)
+            climb.session = session
+        }
+        assert(session.hardest(.boulder) == nil && session.sends.count == 2)
+        assert(tallyGroups(session.climbs, scale: []).count == 2)
+        // Editing the gym's scale must preserve the original climb labels.
+        banana.boulderGrading = .font
+        banana.boulderGradeLabels = nil
+        let withLabels = LogbookBackup([session], addedGyms: [banana])
+        let roundTrip = try LogbookBackup.decoder.decode(LogbookBackup.self, from: LogbookBackup.encoder.encode(withLabels))
+        assert(roundTrip.version == 5 && roundTrip.addedGyms?.first?.grading(for: .boulder) == .font)
+        let restoredCount = try roundTrip.restore(into: destination.mainContext, existing: [])
+        assert(restoredCount == 1)
+        let allClimbs = try destination.mainContext.fetch(FetchDescriptor<Climb>())
+        assert(Set(allClimbs.map(\.gradeLabel)) == Set(["G1", "G2"]))
+        print("Added gym conversion, local hours, custom grades, cross-platform backup and restore checks passed")
     }
 }

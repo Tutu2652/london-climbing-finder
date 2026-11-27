@@ -165,6 +165,18 @@ Run the in-memory logbook regression checks on a Mac with Xcode:
 zsh ios/Tests/check-logbook.sh
 ```
 
+### Grading at gyms you add
+
+In **Add a gym** or **Edit this gym**, choose a system for bouldering or ropes. Use
+**Custom labels** for a gym's own system and enter its grades in order, easiest first.
+The **Banana Climbing (香蕉攀岩)** preset starts with 0–20 and lets you enter the labels
+posted at your branch. For colour circuits, set up the colours from the session screen.
+
+A climb keeps its original label if you change the gym's system later. The grade pyramid
+uses V and French sport grades. Other systems still count toward sends and visits.
+Backups containing grading settings or alternate labels use version 5 and need a version
+of the app that supports those fields. The app can still restore older backups.
+
 ### Route photos and climb videos
 
 Tap a climb in **Climbs & media** during a session, or **Climbs in order** on a

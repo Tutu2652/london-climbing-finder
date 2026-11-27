@@ -71,7 +71,7 @@ struct ClimbMediaView: View {
 
     /// Boulders and ropes only matter where the gym has ropes, or the climb is already a rope.
     private var showsDiscipline: Bool {
-        climb.discipline == .rope || climb.session.flatMap { model.gym($0.gymID) }?.type.contains("ropes") == true
+        climb.gymGrade == nil && (climb.discipline == .rope || climb.session.flatMap { model.gym($0.gymID) }?.type.contains("ropes") == true)
     }
 
     /// The gym's colours, with this climb's own colour (as logged) in place of the chart's
@@ -95,7 +95,7 @@ struct ClimbMediaView: View {
                         ForEach(Discipline.allCases) { Text($0.title).tag($0) }
                     }
                 }
-                if climb.discipline == .boulder && !colourChoices.isEmpty {
+                if climb.gymGrade == nil && climb.discipline == .boulder && !colourChoices.isEmpty {
                     Picker("Colour", selection: Binding(get: { climb.colourGrade }, set: { climb.setColour($0) })) {
                         Text("None (V grade)").tag(ColourGrade?.none)
                         ForEach(colourChoices) { c in
@@ -108,6 +108,13 @@ struct ClimbMediaView: View {
                     Picker("Felt grade", selection: $climb.feltGrade) {
                         Text("Not set").tag(Int?.none)
                         ForEach(climb.discipline.grades.indices, id: \.self) { Text(climb.discipline.grades[$0]).tag(Int?.some($0)) }
+                    }
+                } else if let loggedGrade = climb.gymGrade {
+                    SwitchRow(isOn: $climb.isComp) { Text("Comp route") }
+                    let grades = climb.session.flatMap { model.addedGym($0.gymID) }?.alternateGrades(for: climb.discipline) ?? []
+                    let choices = grades.contains(loggedGrade) ? grades : [loggedGrade] + grades
+                    Picker("Grade", selection: $climb.gymGrade) {
+                        ForEach(choices, id: \.self) { Text($0).tag(String?.some($0)) }
                     }
                 } else {
                     SwitchRow(isOn: $climb.isComp) { Text("Comp route") }

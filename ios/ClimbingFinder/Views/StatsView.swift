@@ -58,6 +58,15 @@ struct StatsView: View {
                 .padding(.vertical, 6)
             }
 
+            let gymGradeSends = sends.count { $0.gymGrade != nil }
+            if gymGradeSends > 0 {
+                Section {
+                    LabeledContent("Sends on other grading systems", value: String(gymGradeSends))
+                } footer: {
+                    Text("These grades appear in your session logs. The pyramid and hardest grades use \(discipline == .boulder ? "V grades" : "French sport grades").")
+                }
+            }
+
             if !graded.isEmpty {
                 Section {
                     pyramid(graded)

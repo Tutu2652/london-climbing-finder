@@ -75,6 +75,7 @@ import io.github.tutu2652.climbingfinder.core.ClimbResult
 import io.github.tutu2652.climbingfinder.core.ClimbSession
 import io.github.tutu2652.climbingfinder.core.ColourGrade
 import io.github.tutu2652.climbingfinder.core.Discipline
+import io.github.tutu2652.climbingfinder.core.GymGrading
 import io.github.tutu2652.climbingfinder.core.MediaFile
 import io.github.tutu2652.climbingfinder.core.ClimbMedia
 import io.github.tutu2652.climbingfinder.core.MediaKind
@@ -124,26 +125,33 @@ fun SessionLogScreen(id: String) {
     val gym = model.gym(session.gymID)
     val ropesHere = gym?.type?.contains("ropes") == true || session.climbs.any { it.discipline == Discipline.ROPE }
     var discipline by remember { mutableStateOf(Discipline.of(prefs.getString("logDiscipline", "boulder")!!) ?: Discipline.BOULDER) }
-    if (!ropesHere) discipline = Discipline.BOULDER
+    val ropesOnly = gym?.type == "ropes" && session.climbs.none { it.discipline == Discipline.BOULDER }
+    if (ropesOnly) discipline = Discipline.ROPE
+    else if (!ropesHere) discipline = Discipline.BOULDER
     var mode by remember { mutableStateOf(ClimbResult.of(prefs.getString("logMode", "send")!!) ?: ClimbResult.SEND) }
     var allGrades by remember { mutableStateOf(false) }
     // Carry on in comp mode, or by V grade, if that's what you were last logging.
     val last = session.lastClimb
     var comp by remember { mutableStateOf(last?.comp ?: false) }
     /** At a gym with colour grades: log by colour (true) or by V grade. */
+    val addedGym = model.addedGym(session.gymID)
     var byColour by remember {
-        mutableStateOf(if (last != null && last.discipline == Discipline.BOULDER && !last.comp) last.colour != null else true)
+        mutableStateOf(addedGym?.boulderGrading == GymGrading.COLOUR ||
+            last == null || last.discipline != Discipline.BOULDER || last.comp || last.colour != null)
     }
     val scale = model.colourScale(session.gymID)
-    // Colour grades only apply to boulders, and comps are logged by V grade.
-    val colourGradable = discipline == Discipline.BOULDER && !comp
+    val alternateGrades = addedGym?.alternateGrades(discipline).orEmpty()
+    val grades = alternateGrades.ifEmpty { discipline.grades }
+    val colourGradable = discipline == Discipline.BOULDER && !comp && alternateGrades.isEmpty() && addedGym?.boulderGrading != GymGrading.V
     val usingColours = colourGradable && byColour && scale.isNotEmpty()
     var confirmDelete by remember { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
     val now by rememberNow(1000)
 
     fun log(grade: Int) {
-        model.logbook.update(id) { it.copy(climbs = it.climbs + Climb.of(discipline, grade, mode, it.nextLogTime(), comp)) }
+        model.logbook.update(id) {
+            it.copy(climbs = it.climbs + Climb.of(discipline, grade, mode, it.nextLogTime(), comp, alternateGrades.getOrNull(grade)))
+        }
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
     fun log(colour: ColourGrade) {
@@ -178,7 +186,7 @@ fun SessionLogScreen(id: String) {
         section(if (comp) "Tap the grade it felt, or No grade, to log a comp ${mode.title.lowercase()}"
         else "Tap ${if (usingColours) "a colour" else "a grade"} to log ${if (mode == ClimbResult.ATTEMPT) "an" else "a"} ${mode.title.lowercase()}") {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (ropesHere) {
+                if (ropesHere && !ropesOnly) {
                     Segmented(Discipline.entries, discipline, { it.title }) { discipline = it; prefs.edit().putString("logDiscipline", it.raw).apply() }
                 }
                 Segmented(ClimbResult.entries, mode, { it.title }) { mode = it; prefs.edit().putString("logMode", it.raw).apply() }
@@ -190,7 +198,6 @@ fun SessionLogScreen(id: String) {
                 if (colourGradable && scale.isNotEmpty()) {
                     Segmented(listOf(true, false), byColour, { if (it) "Colour" else "V grade" }) { byColour = it }
                 }
-                val grades = discipline.grades
                 val shown = if (allGrades) grades.size else minOf(discipline.commonCount, grades.size)
                 val tiles = (if (comp) listOf(Climb.UNGRADED to "No grade") else emptyList()) + (0 until shown).map { it to grades[it] }
                 if (usingColours) for (row in scale.chunked(3)) {
@@ -204,7 +211,11 @@ fun SessionLogScreen(id: String) {
                 } else for (row in tiles.chunked(5)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         for ((g, title) in row) {
-                            val count = session.climbs.count { it.discipline == discipline && it.grade == g && it.comp == comp && it.colour == null && it.result.isSend }
+                            val label = alternateGrades.getOrNull(g)
+                            val count = session.climbs.count {
+                                it.discipline == discipline && it.grade == (if (label == null) g else Climb.UNGRADED) &&
+                                    it.gymGrade == label && it.comp == comp && it.colour == null && it.result.isSend
+                            }
                             GradeTile(title, count, Modifier.weight(1f),
                                 if (g == Climb.UNGRADED) "Log comp ${mode.title.lowercase()} with no grade"
                                 else "Log ${if (comp) "comp " else ""}${mode.title.lowercase()} at $title") { log(g) }
@@ -213,7 +224,7 @@ fun SessionLogScreen(id: String) {
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (!usingColours) TextButton(onClick = { allGrades = !allGrades }) { Text(if (allGrades) "Fewer grades" else "More grades") }
+                    if (!usingColours && grades.size > discipline.commonCount) TextButton(onClick = { allGrades = !allGrades }) { Text(if (allGrades) "Fewer grades" else "More grades") }
                     Spacer(Modifier.weight(1f))
                     last?.let { last ->
                         TextButton(onClick = { model.logbook.update(id) { s -> s.copy(climbs = s.climbs.filterNot { it.id == last.id }) } }) {
@@ -527,7 +538,8 @@ fun ordinal(n: Int): String {
 fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false, withSound: Boolean = false) {
     val model = LocalModel.current
     val nav = LocalNav.current
-    val climb = model.logbook.session(sessionID)?.climbs?.firstOrNull { it.id == climbID }
+    val session = model.logbook.session(sessionID)
+    val climb = session?.climbs?.firstOrNull { it.id == climbID }
         ?: return Screen("Climb") { section { RowItem(divider = false) { Text("This climb was deleted.") } } }
     fun change(f: (Climb) -> Climb) = model.logbook.update(sessionID) { s -> s.copy(climbs = s.climbs.map { if (it.id == climbID) f(it) else it }) }
     var gradeMenu by remember { mutableStateOf(false) }
@@ -609,7 +621,7 @@ fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false, 
             "This gym's colours have no V grades, so this climb counts as a send but not in grade stats. Set a felt grade to count it."
         low != null && climb.feltGrade != null -> "Stats count this climb as ${climb.gradeLabel}, the grade you said it felt."
         colourGrade != null -> "Stats count this climb as ${climb.gradeLabel}, the bottom of the range. Set a felt grade if it felt different."
-        climb.comp && !climb.isGraded -> "Add a grade to count this climb in grade stats, or to untag it as comp."
+        climb.comp && !climb.isGraded && climb.gymGrade == null -> "Add a grade to count this climb in grade stats, or to untag it as comp."
         else -> null
     }
     Screen(climb.label + " · " + climb.result.title) {
@@ -621,12 +633,12 @@ fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false, 
                 }
             }
             LabeledRow("Logged", dayFormat.onPhone(climb.loggedAt) + ", " + timeFormat.onPhone(climb.loggedAt))
-            if (showsDiscipline) {
+            if (showsDiscipline && climb.gymGrade == null) {
                 RowItem {
                     Segmented(Discipline.entries, climb.discipline, { it.title }) { d -> change { it.withDiscipline(d) } }
                 }
             }
-            if (climb.discipline == Discipline.BOULDER && colourChoices.isNotEmpty()) {
+            if (climb.gymGrade == null && climb.discipline == Discipline.BOULDER && colourChoices.isNotEmpty()) {
                 Box {
                     RowItem(onClick = { colourMenu = true }) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -648,7 +660,7 @@ fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false, 
             } else RowItem(onClick = if (climb.comp && !climb.isGraded) null else ({ change { it.copy(isComp = !it.comp) } }), chevron = false) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Comp route", Modifier.weight(1f))
-                    Switch(climb.comp, { on -> change { it.copy(isComp = on) } }, enabled = !(climb.comp && !climb.isGraded))
+                    Switch(climb.comp, { on -> change { it.copy(isComp = on) } }, enabled = !(climb.comp && !climb.isGraded && climb.gymGrade == null))
                 }
             }
             if (colourGrade != null) Box {
@@ -657,6 +669,15 @@ fun ClimbScreen(sessionID: String, climbID: String, playVideo: Boolean = false, 
                     DropdownMenuItem({ Text("Not set") }, { gradeMenu = false; change { it.withFeltGrade(null) } })
                     climb.discipline.grades.forEachIndexed { i, g ->
                         DropdownMenuItem({ Text(g) }, { gradeMenu = false; change { it.withFeltGrade(i) } })
+                    }
+                }
+            } else if (climb.gymGrade != null) Box {
+                val grades = session?.let { model.addedGym(it.gymID) }?.alternateGrades(climb.discipline).orEmpty()
+                val choices = (listOfNotNull(climb.gymGrade) + grades).distinct()
+                LabeledRow("Grade", climb.gradeLabel) { gradeMenu = true }
+                DropdownMenu(gradeMenu, { gradeMenu = false }) {
+                    for (label in choices) {
+                        DropdownMenuItem({ Text(label) }, { gradeMenu = false; change { it.copy(gymGrade = label) } })
                     }
                 }
             } else Box {

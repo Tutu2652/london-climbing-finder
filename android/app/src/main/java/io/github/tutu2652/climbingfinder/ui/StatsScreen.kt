@@ -97,6 +97,13 @@ fun StatsScreen() {
                 }
             }
         }
+        val gymGradeSends = sends.count { it.gymGrade != null }
+        if (gymGradeSends > 0) {
+            val standard = if (discipline == Discipline.BOULDER) "V grades" else "French sport grades"
+            section(footer = "These grades appear in your session logs. The pyramid and hardest grades use $standard.") {
+                LabeledRow("Sends on other grading systems", gymGradeSends.toString(), divider = false)
+            }
+        }
         if (graded.isNotEmpty()) {
             section("Grade pyramid", footer = "Sends at each grade. A broad base under your hardest grade usually means you're ready to push it.") {
                 Pyramid(graded, discipline)

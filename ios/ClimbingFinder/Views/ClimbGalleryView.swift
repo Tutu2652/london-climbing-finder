@@ -320,6 +320,7 @@ struct ClimbGalleryView: View {
 enum GradeFilter: Hashable {
     case colour(String)
     case grade(Discipline, Int)
+    case gymGrade(String)
     case noGrade
 
     /// The options a climb shows under. With `byColour`, a colour climb shows under its
@@ -333,6 +334,7 @@ enum GradeFilter: Hashable {
                 return (low...max(low, colour.high ?? low)).map { .grade(.boulder, $0) }
             }
         }
+        if let label = climb.gymGrade { return [.gymGrade(label)] }
         return climb.isGraded ? [.grade(climb.discipline, climb.grade)] : [.noGrade]
     }
 
@@ -340,6 +342,7 @@ enum GradeFilter: Hashable {
         switch self {
         case .colour(let name): name
         case .grade(let discipline, let grade): discipline.grades[grade]
+        case .gymGrade(let label): label
         case .noGrade: "No grade"
         }
     }
@@ -349,6 +352,7 @@ enum GradeFilter: Hashable {
         switch self {
         case .colour(let name): (0, colours.firstIndex(of: name) ?? colours.count, name)
         case .grade(let discipline, let grade): (1 + (Discipline.allCases.firstIndex(of: discipline) ?? 0), grade, "")
+        case .gymGrade(let label): (3, 0, label)
         case .noGrade: (9, 0, "")
         }
     }

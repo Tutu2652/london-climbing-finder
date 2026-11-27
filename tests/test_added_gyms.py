@@ -27,8 +27,9 @@ class AddedGymsTest(unittest.TestCase):
         self.assertIn('const val BRAND = "Added by you"', kotlin)
 
     def test_both_apps_save_the_same_fields(self):
-        swift_keys = re.search(r"enum CodingKeys: String, CodingKey \{\s*case ([^}]*)\}", SWIFT.read_text()).group(1)
-        swift_fields = {k.strip() for k in swift_keys.split(",")}
+        swift_keys = re.search(r"enum CodingKeys: String, CodingKey \{([^}]*)\}", SWIFT.read_text()).group(1)
+        swift_fields = {key.strip() for line in re.findall(r"^\s*case ([^\n]+)", swift_keys, re.M)
+                        for key in line.split(",")}
         body = re.search(r"data class AddedGym\((.*?)\n\) \{", KOTLIN.read_text(), re.S).group(1)
         kotlin_fields = set(re.findall(r"^\s*val (\w+):", body, re.M))
         self.assertEqual(swift_fields, kotlin_fields)

@@ -91,6 +91,8 @@ final class Climb {
     var id: UUID = UUID()
     var disciplineRaw: String = Discipline.boulder.rawValue
     var grade: Int = 0
+    /// The grade as posted at the gym, independent of the standard grade charts.
+    var gymGrade: String?
     var resultRaw: String = ClimbResult.send.rawValue
     var loggedAt: Date = Date.now
     var session: ClimbSession?
@@ -113,9 +115,10 @@ final class Climb {
     /// Grade value for a comp problem logged without a grade.
     static let ungraded = -1
 
-    init(discipline: Discipline, grade: Int, result: ClimbResult, at: Date = .now, comp: Bool = false) {
+    init(discipline: Discipline, grade: Int, result: ClimbResult, at: Date = .now, comp: Bool = false, gymGrade: String? = nil) {
         disciplineRaw = discipline.rawValue
-        self.grade = grade
+        self.grade = gymGrade == nil ? grade : Self.ungraded
+        self.gymGrade = gymGrade
         resultRaw = result.rawValue
         loggedAt = at
         isComp = comp
@@ -132,7 +135,7 @@ final class Climb {
     var discipline: Discipline { Discipline(rawValue: disciplineRaw) ?? .boulder }
     var result: ClimbResult { ClimbResult(rawValue: resultRaw) ?? .send }
     var isGraded: Bool { discipline.grades.indices.contains(grade) }
-    var gradeLabel: String { isGraded ? discipline.grades[grade] : grade == Self.ungraded ? "–" : "?" }
+    var gradeLabel: String { gymGrade ?? (isGraded ? discipline.grades[grade] : grade == Self.ungraded ? "–" : "?") }
     /// The colour and range this climb was logged with, if it was logged by colour.
     var colourGrade: ColourGrade? {
         colour.map { ColourGrade(name: $0, low: colourLow, high: colourHigh) }
@@ -172,6 +175,7 @@ final class Climb {
     func setColour(_ c: ColourGrade?) {
         if let c {
             guard c != colourGrade else { return }
+            gymGrade = nil
             colour = c.name; colourLow = c.low; colourHigh = c.high
             disciplineRaw = Discipline.boulder.rawValue
             isComp = false
@@ -196,7 +200,13 @@ final class Climb {
     /// "V4", "Comp V4", "Comp" or, for a colour climb, "Blue".
     var label: String {
         if let colour { return colour }
-        return isComp ? (isGraded ? "Comp " + gradeLabel : "Comp") : gradeLabel
+        return isComp ? (isGraded || gymGrade != nil ? "Comp " + gradeLabel : "Comp") : gradeLabel
+    }
+}
+
+extension Climb {
+    var tallyKey: String {
+        "\(disciplineRaw)#\(grade)#\(isComp)#\(colour ?? "")#\(listGradeIsFelt)#\(gymGrade ?? "")"
     }
 }
 
@@ -206,9 +216,7 @@ final class Climb {
 /// the gym's scale, hardest first; a colour no longer on the scale goes after them.
 func tallyGroups(_ climbs: [Climb], scale: [ColourGrade]) -> [[Climb]] {
     let rank = Dictionary(scale.enumerated().map { ($1.name, $0) }, uniquingKeysWith: { a, _ in a })
-    let groups = Dictionary(grouping: climbs) {
-        "\($0.disciplineRaw)#\($0.grade)#\($0.isComp)#\($0.colour ?? "")#\($0.listGradeIsFelt)"
-    }.values.map { Array($0) }
+    let groups = Dictionary(grouping: climbs, by: \.tallyKey).values.map { Array($0) }
     func key(_ c: Climb) -> (Int, Int, Int, Int, String) {
         (c.discipline == .rope ? 1 : 0, c.isComp ? 1 : 0, -c.grade, -(c.colour.flatMap { rank[$0] } ?? -1),
          (c.colour ?? "") + c.listGrade)
@@ -256,6 +264,7 @@ struct LogbookBackup: Codable {
         var colourHigh: Int?
         /// Present (true) only when you picked how a colour climb felt.
         var feltGradeSet: Bool?
+        var gymGrade: String?
     }
     var version = 4
     var exported = Date.now
@@ -272,11 +281,14 @@ struct LogbookBackup: Codable {
                         ClimbRecord(id: $0.id, discipline: $0.disciplineRaw, grade: $0.grade, result: $0.resultRaw, loggedAt: $0.loggedAt,
                                     videoAssetID: $0.videoAssetID, routePhotoAssetID: $0.routePhotoAssetID, isComp: $0.isComp,
                                     colour: $0.colour, colourLow: $0.colourLow, colourHigh: $0.colourHigh,
-                                    feltGradeSet: $0.feltGradeSet ? true : nil)
+                                    feltGradeSet: $0.feltGradeSet ? true : nil, gymGrade: $0.gymGrade)
                     })
         }
         self.colourScales = colourScales.isEmpty ? nil : colourScales
         self.addedGyms = addedGyms.isEmpty ? nil : addedGyms
+        if addedGyms.contains(where: \.hasGradingSettings) || sessions.contains(where: { $0.climbs.contains { $0.gymGrade != nil } }) {
+            version = 5
+        }
     }
 
     /// Colour scales from the file for gyms that don't have one yet; existing scales are kept.
@@ -301,7 +313,7 @@ struct LogbookBackup: Codable {
 
     /// Validate the whole file before changing the store.
     func validate() throws {
-        guard (1...4).contains(version) else { throw RestoreError.unsupportedVersion }
+        guard (1...5).contains(version) else { throw RestoreError.unsupportedVersion }
         for (gymID, scale) in colourScales ?? [:] {
             guard !gymID.isEmpty, ColourGrade.isValidScale(scale) else { throw RestoreError.invalidRecord }
         }
@@ -311,8 +323,11 @@ struct LogbookBackup: Codable {
                   s.end.map({ $0 >= s.start }) ?? true,
                   s.price.map({ $0.isFinite && $0 >= 0 }) ?? true else { throw RestoreError.invalidRecord }
             for c in s.climbs {
-                // Only comp climbs and colours without a V range may be ungraded.
-                let mayBeUngraded = c.isComp == true || (c.colour != nil && c.colourLow == nil)
+                // Alternate systems have their own label instead of a standard grade index.
+                let mayBeUngraded = c.isComp == true || (c.colour != nil && c.colourLow == nil) || c.gymGrade != nil
+                if let label = c.gymGrade {
+                    guard GymGrading.validLabel(label), c.grade == Climb.ungraded, c.colour == nil else { throw RestoreError.invalidRecord }
+                }
                 guard let discipline = Discipline(rawValue: c.discipline),
                       discipline.grades.indices.contains(c.grade) || (mayBeUngraded && c.grade == Climb.ungraded),
                       ClimbResult(rawValue: c.result) != nil else { throw RestoreError.invalidRecord }
@@ -340,7 +355,7 @@ struct LogbookBackup: Codable {
             var climbIDs = Set<UUID>()
             for c in s.climbs where climbIDs.insert(c.id).inserted {
                 let climb = Climb(discipline: Discipline(rawValue: c.discipline) ?? .boulder, grade: c.grade,
-                                  result: ClimbResult(rawValue: c.result) ?? .send, at: c.loggedAt, comp: c.isComp ?? false)
+                                  result: ClimbResult(rawValue: c.result) ?? .send, at: c.loggedAt, comp: c.isComp ?? false, gymGrade: c.gymGrade)
                 climb.id = c.id
                 climb.videoAssetID = c.videoAssetID
                 climb.routePhotoAssetID = c.routePhotoAssetID

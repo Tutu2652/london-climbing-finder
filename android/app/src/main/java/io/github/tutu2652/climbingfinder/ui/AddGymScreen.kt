@@ -6,6 +6,7 @@ import android.app.TimePickerDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,8 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -55,6 +58,7 @@ import io.github.tutu2652.climbingfinder.AppModel
 import io.github.tutu2652.climbingfinder.LocationService
 import io.github.tutu2652.climbingfinder.core.AddedGym
 import io.github.tutu2652.climbingfinder.core.Gym
+import io.github.tutu2652.climbingfinder.core.GymGrading
 import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
@@ -102,6 +106,16 @@ fun AddGymScreen(id: String?, initialName: String = "") {
     var pinLat by rememberSaveable { mutableStateOf(editing?.lat) }
     var pinLng by rememberSaveable { mutableStateOf(editing?.lng) }
     var type by rememberSaveable { mutableStateOf(editing?.type ?: "bouldering") }
+    var boulderGrading by rememberSaveable {
+        val default = if (editing != null && model.colourScale(editing.id).isNotEmpty()) GymGrading.COLOUR else GymGrading.V
+        mutableStateOf(editing?.boulderGrading ?: default)
+    }
+    var ropeGrading by rememberSaveable { mutableStateOf(editing?.ropeGrading ?: GymGrading.FRENCH) }
+    var boulderLabels by rememberSaveable { mutableStateOf(editing?.boulderGradeLabels.orEmpty().joinToString()) }
+    var ropeLabels by rememberSaveable { mutableStateOf(editing?.ropeGradeLabels.orEmpty().joinToString()) }
+    val boulderGrades = GymGrading.parseLabels(boulderLabels).takeIf { boulderGrading.usesEditableLabels && it.isNotEmpty() }
+    val ropeGrades = GymGrading.parseLabels(ropeLabels).takeIf { ropeGrading.usesEditableLabels && it.isNotEmpty() }
+    val validGrading = GymGrading.validLabels(boulderGrades) && GymGrading.validLabels(ropeGrades)
     var adultPrice by rememberSaveable { mutableStateOf(editing?.adultPrice?.let { priceText(it) } ?: "") }
     var concessionPrice by rememberSaveable { mutableStateOf(editing?.concessionPrice?.let { priceText(it) } ?: "") }
     val open = remember { mutableStateMapOf<String, Boolean>().apply { editing?.hours?.keys?.forEach { put(it, true) } } }
@@ -180,6 +194,9 @@ fun AddGymScreen(id: String?, initialName: String = "") {
             adultPrice = adult.value, concessionPrice = conc.value,
             hours = AddedGym.DAYS.filter { open[it] == true }.associateWith { hoursFor(it) },
             website = site, notes = notes.trim().ifEmpty { null },
+            boulderGrading = if (type == "ropes") editing?.boulderGrading else boulderGrading,
+            ropeGrading = ropeGrading.takeUnless { it == GymGrading.FRENCH },
+            boulderGradeLabels = boulderGrades, ropeGradeLabels = ropeGrades,
         ).takeIf { it.isValid }
     }
 
@@ -263,6 +280,18 @@ fun AddGymScreen(id: String?, initialName: String = "") {
             }
         }
 
+        section("Grading") {
+            if (type != "ropes") {
+                GymGradingField("Bouldering", GymGrading.boulderChoices, boulderGrading, { boulderGrading = it }, boulderLabels, { boulderLabels = it })
+            }
+            if (type.contains("ropes")) {
+                GymGradingField("Ropes", GymGrading.ropeChoices, ropeGrading, { ropeGrading = it }, ropeLabels, { ropeLabels = it })
+            }
+            if (type != "ropes" && boulderGrading == GymGrading.COLOUR) {
+                RowItem { Text("Set up the circuit colours when you log your first session.", style = MaterialTheme.typography.bodySmall) }
+            }
+        }
+
         section("Opening hours (optional)", footer = if (badDays.isNotEmpty()) "Closing time must be after opening time (${badDays.joinToString()})."
             else "In the gym's local time. Leave every day off if you don't know; once any day is on, days left off count as closed.") {
             AddedGym.DAYS.forEachIndexed { i, d ->
@@ -289,7 +318,37 @@ fun AddGymScreen(id: String?, initialName: String = "") {
 
         item { Explainer("Kept on this phone only, and in your logbook backups. It isn't sent anywhere or added to the gym list.") }
         if (draft == null) {
-            item { Explainer(if (name.isBlank() || pinLat == null) "Save needs a name and a pin on the map." else "Check the prices and opening hours.") }
+            item { Explainer(if (name.isBlank() || pinLat == null) "Save needs a name and a pin on the map." else if (!validGrading) "Check the grade labels." else "Check the prices and opening hours.") }
+        }
+    }
+}
+
+@Composable
+private fun GymGradingField(
+    title: String, choices: List<GymGrading>, grading: GymGrading, onGrading: (GymGrading) -> Unit,
+    labels: String, onLabels: (String) -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    Box {
+        LabeledRow(title, grading.title) { menu = true }
+        DropdownMenu(menu, { menu = false }) {
+            for (choice in choices) {
+                DropdownMenuItem({ Text(choice.title) }, { menu = false; onGrading(choice) })
+            }
+        }
+    }
+    if (grading.usesEditableLabels) {
+        val parsed = GymGrading.parseLabels(labels)
+        val valid = GymGrading.validLabels(parsed.ifEmpty { null })
+        RowItem {
+            OutlinedTextField(labels, onLabels, label = { Text("$title grade labels, easiest first") },
+                modifier = Modifier.fillMaxWidth(), isError = !valid, supportingText = {
+                    Text(when {
+                        !valid -> "Use up to 60 distinct labels, with at most 24 characters per label."
+                        grading == GymGrading.BANANA -> "Defaults to 0–20. Enter your branch’s labels separated by commas to change them."
+                        else -> "Separate labels with commas, for example 1, 2, 3, 4. Defaults to 1–10."
+                    })
+                })
         }
     }
 }

@@ -326,6 +326,7 @@ private fun gradeOptions(climb: Climb, colours: List<String>?): List<GradeOption
                 .map { GradeOption.grade(Discipline.BOULDER, it) }
         }
     }
+    climb.gymGrade?.let { return listOf(GradeOption("gym:$it", it, null, 3, 0)) }
     return listOf(if (climb.isGraded) GradeOption.grade(climb.discipline, climb.grade) else GradeOption.none)
 }
 

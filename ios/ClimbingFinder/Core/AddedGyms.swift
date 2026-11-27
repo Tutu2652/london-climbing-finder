@@ -1,5 +1,68 @@
 import Foundation
 
+/// The scales a personal gym can use. Standard V and French grades use the existing
+/// logbook indexes. Other scales keep the gym's label on each climb.
+enum GymGrading: String, Codable, CaseIterable, Identifiable {
+    case v, font, colour, banana, french, yds, uiaa, ewbank, custom
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .v: "V scale"
+        case .font: "Fontainebleau"
+        case .colour: "Colour circuits"
+        case .banana: "Banana Climbing (香蕉攀岩)"
+        case .french: "French sport"
+        case .yds: "Yosemite Decimal"
+        case .uiaa: "UIAA"
+        case .ewbank: "Ewbank"
+        case .custom: "Custom labels"
+        }
+    }
+
+    static let boulderChoices: [Self] = [.v, .font, .colour, .banana, .custom]
+    static let ropeChoices: [Self] = [.french, .yds, .uiaa, .ewbank, .custom]
+    static let numberedLabels = (1...10).map(String.init)
+
+    func labels(custom: [String]?) -> [String] {
+        switch self {
+        case .font:
+            return ["1", "2", "3", "3+", "4", "4+", "5", "5+", "6A", "6A+", "6B", "6B+", "6C", "6C+",
+                    "7A", "7A+", "7B", "7B+", "7C", "7C+", "8A", "8A+", "8B", "8B+", "8C", "8C+", "9A"]
+        case .banana: return custom ?? (0...20).map(String.init)
+        case .yds:
+            return (1...9).map { "5.\($0)" } + (10...15).flatMap { n in
+                ["a", "b", "c", "d"].map { "5.\(n)\($0)" }
+            }
+        case .uiaa:
+            return ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"].flatMap { grade in
+                [grade + "−", grade, grade + "+"]
+            }
+        case .ewbank: return (1...39).map(String.init)
+        case .custom: return custom ?? Self.numberedLabels
+        case .v, .colour, .french: return []
+        }
+    }
+
+    var usesEditableLabels: Bool { self == .custom || self == .banana }
+
+    static func parseLabels(_ input: String) -> [String] {
+        input.components(separatedBy: CharacterSet(charactersIn: ",，").union(.newlines))
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+    }
+
+    static func validLabel(_ label: String) -> Bool {
+        !label.isEmpty && label.utf16.count <= 24
+            && label == label.trimmingCharacters(in: .whitespacesAndNewlines)
+            && label.rangeOfCharacter(from: CharacterSet.controlCharacters.union(CharacterSet(charactersIn: ",，"))) == nil
+    }
+
+    static func validLabels(_ labels: [String]?) -> Bool {
+        guard let labels else { return true }
+        return (1...60).contains(labels.count) && Set(labels).count == labels.count && labels.allSatisfy(validLabel)
+    }
+}
+
 /// A gym you added yourself, anywhere in the world (mainly to log sessions while travelling).
 /// It is kept on this phone (and in logbook backups) only: it is never uploaded or added to
 /// gyms.json. The JSON is the same in the Android app (android/core/.../AddedGym.kt), so a backup
@@ -37,19 +100,38 @@ struct AddedGym: Codable, Identifiable, Equatable {
     var hours: [String: [String]] = [:]
     var website: String?
     var notes: String?
+    var boulderGrading: GymGrading?
+    var ropeGrading: GymGrading?
+    var boulderGradeLabels: [String]?
+    var ropeGradeLabels: [String]?
+
+    func grading(for discipline: Discipline) -> GymGrading {
+        discipline == .boulder ? boulderGrading ?? .v : ropeGrading ?? .french
+    }
+
+    func alternateGrades(for discipline: Discipline) -> [String] {
+        grading(for: discipline).labels(custom: discipline == .boulder ? boulderGradeLabels : ropeGradeLabels)
+    }
+
+    var hasGradingSettings: Bool { boulderGrading != nil || ropeGrading != nil }
 
     init(id: String, name: String, area: String, country: String?, postcode: String?, address: String?,
          lat: Double, lng: Double, timeZone: String?, type: String, adultPrice: Double?, concessionPrice: Double?,
-         hours: [String: [String]], website: String?, notes: String?) {
+         hours: [String: [String]], website: String?, notes: String?,
+         boulderGrading: GymGrading? = nil, ropeGrading: GymGrading? = nil,
+         boulderGradeLabels: [String]? = nil, ropeGradeLabels: [String]? = nil) {
         self.id = id; self.name = name; self.area = area; self.country = country
         self.postcode = postcode; self.address = address
         self.lat = lat; self.lng = lng; self.timeZone = timeZone; self.type = type
         self.adultPrice = adultPrice; self.concessionPrice = concessionPrice; self.hours = hours
         self.website = website; self.notes = notes
+        self.boulderGrading = boulderGrading; self.ropeGrading = ropeGrading
+        self.boulderGradeLabels = boulderGradeLabels; self.ropeGradeLabels = ropeGradeLabels
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, name, area, country, postcode, address, lat, lng, timeZone, type, adultPrice, concessionPrice, hours, website, notes
+        case boulderGrading, ropeGrading, boulderGradeLabels, ropeGradeLabels
     }
 
     init(from decoder: Decoder) throws {
@@ -69,6 +151,10 @@ struct AddedGym: Codable, Identifiable, Equatable {
         hours = try c.decodeIfPresent([String: [String]].self, forKey: .hours) ?? [:]
         website = try c.decodeIfPresent(String.self, forKey: .website)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
+        boulderGrading = try c.decodeIfPresent(GymGrading.self, forKey: .boulderGrading)
+        ropeGrading = try c.decodeIfPresent(GymGrading.self, forKey: .ropeGrading)
+        boulderGradeLabels = try c.decodeIfPresent([String].self, forKey: .boulderGradeLabels)
+        ropeGradeLabels = try c.decodeIfPresent([String].self, forKey: .ropeGradeLabels)
     }
 
     /// Everything needed to show, map and price it safely. Only a name and a pin are required:
@@ -85,6 +171,9 @@ struct AddedGym: Codable, Identifiable, Equatable {
             && filled(name)
             && lat.isFinite && lng.isFinite && (-90...90).contains(lat) && (-180...180).contains(lng)
             && (timeZone == nil || zone != nil) && Self.types.contains(type)
+            && GymGrading.boulderChoices.contains(boulderGrading ?? .v)
+            && GymGrading.ropeChoices.contains(ropeGrading ?? .french)
+            && GymGrading.validLabels(boulderGradeLabels) && GymGrading.validLabels(ropeGradeLabels)
             && [adultPrice, concessionPrice].compactMap { $0 }.allSatisfy { $0.isFinite && $0 >= 0 && $0 < 1000 }
             && hours.allSatisfy { day, t in
                 Self.days.contains(day) && t.count == 2 && t.allSatisfy(isTime) && t[0] < t[1]

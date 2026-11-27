@@ -1,5 +1,6 @@
 package io.github.tutu2652.climbingfinder.core
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -8,6 +9,48 @@ import kotlinx.serialization.json.JsonArray
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
+
+@Serializable
+enum class GymGrading(val title: String) {
+    @SerialName("v") V("V scale"),
+    @SerialName("font") FONT("Fontainebleau"),
+    @SerialName("colour") COLOUR("Colour circuits"),
+    @SerialName("banana") BANANA("Banana Climbing (香蕉攀岩)"),
+    @SerialName("french") FRENCH("French sport"),
+    @SerialName("yds") YDS("Yosemite Decimal"),
+    @SerialName("uiaa") UIAA("UIAA"),
+    @SerialName("ewbank") EWBANK("Ewbank"),
+    @SerialName("custom") CUSTOM("Custom labels");
+
+    val usesEditableLabels: Boolean get() = this == CUSTOM || this == BANANA
+
+    fun labels(custom: List<String>?): List<String> = when (this) {
+        FONT -> listOf("1", "2", "3", "3+", "4", "4+", "5", "5+", "6A", "6A+", "6B", "6B+", "6C", "6C+",
+            "7A", "7A+", "7B", "7B+", "7C", "7C+", "8A", "8A+", "8B", "8B+", "8C", "8C+", "9A")
+        BANANA -> custom ?: (0..20).map(Int::toString)
+        YDS -> (1..9).map { "5.$it" } + (10..15).flatMap { n -> listOf("a", "b", "c", "d").map { "5.$n$it" } }
+        UIAA -> listOf("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII")
+            .flatMap { listOf(it + "−", it, it + "+") }
+        EWBANK -> (1..39).map(Int::toString)
+        CUSTOM -> custom ?: (1..10).map(Int::toString)
+        V, COLOUR, FRENCH -> emptyList()
+    }
+
+    companion object {
+        val boulderChoices = listOf(V, FONT, COLOUR, BANANA, CUSTOM)
+        val ropeChoices = listOf(FRENCH, YDS, UIAA, EWBANK, CUSTOM)
+
+        fun parseLabels(input: String): List<String> =
+            input.split(',', '，', '\n', '\r', '\u0085', '\u2028', '\u2029').map(String::trim).filter(String::isNotEmpty)
+
+        fun validLabel(label: String): Boolean =
+            label.isNotEmpty() && label.length <= 24 && label == label.trim() &&
+                label.none { it.isISOControl() || it == '\u2028' || it == '\u2029' || it == ',' || it == '，' }
+
+        fun validLabels(labels: List<String>?): Boolean =
+            labels == null || (labels.size in 1..60 && labels.toSet().size == labels.size && labels.all(::validLabel))
+    }
+}
 
 /**
  * A gym you added yourself, anywhere in the world. It is kept on this phone (and in logbook
@@ -42,7 +85,19 @@ data class AddedGym(
     val hours: Map<String, List<String>> = emptyMap(),
     val website: String? = null,
     val notes: String? = null,
+    val boulderGrading: GymGrading? = null,
+    val ropeGrading: GymGrading? = null,
+    val boulderGradeLabels: List<String>? = null,
+    val ropeGradeLabels: List<String>? = null,
 ) {
+    fun grading(discipline: Discipline): GymGrading =
+        if (discipline == Discipline.BOULDER) boulderGrading ?: GymGrading.V else ropeGrading ?: GymGrading.FRENCH
+
+    fun alternateGrades(discipline: Discipline): List<String> =
+        grading(discipline).labels(if (discipline == Discipline.BOULDER) boulderGradeLabels else ropeGradeLabels)
+
+    val hasGradingSettings: Boolean get() = boulderGrading != null || ropeGrading != null
+
     /**
      * Everything needed to show, map and price it safely. Only a name and a pin are required:
      * the rest is filled in from the pin when possible, but may be blank (e.g. offline abroad).
@@ -52,6 +107,8 @@ data class AddedGym(
             name.isNotBlank() &&
             lat.isFinite() && lng.isFinite() && lat in -90.0..90.0 && lng in -180.0..180.0 &&
             (timeZone == null || zone != null) && type in TYPES &&
+            grading(Discipline.BOULDER) in GymGrading.boulderChoices && grading(Discipline.ROPE) in GymGrading.ropeChoices &&
+            GymGrading.validLabels(boulderGradeLabels) && GymGrading.validLabels(ropeGradeLabels) &&
             listOfNotNull(adultPrice, concessionPrice).all { it.isFinite() && it >= 0 && it < 1000 } &&
             hours.all { (day, t) -> day in DAYS && t.size == 2 && t.all { TIME.matches(it) } && t[0] < t[1] }
 

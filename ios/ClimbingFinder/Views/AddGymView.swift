@@ -27,6 +27,10 @@ struct AddGymView: View {
         center: CLLocationCoordinate2D(latitude: 51.515, longitude: -0.12),
         span: MKCoordinateSpan(latitudeDelta: 0.2, longitudeDelta: 0.26)))
     @State private var type = "bouldering"
+    @State private var boulderGrading: GymGrading = .v
+    @State private var ropeGrading: GymGrading = .french
+    @State private var boulderLabels = ""
+    @State private var ropeLabels = ""
     @State private var adultPrice = ""
     @State private var concessionPrice = ""
     @State private var open: [String: Bool] = [:]
@@ -40,7 +44,7 @@ struct AddGymView: View {
     /// What the last lookup filled in, so a later one replaces those but never what you typed.
     @State private var filled: [String: String] = [:]
 
-    init(editing: AddedGym? = nil, name: String = "", onSave: @escaping (String) -> Void = { _ in }) {
+    init(editing: AddedGym? = nil, name: String = "", defaultBoulderGrading: GymGrading = .v, onSave: @escaping (String) -> Void = { _ in }) {
         self.editing = editing
         self.onSave = onSave
         _name = State(initialValue: editing?.name ?? name)
@@ -54,6 +58,10 @@ struct AddGymView: View {
         _pin = State(initialValue: c)
         _camera = State(initialValue: .region(MKCoordinateRegion(center: c, latitudinalMeters: 1500, longitudinalMeters: 1500)))
         _type = State(initialValue: g.type)
+        _boulderGrading = State(initialValue: g.boulderGrading ?? defaultBoulderGrading)
+        _ropeGrading = State(initialValue: g.ropeGrading ?? .french)
+        _boulderLabels = State(initialValue: g.boulderGradeLabels?.joined(separator: ", ") ?? "")
+        _ropeLabels = State(initialValue: g.ropeGradeLabels?.joined(separator: ", ") ?? "")
         _adultPrice = State(initialValue: g.adultPrice.map(Self.priceText) ?? "")
         _concessionPrice = State(initialValue: g.concessionPrice.map(Self.priceText) ?? "")
         _open = State(initialValue: g.hours.mapValues { _ in true })
@@ -133,6 +141,18 @@ struct AddGymView: View {
                     Text("Details (optional)")
                 } footer: {
                     Text("Prices are in pounds, and fill in a session's entry price. A gym outside London isn't compared with London gyms in Cheapest.")
+                }
+
+                Section("Grading") {
+                    if type != "ropes" {
+                        gradingPicker("Bouldering", selection: $boulderGrading, choices: GymGrading.boulderChoices, labels: $boulderLabels)
+                    }
+                    if type.contains("ropes") {
+                        gradingPicker("Ropes", selection: $ropeGrading, choices: GymGrading.ropeChoices, labels: $ropeLabels)
+                    }
+                    if type != "ropes" && boulderGrading == .colour {
+                        Text("Set up the circuit colours when you log your first session.").font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
 
                 Section {
@@ -237,6 +257,26 @@ struct AddGymView: View {
 
     // MARK: Fields
 
+    @ViewBuilder
+    private func gradingPicker(_ title: String, selection: Binding<GymGrading>, choices: [GymGrading], labels: Binding<String>) -> some View {
+        Picker(title, selection: selection) {
+            ForEach(choices) { Text($0.title).tag($0) }
+        }
+        let system = selection.wrappedValue
+        if system.usesEditableLabels {
+            TextField("Grade labels, easiest first", text: labels, axis: .vertical)
+                .accessibilityLabel(title + " grade labels, easiest first")
+            let parsed = GymGrading.parseLabels(labels.wrappedValue)
+            if let parsed = parsed.isEmpty ? nil : parsed, !GymGrading.validLabels(parsed) {
+                Text("Use up to 60 distinct labels, with at most 24 characters per label.").font(.footnote).foregroundStyle(Color.warn)
+            } else {
+                Text(system == .banana ? "Defaults to 0–20. Enter your branch’s labels separated by commas to change them."
+                                        : "Separate labels with commas, for example 1, 2, 3, 4. Defaults to 1–10.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
+
     private func priceField(_ title: String, text: Binding<String>) -> some View {
         HStack {
             Text(title)
@@ -293,12 +333,18 @@ struct AddGymView: View {
         if let s = site, !s.contains("://") { site = "https://" + s }
         var hours: [String: [String]] = [:]
         for d in AddedGym.days where open[d] == true { hours[d] = hoursText(d) }
+        let boulderLabels = boulderGrading.usesEditableLabels ? GymGrading.parseLabels(boulderLabels) : []
+        let ropeLabels = ropeGrading.usesEditableLabels ? GymGrading.parseLabels(ropeLabels) : []
         let g = AddedGym(id: editing?.id ?? AddedGym.newID(avoiding: model.takenGymIDs),
                          name: clean(name) ?? "", area: clean(area) ?? "", country: clean(country),
                          postcode: clean(postcode)?.uppercased(), address: clean(address),
                          lat: pin.latitude, lng: pin.longitude, timeZone: timeZone, type: type,
                          adultPrice: adult, concessionPrice: conc, hours: hours,
-                         website: site, notes: clean(notes))
+                         website: site, notes: clean(notes),
+                         boulderGrading: type == "ropes" ? editing?.boulderGrading : boulderGrading,
+                         ropeGrading: ropeGrading == .french ? nil : ropeGrading,
+                         boulderGradeLabels: boulderLabels.isEmpty ? nil : boulderLabels,
+                         ropeGradeLabels: ropeLabels.isEmpty ? nil : ropeLabels)
         return g.isValid ? g : nil
     }
 
@@ -363,7 +409,9 @@ struct AddedGymSection: View {
             Text("Opening hours are the gym's local time. Only on this iPhone; it isn't shared or added to the gym list for anyone else.")
         }
         .sheet(isPresented: $editing) {
-            if let g = model.addedGym(gym.id) { AddGymView(editing: g) }
+            if let g = model.addedGym(gym.id) {
+                AddGymView(editing: g, defaultBoulderGrading: model.colourScale(g.id).isEmpty ? .v : .colour)
+            }
         }
         .confirmationDialog("Delete \(gym.name)?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete gym", role: .destructive) {

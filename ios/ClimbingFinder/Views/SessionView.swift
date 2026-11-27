@@ -19,12 +19,17 @@ struct SessionView: View {
     @State private var byColour = true
 
     private var scale: [ColourGrade] { model.colourScale(session.gymID) }
-    /// Colour grades only apply to boulders, and comps are logged by V grade.
-    private var colourGradable: Bool { discipline == .boulder && !comp }
+    private var addedGym: AddedGym? { model.addedGym(session.gymID) }
+    private var alternateGrades: [String] { addedGym?.alternateGrades(for: discipline) ?? [] }
+    private var grades: [String] { alternateGrades.isEmpty ? discipline.grades : alternateGrades }
+    private var shown: Int { allGrades ? grades.count : min(discipline.commonCount, grades.count) }
+    /// Colour circuits can use a standard V grade instead, including for comps.
+    private var colourGradable: Bool { discipline == .boulder && !comp && alternateGrades.isEmpty && addedGym?.boulderGrading != .v }
     private var usingColours: Bool { colourGradable && byColour && !scale.isEmpty }
 
     var body: some View {
         let gym = model.gym(session.gymID)
+        let ropesOnly = gym?.type == "ropes" && !session.climbs.contains { $0.discipline == .boulder }
         List {
             Section {
                 HStack(spacing: 12) {
@@ -44,7 +49,7 @@ struct SessionView: View {
             }
 
             Section {
-                if gym?.type.contains("ropes") == true || session.climbs.contains(where: { $0.discipline == .rope }) {
+                if !ropesOnly && (gym?.type.contains("ropes") == true || session.climbs.contains(where: { $0.discipline == .rope })) {
                     Picker("Discipline", selection: $discipline) {
                         ForEach(Discipline.allCases) { Text($0.title).tag($0) }
                     }
@@ -64,7 +69,7 @@ struct SessionView: View {
                 }
                 if usingColours { colourGrid } else { gradeGrid }
                 HStack {
-                    if !usingColours {
+                    if !usingColours && grades.count > discipline.commonCount {
                         Button(allGrades ? "Fewer grades" : "More grades") { allGrades.toggle() }
                     }
                     Spacer()
@@ -164,21 +169,23 @@ struct SessionView: View {
             Button("Delete", role: .destructive) { context.delete(session); dismiss() }
         }
         .onAppear {
-            if gym?.type.contains("ropes") != true && !session.climbs.contains(where: { $0.discipline == .rope }) {
+            if ropesOnly {
+                discipline = .rope
+            } else if gym?.type.contains("ropes") != true && !session.climbs.contains(where: { $0.discipline == .rope }) {
                 discipline = .boulder
             }
             // Carry on in comp mode, or by V grade, if that's what you were last logging.
             let last = session.lastClimb
             comp = last?.isComp ?? false
-            if let last, last.discipline == .boulder, !last.isComp { byColour = last.colour != nil }
+            if addedGym?.boulderGrading != .colour, let last, last.discipline == .boulder, !last.isComp {
+                byColour = last.colour != nil
+            }
         }
         .sensoryFeedback(.success, trigger: session.climbs.count)
     }
 
     private var gradeGrid: some View {
-        let grades = discipline.grades
-        let shown = allGrades ? grades.count : min(discipline.commonCount, grades.count)
-        return LazyVGrid(columns: [GridItem(.adaptive(minimum: 58), spacing: 8)], spacing: 8) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 58), spacing: 8)], spacing: 8) {
             if comp {
                 gradeTile(Climb.ungraded, title: "No grade", accessibility: "Log comp \(mode.title.lowercased()) with no grade")
             }
@@ -224,7 +231,11 @@ struct SessionView: View {
 
 
     private func gradeTile(_ grade: Int, title: String, accessibility: String) -> some View {
-        let count = session.climbs.filter { $0.discipline == discipline && $0.grade == grade && $0.isComp == comp && $0.colour == nil && $0.result.isSend }.count
+        let label = gymGrade(at: grade)
+        let count = session.climbs.filter {
+            $0.discipline == discipline && $0.grade == (label == nil ? grade : Climb.ungraded)
+                && $0.gymGrade == label && $0.isComp == comp && $0.colour == nil && $0.result.isSend
+        }.count
         // A plain tap gesture, not a Button: Buttons inside a List row drop
         // quick repeat taps, and logging three V2s in a row should just work.
         return VStack(spacing: 2) {
@@ -239,8 +250,13 @@ struct SessionView: View {
         .accessibilityLabel(accessibility)
     }
 
+    private func gymGrade(at index: Int) -> String? {
+        alternateGrades.indices.contains(index) ? alternateGrades[index] : nil
+    }
+
     private func log(grade: Int) {
-        let climb = Climb(discipline: discipline, grade: grade, result: mode, at: session.nextLogTime(), comp: comp)
+        let climb = Climb(discipline: discipline, grade: grade, result: mode, at: session.nextLogTime(),
+                          comp: comp, gymGrade: gymGrade(at: grade))
         climb.session = session
         context.insert(climb)
     }
@@ -258,7 +274,7 @@ struct SessionTally: View {
         let flashes = climbs.filter { $0.result == .flash }.count
         let attempts = climbs.count - sends.count
         let comps = climbs.filter(\.isComp).count
-        let hasColours = climbs.contains { $0.colour != nil }
+        let hasWideLabels = climbs.contains { $0.colour != nil || $0.gymGrade != nil }
         VStack(alignment: .leading, spacing: 6) {
             Text("\(sends.count) sends" + (flashes > 0 ? " (\(flashes) flashed)" : "") + (attempts > 0 ? " · \(attempts) attempt\(attempts == 1 ? "" : "s")" : "")
                  + (comps > 0 ? " · \(comps) comp" : ""))
@@ -273,7 +289,7 @@ struct SessionTally: View {
                             Text(row.label).font(.callout.weight(.semibold).monospacedDigit())
                         }
                     }
-                    .frame(width: hasColours ? 112 : 44, alignment: .leading)
+                    .frame(width: hasWideLabels ? 112 : 44, alignment: .leading)
                     if row.comp { Image(systemName: "trophy").foregroundStyle(.secondary).accessibilityLabel("Comp") }
                     if row.flash > 0 { Label("\(row.flash)", systemImage: "bolt.fill").foregroundStyle(Color.amber) }
                     if row.send > 0 { Label("\(row.send)", systemImage: "checkmark").foregroundStyle(Color.brand) }
@@ -294,7 +310,7 @@ struct SessionTally: View {
     private var rows: [Row] {
         tallyGroups(session.climbs, scale: model.colourScale(session.gymID)).map { cs in
             let c = cs[0]
-            return Row(id: "\(c.disciplineRaw)#\(c.grade)#\(c.isComp)#\(c.colour ?? "")#\(c.listGradeIsFelt)",
+            return Row(id: c.tallyKey,
                        label: (c.colour ?? "") + c.listGrade, sample: c, comp: c.isComp,
                        flash: cs.filter { $0.result == .flash }.count,
                        send: cs.filter { $0.result == .send }.count,

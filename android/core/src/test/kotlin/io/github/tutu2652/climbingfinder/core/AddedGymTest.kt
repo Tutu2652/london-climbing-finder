@@ -98,4 +98,24 @@ class AddedGymTest {
         assertEquals("Europe/Paris", g.zone?.id)
         assertTrue(g.toGym().outsideLondon)
     }
+    @Test fun customGymGradesSurviveBackupsWithoutBecomingVGrades() {
+        val banana = tokyo.copy(name = "香蕉攀岩", boulderGrading = GymGrading.BANANA)
+        assertEquals((0..20).map(Int::toString), banana.alternateGrades(Discipline.BOULDER))
+        val edited = banana.copy(boulderGrading = GymGrading.CUSTOM,
+            boulderGradeLabels = GymGrading.parseLabels("入门，G1, G2"))
+        assertTrue(edited.isValid)
+        assertEquals(listOf("入门", "G1", "G2"), edited.alternateGrades(Discipline.BOULDER))
+        val at = Instant.parse("2026-11-26T10:00:00Z")
+        val grades = listOf("G1", "G2").map { Climb.of(Discipline.BOULDER, 1, ClimbResult.SEND, at, false, it) }
+        val session = ClimbSession(gymID = edited.id, start = at, end = at, climbs = grades)
+        val backup = LogbookBackup.decode(LogbookBackup(sessions = listOf(session), addedGyms = listOf(edited)).encode())
+        assertEquals(5, backup.version)
+        val restored = backup.newSessions(emptyList()).single()
+        assertEquals(listOf("G1", "G2"), restored.climbs.map { it.gradeLabel })
+        assertEquals(2, restored.sends.size)
+        assertNull(restored.hardest(Discipline.BOULDER))
+        assertEquals(2, tallyGroups(restored.climbs, emptyList()).size)
+        assertEquals(edited, backup.addedGyms?.single())
+    }
+
 }
