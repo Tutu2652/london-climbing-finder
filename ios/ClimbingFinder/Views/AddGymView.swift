@@ -75,7 +75,12 @@ struct AddGymView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Gym name", text: $name)
+                    HStack(spacing: 12) {
+                        if pin != nil {
+                            GymBadge(name: name, size: 36, source: LogoCache.websiteURL(website).map { .website($0) })
+                        }
+                        TextField("Gym name", text: $name)
+                    }
                 }
 
                 Section {
@@ -224,7 +229,11 @@ struct AddGymView: View {
            let n = item.name?.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty {
             name = n
         }
-        if website.isEmpty, let u = item.url { website = u.absoluteString }
+        if website.isEmpty || website == filled["website"] {
+            let foundWebsite = item.url?.absoluteString
+            website = foundWebsite ?? ""
+            filled["website"] = foundWebsite
+        }
         fill(from: item.placemark, timeZone: item.timeZone)
         await place(item.placemark.coordinate, move: true, lookUp: false)
     }
