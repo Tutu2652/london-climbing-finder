@@ -13,9 +13,10 @@ struct GymLogo: View {
 
     var body: some View {
         let logo = model.logo(for: gym)
+        let addedLogo = gym.isAddedByYou ? GymBadge.addedGymSource(name: gym.name, website: gym.website,
+                                                                 latitude: gym.lat, longitude: gym.lng) : nil
         GymBadge(name: gym.shortName, size: size, backgroundHex: logo?.background,
-                 source: logo.map { .catalogue($0.url) }
-                    ?? (gym.isAddedByYou ? LogoCache.websiteURL(gym.website).map { .website($0) } : nil))
+                 source: logo.map { .catalogue($0.url) } ?? addedLogo)
     }
 }
 
@@ -24,6 +25,21 @@ struct GymBadge: View {
     enum Source: Hashable {
         case catalogue(String)
         case website(URL)
+    }
+
+    static func addedGymSource(name: String, website: String?, latitude: Double, longitude: Double) -> Source? {
+        let site = LogoCache.websiteURL(website)
+        let edenHost = site?.host?.lowercased()
+        let edenSite = edenHost == "edenrockclimbing.com" || edenHost == "www.edenrockclimbing.com"
+        let edinburghPage = edenSite && site?.path.localizedCaseInsensitiveContains("edinburgh") == true
+        let nearLoanheadGym = haversineKm((latitude, longitude), (55.8837, -3.15032)) < 0.5
+        let edenName = name.lowercased().filter(\.isLetter).contains("edenrock")
+        if edinburghPage || (nearLoanheadGym && (edenName || edenSite)) {
+            // The blue mark from the vector header on edenrockclimbing.com/edinburgh-home.
+            // The site's favicon is made from a 32-pixel JPEG.
+            return .catalogue("/assets/logos/eden-rock-edinburgh.png")
+        }
+        return site.map { .website($0) }
     }
 
     let name: String

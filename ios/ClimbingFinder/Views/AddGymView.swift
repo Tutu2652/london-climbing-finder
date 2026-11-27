@@ -76,8 +76,9 @@ struct AddGymView: View {
             Form {
                 Section {
                     HStack(spacing: 12) {
-                        if pin != nil {
-                            GymBadge(name: name, size: 36, source: LogoCache.websiteURL(website).map { .website($0) })
+                        if let pin {
+                            GymBadge(name: name, size: 36, source: GymBadge.addedGymSource(name: name, website: website,
+                                                                                         latitude: pin.latitude, longitude: pin.longitude))
                         }
                         TextField("Gym name", text: $name)
                     }
